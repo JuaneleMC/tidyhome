@@ -6,8 +6,8 @@ import * as schema from './schema';
 // Si TURSO_DATABASE_URL no está configurado, usamos local SQLite (en serverless /tmp/local.db)
 const isServerless = Boolean(process.env.VERCEL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const defaultDb = isServerless ? 'file:/tmp/local.db' : 'file:local.db';
-const url = process.env.TURSO_DATABASE_URL || defaultDb;
-const authToken = process.env.TURSO_AUTH_TOKEN || undefined;
+const url = process.env.TURSO_DATABASE_URL || process.env.TURSO_DB_URL || defaultDb;
+const authToken = process.env.TURSO_AUTH_TOKEN || process.env.TURSO_DATABASE_AUTH_TOKEN || undefined;
 
 export const rawClient = createClient({
   url,
