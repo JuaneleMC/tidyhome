@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1791290380012,
+      "tag": "0000_nifty_owl",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791354455063,
+      "tag": "0001_low_overlord",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791359537169,
+      "tag": "0002_brown_blue_shield",
+      "breakpoints": true
+    }
+  ]
+}

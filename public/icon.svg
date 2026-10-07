@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="50%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#grad)" />
+  <!-- House and check icon -->
+  <path d="M256 96L96 224v208a16 16 0 0016 16h112V320h64v128h112a16 16 0 0016-16V224L256 96z" fill="#ffffff" fill-opacity="0.95" />
+  <circle cx="360" cy="180" r="64" fill="#10b981" />
+  <path d="M336 180l16 16 32-32" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>

@@ -1,0 +1,2004 @@
+---
+import Layout from '../layouts/Layout.astro';
+import '../styles/global.css';
+---
+
+<Layout title="TidyHome - Reparto Inteligente de Tareas del Hogar">
+  
+  <!-- ========================================== -->
+  <!-- TAB 1: MI PANEL (VISTA INDIVIDUAL) -->
+  <!-- ========================================== -->
+  <section id="view-panel" class="tab-view block space-y-4">
+    <!-- User Welcome & Daily Progress Card -->
+    <div class="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+      <!-- Glow background decoration -->
+      <div class="absolute -right-8 -top-8 w-36 h-36 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span id="panel-greeting-avatar" class="text-2xl">👤</span>
+            <h1 class="text-lg sm:text-xl font-bold text-white tracking-tight">
+              Hola, <span id="panel-user-name" class="text-indigo-400">Usuario</span> 👋
+            </h1>
+          </div>
+          <p id="panel-date-today" class="text-xs sm:text-sm text-slate-400 font-medium">
+            Cargando fecha...
+          </p>
+        </div>
+
+        <!-- Mini Progress Pill -->
+        <div class="text-right">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold">
+            <span id="panel-progress-text">0 / 0</span>
+            <span class="text-[10px] font-normal text-slate-400">hechas</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="mt-4 space-y-1.5">
+        <div class="flex justify-between text-[11px] text-slate-400 font-medium">
+          <span>Progreso de hoy</span>
+          <span id="panel-progress-pct" class="text-indigo-300 font-semibold">0%</span>
+        </div>
+        <div class="w-full h-2.5 bg-slate-800/80 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+          <div
+            id="panel-progress-bar"
+            class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-500 ease-out"
+            style="width: 0%"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel View Filter Tabs -->
+    <div class="flex items-center justify-between gap-2 overflow-x-auto pb-1">
+      <div class="inline-flex p-1 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs font-semibold">
+        <button
+          id="filter-panel-today"
+          data-filter="today"
+          class="panel-filter-btn px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition"
+        >
+          Hoy (<span id="count-panel-today">0</span>)
+        </button>
+        <button
+          id="filter-panel-week"
+          data-filter="week"
+          class="panel-filter-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition"
+        >
+          Esta semana (<span id="count-panel-week">0</span>)
+        </button>
+        <button
+          id="filter-panel-completed"
+          data-filter="completed"
+          class="panel-filter-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition"
+        >
+          Completadas (<span id="count-panel-done">0</span>)
+        </button>
+      </div>
+
+      <button
+        id="btn-refresh-panel"
+        class="text-xs text-slate-400 hover:text-slate-200 px-2 py-1.5 rounded-lg hover:bg-slate-800 transition flex items-center gap-1"
+        title="Recargar tareas"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span class="hidden sm:inline">Actualizar</span>
+      </button>
+    </div>
+
+    <!-- Panel Task List Container -->
+    <div id="panel-tasks-container" class="space-y-2.5">
+      <!-- Loading Skeleton -->
+      <div class="glass-card rounded-2xl p-4 animate-pulse flex items-center gap-3">
+        <div class="w-10 h-10 bg-slate-800 rounded-xl"></div>
+        <div class="flex-1 space-y-2">
+          <div class="h-4 bg-slate-800 rounded w-1/2"></div>
+          <div class="h-3 bg-slate-800 rounded w-1/3"></div>
+        </div>
+        <div class="w-8 h-8 bg-slate-800 rounded-full"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- TAB 2: CASA / DASHBOARD (VISTA GLOBAL) -->
+  <!-- ========================================== -->
+  <section id="view-dashboard" class="tab-view hidden space-y-4">
+    <!-- Household Summary Banner -->
+    <div class="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🏠</span>
+            <h2 class="text-base sm:text-lg font-bold text-white tracking-tight">
+              Estado General de la Casa
+            </h2>
+          </div>
+          <p id="dashboard-week-range" class="text-xs text-slate-400 font-medium mt-0.5">
+            Semana actual
+          </p>
+        </div>
+
+        <!-- Global Percentage Badge -->
+        <div class="flex flex-col items-end">
+          <span id="dashboard-global-pct" class="text-xl sm:text-2xl font-extrabold text-emerald-400 leading-none">
+            0%
+          </span>
+          <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
+            Completado
+          </span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="mt-3.5 space-y-1">
+        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+          <div
+            id="dashboard-progress-bar"
+            class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-indigo-500 rounded-full transition-all duration-500 ease-out"
+            style="width: 0%"
+          ></div>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-400 pt-0.5">
+          <span><strong id="dashboard-done-count" class="text-emerald-400 font-bold">0</strong> hechas</span>
+          <span><strong id="dashboard-pending-count" class="text-amber-400 font-bold">0</strong> pendientes</span>
+        </div>
+      </div>
+
+      <!-- Household notice banner about "¡Lo hago yo!" -->
+      <div class="mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-2 text-xs text-slate-300">
+        <span class="text-pink-400 text-sm">💡</span>
+        <span>
+          ¿Tienes tiempo libre? Pulsa <strong class="text-pink-400 font-semibold">"¡Lo hago yo!"</strong> en cualquier tarea pendiente para asumirla y completarla.
+        </span>
+      </div>
+    </div>
+
+    <!-- Dashboard Grouping Toggle: Por Día vs Por Conviviente -->
+    <div class="flex items-center justify-between gap-2">
+      <div class="inline-flex p-1 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs font-semibold">
+        <button
+          id="btn-group-by-day"
+          class="dashboard-group-btn px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition"
+        >
+          📅 Por Día
+        </button>
+        <button
+          id="btn-group-by-user"
+          class="dashboard-group-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition"
+        >
+          👥 Por Conviviente
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] text-slate-400 hidden xs:inline">Filtro:</span>
+        <select
+          id="filter-dashboard-status"
+          class="text-xs bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        >
+          <option value="all">Todas las tareas</option>
+          <option value="pending">Solo pendientes</option>
+          <option value="completed">Solo completadas</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Dashboard Groups Container -->
+    <div id="dashboard-groups-container" class="space-y-4">
+      <!-- Loading Skeleton -->
+      <div class="glass-card rounded-2xl p-4 animate-pulse space-y-3">
+        <div class="h-5 bg-slate-800 rounded w-1/3"></div>
+        <div class="h-16 bg-slate-800 rounded-xl"></div>
+        <div class="h-16 bg-slate-800 rounded-xl"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- TAB 3: CATÁLOGO DE TAREAS -->
+  <!-- ========================================== -->
+  <section id="view-catalog" class="tab-view hidden space-y-4">
+    <!-- Header with Add Chore button -->
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+          <span>📋</span> Catálogo de Tareas
+        </h2>
+        <p class="text-xs text-slate-400 font-medium">
+          Configuración periódica y reparto habitual del hogar
+        </p>
+      </div>
+
+      <button
+        id="btn-open-new-chore-modal"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 active:scale-95 transition"
+      >
+        <span class="text-base leading-none">+</span>
+        <span>Nueva Tarea</span>
+      </button>
+    </div>
+
+    <!-- Frequency Filter Pills -->
+    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+      <button data-freq="all" class="catalog-filter-btn px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold transition">
+        Todas
+      </button>
+      <button data-freq="daily" class="catalog-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium transition">
+        Diarias
+      </button>
+      <button data-freq="twice_weekly" class="catalog-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium transition">
+        2 por semana
+      </button>
+      <button data-freq="weekly" class="catalog-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium transition">
+        Semanales
+      </button>
+      <button data-freq="biweekly" class="catalog-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium transition">
+        Quincenales
+      </button>
+      <button data-freq="monthly" class="catalog-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium transition">
+        Mensuales
+      </button>
+    </div>
+
+    <!-- Catalog List Container -->
+    <div id="catalog-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <!-- Loading Skeleton -->
+      <div class="glass-card rounded-2xl p-4 animate-pulse space-y-2">
+        <div class="h-4 bg-slate-800 rounded w-2/3"></div>
+        <div class="h-3 bg-slate-800 rounded w-1/3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- TAB 4: CONVIVIENTES & ESTADÍSTICAS -->
+  <!-- ========================================== -->
+  <section id="view-roommates" class="tab-view hidden space-y-4">
+    <!-- Header with Add Roommate button -->
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+          <span>👥</span> Convivientes & Podio
+        </h2>
+        <p class="text-xs text-slate-400 font-medium">
+          Participación de la casa en la semana en curso
+        </p>
+      </div>
+
+      <button
+        id="btn-open-new-user-modal"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-600/20 active:scale-95 transition"
+      >
+        <span class="text-base leading-none">+</span>
+        <span>Añadir Conviviente</span>
+      </button>
+    </div>
+
+    <!-- Leaderboard / Ranking Card -->
+    <div class="glass-card rounded-2xl p-4 relative overflow-hidden">
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🏆</span>
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider">
+            Podio de la Semana
+          </h3>
+        </div>
+        <span class="text-[11px] text-slate-400 font-medium">Por tareas ejecutadas</span>
+      </div>
+
+      <div id="leaderboard-container" class="space-y-2">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Roommates Cards List -->
+    <div>
+      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
+        Lista de Convivientes
+      </h3>
+      <div id="roommates-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- MODAL: NUEVA TAREA (CATÁLOGO) -->
+  <!-- ========================================== -->
+  <div
+    id="modal-new-chore"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity duration-200"
+  >
+    <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-lg p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">✨</span>
+          <h3 class="text-base sm:text-lg font-bold text-white">Nueva Tarea en Catálogo</h3>
+        </div>
+        <button id="btn-close-new-chore-modal" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="form-new-chore" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre de la tarea</label>
+          <input
+            type="text"
+            id="input-chore-name"
+            required
+            placeholder="Ej: Fregar los platos, Aspirar el salón..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Periodicidad</label>
+            <select
+              id="select-chore-frequency"
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="daily">Diariamente</option>
+              <option value="twice_weekly">2 veces a la semana</option>
+              <option value="weekly" selected>1 vez a la semana</option>
+              <option value="biweekly">Cada dos semanas</option>
+              <option value="monthly">Mensual</option>
+            </select>
+          </div>
+
+          <div id="container-day-1">
+            <label id="label-chore-day-1" class="block text-xs font-semibold text-slate-300 mb-1">Día preferido</label>
+            <select
+              id="select-chore-day"
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="1">Lunes</option>
+              <option value="2">Martes</option>
+              <option value="3">Miércoles</option>
+              <option value="4">Jueves</option>
+              <option value="5">Viernes</option>
+              <option value="6">Sábado</option>
+              <option value="0">Domingo</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Segundo día (visible si la periodicidad es 2 veces a la semana) -->
+        <div id="container-second-day" class="hidden">
+          <label class="block text-xs font-semibold text-indigo-300 mb-1">Segundo día de la semana</label>
+          <select
+            id="select-chore-second-day"
+            class="w-full bg-slate-800 border border-indigo-500/40 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="4" selected>Jueves</option>
+            <option value="5">Viernes</option>
+            <option value="6">Sábado</option>
+            <option value="0">Domingo</option>
+            <option value="1">Lunes</option>
+            <option value="2">Martes</option>
+            <option value="3">Miércoles</option>
+          </select>
+          <p class="text-[11px] text-slate-400 mt-1">Se programará automáticamente en ambos días cada semana.</p>
+        </div>
+
+        <!-- Modo de Asignación: Fija o Rotativa -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Modalidad de reparto</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 cursor-pointer hover:border-slate-500 transition has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-950/30">
+              <input type="radio" name="assignment-mode" value="fixed" checked class="text-indigo-600 focus:ring-0" />
+              <div class="text-xs">
+                <span class="font-bold text-white block">📌 Fija</span>
+                <span class="text-[10px] text-slate-400 block">Siempre el mismo</span>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 cursor-pointer hover:border-slate-500 transition has-[:checked]:border-purple-500 has-[:checked]:bg-purple-950/30">
+              <input type="radio" name="assignment-mode" value="rotating" class="text-purple-600 focus:ring-0" />
+              <div class="text-xs">
+                <span class="font-bold text-purple-300 block">🔄 Rotativa</span>
+                <span class="text-[10px] text-slate-400 block">Cambia cada semana</span>
+              </div>
+            </label>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1" id="desc-assignment-mode">
+            📌 La tarea estará siempre asignada a la misma persona seleccionada.
+          </p>
+        </div>
+
+        <div>
+          <label id="label-assignee-select" class="block text-xs font-semibold text-slate-300 mb-1">Responsable habitual</label>
+          <select
+            id="select-chore-assignee"
+            required
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <!-- Options populated by JS -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Icono / Emoji</label>
+            <div class="flex items-center gap-2">
+              <input
+                type="text"
+                id="input-chore-icon"
+                value="🧹"
+                maxlength="4"
+                class="w-14 text-center text-xl bg-slate-800 border border-slate-700 rounded-xl py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <!-- Quick emojis -->
+              <div class="flex gap-1 overflow-x-auto text-lg">
+                <button type="button" class="quick-emoji p-1 rounded hover:bg-slate-800">🧹</button>
+                <button type="button" class="quick-emoji p-1 rounded hover:bg-slate-800">🍽️</button>
+                <button type="button" class="quick-emoji p-1 rounded hover:bg-slate-800">🧺</button>
+                <button type="button" class="quick-emoji p-1 rounded hover:bg-slate-800">🚿</button>
+                <button type="button" class="quick-emoji p-1 rounded hover:bg-slate-800">🗑️</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Categoría</label>
+            <input
+              type="text"
+              id="input-chore-category"
+              value="Hogar"
+              placeholder="Cocina, Baño..."
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button
+            type="button"
+            id="btn-cancel-new-chore"
+            class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            id="btn-submit-new-chore"
+            class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition active:scale-95"
+          >
+            Guardar y Sincronizar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: NUEVO CONVIVIENTE -->
+  <!-- ========================================== -->
+  <div
+    id="modal-new-user"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity duration-200"
+  >
+    <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">👋</span>
+          <h3 class="text-base sm:text-lg font-bold text-white">Nuevo Conviviente</h3>
+        </div>
+        <button id="btn-close-new-user-modal" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="form-new-user" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre</label>
+          <input
+            type="text"
+            id="input-user-name"
+            required
+            placeholder="Ej: Pablo, Marta..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Correo Electrónico</label>
+          <input
+            type="email"
+            id="input-user-email"
+            required
+            placeholder="pablo@casa.com"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Avatar Emoji</label>
+            <div class="flex items-center gap-2">
+              <input
+                type="text"
+                id="input-user-avatar"
+                value="🧑‍🍳"
+                maxlength="4"
+                class="w-14 text-center text-xl bg-slate-800 border border-slate-700 rounded-xl py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <div class="flex gap-1 overflow-x-auto text-lg">
+                <button type="button" class="quick-avatar p-1 rounded hover:bg-slate-800">🧑‍🍳</button>
+                <button type="button" class="quick-avatar p-1 rounded hover:bg-slate-800">👩‍💼</button>
+                <button type="button" class="quick-avatar p-1 rounded hover:bg-slate-800">👨‍🎨</button>
+                <button type="button" class="quick-avatar p-1 rounded hover:bg-slate-800">👩‍🔬</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Color distintivo</label>
+            <input
+              type="color"
+              id="input-user-color"
+              value="#8b5cf6"
+              class="w-full h-10 bg-slate-800 border border-slate-700 rounded-xl px-1 py-1 cursor-pointer"
+            />
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button
+            type="button"
+            id="btn-cancel-new-user"
+            class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            id="btn-submit-new-user"
+            class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 transition active:scale-95"
+          >
+            Dar de Alta
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</Layout>
+
+<!-- Client Application Logic in TypeScript -->
+<script>
+  // Declare confetti from CDN
+  declare const confetti: any;
+
+  // Types
+  interface User {
+    id: number;
+    name: string;
+    email: string;
+    avatar: string;
+    color: string;
+  }
+
+  interface ChoreLogItem {
+    id: number;
+    choreId: number;
+    choreName: string;
+    icon: string;
+    category: string;
+    frequency: string;
+    assignmentMode: 'fixed' | 'rotating';
+    targetDate: string;
+    status: 'pending' | 'completed';
+    assignedToId: number;
+    assignedToName: string;
+    assignedToColor: string;
+    assignedToAvatar: string;
+    executedById: number | null;
+    executedByName: string | null;
+    executedByColor: string | null;
+    executedByAvatar: string | null;
+    executionDate: string | null;
+    isStolen: boolean;
+    isToday: boolean;
+    isOverdue: boolean;
+  }
+
+  interface DayGroup {
+    day: {
+      dateStr: string;
+      dayOfWeek: number;
+      dayName: string;
+      dayShort: string;
+      dayNumber: number;
+      monthName: string;
+      isToday: boolean;
+      isPast: boolean;
+    };
+    chores: ChoreLogItem[];
+    totalCount: number;
+    completedCount: number;
+    pendingCount: number;
+    isComplete: boolean;
+  }
+
+  // Application State
+  let usersList: User[] = [];
+  let activeUser: User | null = null;
+  let activeTab: 'panel' | 'dashboard' | 'catalog' | 'roommates' = 'panel';
+  let panelFilter: 'today' | 'week' | 'completed' = 'today';
+  let dashboardGroupBy: 'day' | 'user' = 'day';
+  let dashboardFilterStatus: 'all' | 'pending' | 'completed' = 'all';
+  let catalogFilterFreq: string = 'all';
+
+  // Cached data
+  let myTasksData: {
+    todayTasks: ChoreLogItem[];
+    upcomingTasks: ChoreLogItem[];
+    overdueTasks: ChoreLogItem[];
+    completedTasks: ChoreLogItem[];
+    allTasks: ChoreLogItem[];
+    stats: { total: number; completed: number; pending: number; progressPct: number };
+  } | null = null;
+
+  let dashboardData: {
+    days: any[];
+    choresByDay: DayGroup[];
+    allChores: ChoreLogItem[];
+    users: User[];
+    userStats: any[];
+    summary: { totalTasks: number; totalCompleted: number; totalPending: number; overallProgress: number; weekRange: string };
+  } | null = null;
+
+  let catalogData: any[] = [];
+
+  // ==========================================
+  // TOAST NOTIFICATIONS
+  // ==========================================
+  function showToast(message: string, type: 'success' | 'info' | 'error' = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    const colors = {
+      success: 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200',
+      info: 'bg-indigo-950/90 border-indigo-500/40 text-indigo-200',
+      error: 'bg-rose-950/90 border-rose-500/40 text-rose-200',
+    };
+    const icons = {
+      success: '✅',
+      info: '💡',
+      error: '⚠️',
+    };
+
+    toast.className = `p-3 rounded-2xl border shadow-xl backdrop-blur-md flex items-center gap-2.5 text-xs font-medium pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0 ${colors[type]}`;
+    toast.innerHTML = `
+      <span class="text-base">${icons[type]}</span>
+      <span class="flex-1">${message}</span>
+      <button class="text-slate-400 hover:text-white text-sm px-1 leading-none font-bold">&times;</button>
+    `;
+
+    toast.querySelector('button')?.addEventListener('click', () => {
+      toast.remove();
+    });
+
+    container.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => {
+      toast.classList.remove('translate-y-2', 'opacity-0');
+    });
+
+    // Auto remove
+    setTimeout(() => {
+      toast.classList.add('opacity-0', '-translate-y-2');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+
+  // ==========================================
+  // CONFETTI EFFECT
+  // ==========================================
+  function triggerConfetti() {
+    try {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 65,
+          spread: 60,
+          origin: { y: 0.75 },
+          colors: ['#6366f1', '#10b981', '#ec4899', '#f59e0b'],
+        });
+      }
+    } catch (e) {
+      // Ignore if not loaded
+    }
+  }
+
+  // ==========================================
+  // NAVIGATION & TABS
+  // ==========================================
+  function switchTab(tab: 'panel' | 'dashboard' | 'catalog' | 'roommates') {
+    activeTab = tab;
+
+    // Update bottom nav buttons
+    document.querySelectorAll('.nav-tab').forEach((btn) => {
+      const btnTab = btn.getAttribute('data-tab');
+      if (btnTab === tab) {
+        btn.classList.add('text-indigo-400');
+        btn.classList.remove('text-slate-400');
+      } else {
+        btn.classList.remove('text-indigo-400');
+        btn.classList.add('text-slate-400');
+      }
+    });
+
+    // Update views visibility
+    document.querySelectorAll('.tab-view').forEach((view) => {
+      view.classList.add('hidden');
+    });
+
+    const targetView = document.getElementById(`view-${tab}`);
+    if (targetView) {
+      targetView.classList.remove('hidden');
+    }
+
+    // Refresh content for active tab
+    if (tab === 'panel') {
+      loadMyTasks();
+    } else if (tab === 'dashboard') {
+      loadDashboard();
+    } else if (tab === 'catalog') {
+      loadCatalog();
+    } else if (tab === 'roommates') {
+      loadRoommates();
+    }
+  }
+
+  // ==========================================
+  // USER MANAGEMENT & SWITCHING
+  // ==========================================
+  async function loadUsers() {
+    try {
+      const res = await fetch('/api/users');
+      const data = await res.json();
+      if (data.success && data.users.length > 0) {
+        usersList = data.users;
+
+        // Restore active user from localStorage or pick the first
+        const savedUserId = localStorage.getItem('tidyhome_active_user_id');
+        if (savedUserId) {
+          const found = usersList.find((u) => u.id === Number(savedUserId));
+          activeUser = found || usersList[0];
+        } else {
+          activeUser = usersList[0];
+        }
+
+        localStorage.setItem('tidyhome_active_user_id', String(activeUser.id));
+        updateActiveUserUI();
+        populateUserDropdown();
+        populateAssigneeSelect();
+      }
+    } catch (err) {
+      console.error('Error loading users:', err);
+    }
+  }
+
+  function setActiveUser(userId: number) {
+    const user = usersList.find((u) => u.id === userId);
+    if (!user) return;
+
+    activeUser = user;
+    localStorage.setItem('tidyhome_active_user_id', String(user.id));
+    updateActiveUserUI();
+    showToast(`Conviviente activo cambiado a ${user.name}`, 'info');
+
+    // Reload active tab
+    if (activeTab === 'panel') {
+      loadMyTasks();
+    } else if (activeTab === 'dashboard') {
+      loadDashboard();
+    }
+  }
+
+  function updateActiveUserUI() {
+    if (!activeUser) return;
+    const avatarEl = document.getElementById('active-user-avatar');
+    const nameEl = document.getElementById('active-user-name');
+    const greetingAvatarEl = document.getElementById('panel-greeting-avatar');
+    const greetingNameEl = document.getElementById('panel-user-name');
+
+    if (avatarEl) avatarEl.textContent = activeUser.avatar || '👤';
+    if (nameEl) nameEl.textContent = activeUser.name;
+    if (greetingAvatarEl) greetingAvatarEl.textContent = activeUser.avatar || '👤';
+    if (greetingNameEl) greetingNameEl.textContent = activeUser.name;
+  }
+
+  function populateUserDropdown() {
+    const list = document.getElementById('user-dropdown-list');
+    if (!list) return;
+
+    list.innerHTML = usersList
+      .map(
+        (u) => `
+        <button
+          type="button"
+          data-user-id="${u.id}"
+          class="user-dropdown-item w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold text-left transition ${
+            activeUser?.id === u.id ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30' : 'text-slate-300 hover:bg-slate-800'
+          }"
+        >
+          <div class="flex items-center gap-2">
+            <span class="text-base">${u.avatar || '👤'}</span>
+            <span>${u.name}</span>
+          </div>
+          ${activeUser?.id === u.id ? '<span class="text-indigo-400 text-xs">✓</span>' : ''}
+        </button>
+      `
+      )
+      .join('');
+
+    list.querySelectorAll('.user-dropdown-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const uid = Number(btn.getAttribute('data-user-id'));
+        setActiveUser(uid);
+        document.getElementById('user-dropdown-menu')?.classList.add('hidden');
+      });
+    });
+  }
+
+  function populateAssigneeSelect() {
+    const select = document.getElementById('select-chore-assignee') as HTMLSelectElement | null;
+    if (!select) return;
+
+    select.innerHTML = usersList
+      .map(
+        (u) => `
+        <option value="${u.id}" ${activeUser?.id === u.id ? 'selected' : ''}>
+          ${u.avatar || '👤'} ${u.name} (${u.email})
+        </option>
+      `
+      )
+      .join('');
+  }
+
+  // ==========================================
+  // SYNC & GENERATE ENDPOINT CALL
+  // ==========================================
+  async function syncWeek() {
+    const icon = document.getElementById('sync-icon');
+    if (icon) icon.classList.add('rotate-180');
+
+    try {
+      const res = await fetch('/api/chores/generate', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'Semana sincronizada correctamente', 'success');
+        if (activeTab === 'panel') loadMyTasks();
+        if (activeTab === 'dashboard') loadDashboard();
+      } else {
+        showToast(data.error || 'Error al sincronizar', 'error');
+      }
+    } catch (err) {
+      showToast('Error de conexión al sincronizar', 'error');
+    } finally {
+      if (icon) {
+        setTimeout(() => icon.classList.remove('rotate-180'), 600);
+      }
+    }
+  }
+
+  // ==========================================
+  // VISTA 1: MI PANEL (CARGA Y RENDER)
+  // ==========================================
+  async function loadMyTasks() {
+    if (!activeUser) return;
+    const container = document.getElementById('panel-tasks-container');
+    if (!container) return;
+
+    try {
+      const res = await fetch(`/api/chores/my-tasks?userId=${activeUser.id}`);
+      const data = await res.json();
+
+      if (!data.success) {
+        container.innerHTML = `<div class="p-4 text-center text-rose-400 text-xs">${data.error}</div>`;
+        return;
+      }
+
+      myTasksData = data;
+
+      // Update counters & progress
+      const todayTotal = data.todayTasks.length + data.overdueTasks.length;
+      const todayCompleted = data.todayTasks.filter((t: ChoreLogItem) => t.status === 'completed').length;
+      const todayPct = todayTotal ? Math.round((todayCompleted / todayTotal) * 100) : 0;
+
+      const progressText = document.getElementById('panel-progress-text');
+      const progressPct = document.getElementById('panel-progress-pct');
+      const progressBar = document.getElementById('panel-progress-bar');
+      const countToday = document.getElementById('count-panel-today');
+      const countWeek = document.getElementById('count-panel-week');
+      const countDone = document.getElementById('count-panel-done');
+      const badgePending = document.getElementById('badge-my-pending');
+
+      if (progressText) progressText.textContent = `${todayCompleted} / ${todayTotal}`;
+      if (progressPct) progressPct.textContent = `${todayPct}%`;
+      if (progressBar) progressBar.style.width = `${todayPct}%`;
+
+      if (countToday) countToday.textContent = String(todayTotal);
+      if (countWeek) countWeek.textContent = String(data.allTasks.length);
+      if (countDone) countDone.textContent = String(data.completedTasks.length);
+
+      // Pending badge on bottom nav
+      const pendingToday = data.todayTasks.filter((t: ChoreLogItem) => t.status === 'pending').length +
+                           data.overdueTasks.filter((t: ChoreLogItem) => t.status === 'pending').length;
+      if (badgePending) {
+        if (pendingToday > 0) {
+          badgePending.textContent = String(pendingToday);
+          badgePending.classList.remove('hidden');
+        } else {
+          badgePending.classList.add('hidden');
+        }
+      }
+
+      // Date today formatted
+      const dateEl = document.getElementById('panel-date-today');
+      if (dateEl) {
+        const now = new Date();
+        const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+        dateEl.textContent = now.toLocaleDateString('es-ES', options);
+      }
+
+      renderPanelTasks();
+    } catch (err) {
+      console.error('Error fetching my-tasks:', err);
+    }
+  }
+
+  function renderPanelTasks() {
+    const container = document.getElementById('panel-tasks-container');
+    if (!container || !myTasksData) return;
+
+    let listToRender: ChoreLogItem[] = [];
+
+    if (panelFilter === 'today') {
+      // Prioritize overdue pending tasks, then today's tasks
+      listToRender = [...myTasksData.overdueTasks.filter(t => t.status === 'pending'), ...myTasksData.todayTasks];
+    } else if (panelFilter === 'week') {
+      listToRender = myTasksData.allTasks;
+    } else if (panelFilter === 'completed') {
+      listToRender = myTasksData.completedTasks;
+    }
+
+    if (listToRender.length === 0) {
+      container.innerHTML = `
+        <div class="glass-card rounded-2xl p-8 text-center space-y-3">
+          <div class="text-4xl">🎉</div>
+          <h3 class="text-sm font-bold text-white">¡No hay tareas pendientes en este filtro!</h3>
+          <p class="text-xs text-slate-400 max-w-xs mx-auto">
+            ${
+              panelFilter === 'today'
+                ? 'Has completado todas tus tareas de hoy o no tienes ninguna asignada. ¡Disfruta del descanso!'
+                : 'No se encontraron tareas para mostrar.'
+            }
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = listToRender
+      .map((item) => {
+        const isCompleted = item.status === 'completed';
+        const isStolenByOther = isCompleted && item.executedById && item.executedById !== item.assignedToId;
+
+        // Freq label in Spanish
+        const freqLabels: Record<string, string> = {
+          daily: 'Diaria',
+          twice_weekly: '2 veces/sem',
+          weekly: 'Semanal',
+          biweekly: 'Quincenal',
+          monthly: 'Mensual',
+        };
+
+        return `
+          <div
+            class="glass-card glass-card-hover rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 transition ${
+              isCompleted ? 'opacity-70 bg-slate-900/40 border-emerald-500/20' : 'border-slate-700/60'
+            }"
+            id="chore-card-${item.id}"
+          >
+            <!-- Chore Info -->
+            <div class="flex items-start gap-3 flex-1 min-w-0">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${
+                isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-200'
+              }">
+                ${item.icon || '🧹'}
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h4 class="text-sm font-bold text-white tracking-tight truncate ${
+                    isCompleted ? 'line-through text-slate-400' : ''
+                  }">
+                    ${item.choreName}
+                  </h4>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-slate-800 text-slate-400">
+                    ${freqLabels[item.frequency] || item.frequency}
+                  </span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-indigo-500/10 text-indigo-300">
+                    ${item.category}
+                  </span>
+                  ${
+                    item.assignmentMode === 'rotating'
+                      ? `<span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                          🔄 Rotativa
+                         </span>`
+                      : ''
+                  }
+                </div>
+
+                <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-400">
+                  <span class="font-medium ${item.isOverdue ? 'text-amber-400 font-semibold' : item.isToday ? 'text-indigo-400 font-semibold' : ''}">
+                    ${item.isOverdue ? '⚠️ Atrasada (' + item.targetDate + ')' : item.isToday ? '📅 Para Hoy' : '📅 ' + item.targetDate}
+                  </span>
+
+                  ${
+                    isStolenByOther
+                      ? `<span class="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                          ⚡ Hecho por ${item.executedByName}
+                         </span>`
+                      : isCompleted
+                      ? `<span class="text-[10px] text-emerald-400 font-semibold">✓ Completado</span>`
+                      : ''
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive Check Action Button -->
+            <button
+              class="btn-toggle-chore w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-90 shrink-0 ${
+                isCompleted
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-400/40'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-600/80 hover:border-indigo-500'
+              }"
+              data-id="${item.id}"
+              data-completed="${isCompleted}"
+              title="${isCompleted ? 'Desmarcar tarea' : 'Marcar como completada'}"
+            >
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+          </div>
+        `;
+      })
+      .join('');
+
+    // Attach click events
+    container.querySelectorAll('.btn-toggle-chore').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const choreId = Number(btn.getAttribute('data-id'));
+        const isDone = btn.getAttribute('data-completed') === 'true';
+        btn.setAttribute('disabled', 'true');
+        btn.classList.add('animate-pulse');
+
+        await toggleChore(choreId, isDone ? 'pending' : 'completed');
+      });
+    });
+  }
+
+  // ==========================================
+  // VISTA 2: DASHBOARD / CASA (CARGA Y RENDER)
+  // ==========================================
+  async function loadDashboard() {
+    const container = document.getElementById('dashboard-groups-container');
+    if (!container) return;
+
+    try {
+      const res = await fetch('/api/chores/dashboard');
+      const data = await res.json();
+
+      if (!data.success) {
+        container.innerHTML = `<div class="p-4 text-center text-rose-400 text-xs">${data.error}</div>`;
+        return;
+      }
+
+      dashboardData = data;
+
+      // Update Summary Header
+      const pctEl = document.getElementById('dashboard-global-pct');
+      const barEl = document.getElementById('dashboard-progress-bar');
+      const doneEl = document.getElementById('dashboard-done-count');
+      const pendingEl = document.getElementById('dashboard-pending-count');
+      const rangeEl = document.getElementById('dashboard-week-range');
+
+      if (pctEl) pctEl.textContent = `${data.summary.overallProgress}%`;
+      if (barEl) barEl.style.width = `${data.summary.overallProgress}%`;
+      if (doneEl) doneEl.textContent = String(data.summary.totalCompleted);
+      if (pendingEl) pendingEl.textContent = String(data.summary.totalPending);
+      if (rangeEl) rangeEl.textContent = `Semana: ${data.summary.weekRange}`;
+
+      renderDashboardGroups();
+    } catch (err) {
+      console.error('Error fetching dashboard:', err);
+    }
+  }
+
+  function renderDashboardGroups() {
+    const container = document.getElementById('dashboard-groups-container');
+    if (!container || !dashboardData) return;
+
+    if (dashboardGroupBy === 'day') {
+      renderDashboardByDay(container);
+    } else {
+      renderDashboardByUser(container);
+    }
+  }
+
+  function renderDashboardByDay(container: HTMLElement) {
+    if (!dashboardData) return;
+
+    const days = dashboardData.choresByDay;
+
+    container.innerHTML = days
+      .map((dayGroup) => {
+        const day = dayGroup.day;
+        let chores = dayGroup.chores;
+
+        // Apply status filter
+        if (dashboardFilterStatus === 'pending') {
+          chores = chores.filter((c) => c.status === 'pending');
+        } else if (dashboardFilterStatus === 'completed') {
+          chores = chores.filter((c) => c.status === 'completed');
+        }
+
+        const isToday = day.isToday;
+
+        return `
+          <div class="glass-card rounded-2xl overflow-hidden transition border ${
+            isToday ? 'border-indigo-500/50 ring-1 ring-indigo-500/20' : 'border-slate-800'
+          }">
+            <!-- Day Header -->
+            <div class="px-4 py-3 bg-slate-800/60 flex items-center justify-between border-b border-slate-700/50">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-white">
+                  ${day.dayName} ${day.dayNumber}
+                </span>
+                ${
+                  isToday
+                    ? `<span class="px-2 py-0.5 text-[10px] font-bold bg-indigo-500 text-white rounded-full uppercase tracking-wider">
+                        Hoy
+                       </span>`
+                    : ''
+                }
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold ${
+                  dayGroup.isComplete
+                    ? 'text-emerald-400'
+                    : dayGroup.completedCount > 0
+                    ? 'text-amber-400'
+                    : 'text-slate-400'
+                }">
+                  ${dayGroup.completedCount} / ${dayGroup.totalCount}
+                </span>
+              </div>
+            </div>
+
+            <!-- Day Chores List -->
+            <div class="p-3 space-y-2">
+              ${
+                chores.length === 0
+                  ? `<div class="py-3 text-center text-xs text-slate-500">
+                      ${dayGroup.totalCount === 0 ? 'Sin tareas programadas para este día.' : 'No hay tareas con el filtro seleccionado.'}
+                     </div>`
+                  : chores.map((chore) => renderChoreCardInDashboard(chore)).join('')
+              }
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    attachDashboardActionListeners(container);
+  }
+
+  function renderDashboardByUser(container: HTMLElement) {
+    if (!dashboardData) return;
+
+    const users = dashboardData.users;
+    const allChores = dashboardData.allChores;
+
+    container.innerHTML = users
+      .map((user) => {
+        let userChores = allChores.filter((c) => c.assignedToId === user.id);
+
+        if (dashboardFilterStatus === 'pending') {
+          userChores = userChores.filter((c) => c.status === 'pending');
+        } else if (dashboardFilterStatus === 'completed') {
+          userChores = userChores.filter((c) => c.status === 'completed');
+        }
+
+        const totalUser = allChores.filter((c) => c.assignedToId === user.id).length;
+        const doneUser = allChores.filter((c) => c.assignedToId === user.id && c.status === 'completed').length;
+        const isMe = activeUser?.id === user.id;
+
+        return `
+          <div class="glass-card rounded-2xl overflow-hidden border ${
+            isMe ? 'border-indigo-500/40' : 'border-slate-800'
+          }">
+            <!-- User Header -->
+            <div class="px-4 py-3 bg-slate-800/60 flex items-center justify-between border-b border-slate-700/50">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">${user.avatar || '👤'}</span>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-sm font-bold text-white">${user.name}</span>
+                    ${
+                      isMe
+                        ? `<span class="px-1.5 py-0.2 text-[9px] font-bold bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30">TÚ</span>`
+                        : ''
+                    }
+                  </div>
+                  <span class="text-[10px] text-slate-400 font-medium">${user.email}</span>
+                </div>
+              </div>
+
+              <div class="text-right">
+                <span class="text-xs font-bold ${
+                  doneUser === totalUser && totalUser > 0 ? 'text-emerald-400' : 'text-slate-300'
+                }">
+                  ${doneUser} / ${totalUser}
+                </span>
+                <span class="text-[10px] text-slate-500 block">completadas</span>
+              </div>
+            </div>
+
+            <!-- Chores List -->
+            <div class="p-3 space-y-2">
+              ${
+                userChores.length === 0
+                  ? `<div class="py-3 text-center text-xs text-slate-500">
+                      Sin tareas asignadas con el filtro actual.
+                     </div>`
+                  : userChores.map((chore) => renderChoreCardInDashboard(chore)).join('')
+              }
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    attachDashboardActionListeners(container);
+  }
+
+  /**
+   * Render individual chore card in Dashboard with the "¡Lo hago yo!" button
+   */
+  function renderChoreCardInDashboard(chore: ChoreLogItem): string {
+    const isCompleted = chore.status === 'completed';
+    const isStolen = isCompleted && chore.executedById && chore.executedById !== chore.assignedToId;
+    const isAssignedToMe = activeUser?.id === chore.assignedToId;
+
+    return `
+      <div
+        class="glass-card rounded-xl p-3 flex items-center justify-between gap-3 border transition ${
+          isCompleted
+            ? 'bg-emerald-950/20 border-emerald-500/30 text-slate-300'
+            : 'bg-slate-900/60 border-slate-700/60 hover:border-slate-600'
+        }"
+        id="dash-chore-${chore.id}"
+      >
+        <!-- Icon & Description -->
+        <div class="flex items-start gap-2.5 flex-1 min-w-0">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-lg shrink-0 ${
+            isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-200'
+          }">
+            ${chore.icon || '🧹'}
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs font-bold text-white truncate ${
+                isCompleted ? 'line-through text-slate-400' : ''
+              }">
+                ${chore.choreName}
+              </span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded font-medium bg-slate-800 text-slate-400">
+                ${chore.category}
+              </span>
+              ${
+                chore.assignmentMode === 'rotating'
+                  ? `<span class="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                      🔄 Rotativa
+                     </span>`
+                  : ''
+              }
+            </div>
+
+            <!-- Details: Assignee & Executor -->
+            <div class="flex items-center gap-2 mt-1 flex-wrap text-[11px]">
+              <span class="inline-flex items-center gap-1 text-slate-400">
+                <span>${chore.assignedToAvatar}</span>
+                <span class="${isAssignedToMe ? 'text-indigo-300 font-semibold' : ''}">
+                  ${chore.assignedToName}
+                </span>
+              </span>
+
+              ${
+                isStolen
+                  ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-pink-500/15 text-pink-300 border border-pink-500/30">
+                      ⚡ ¡Robado por ${chore.executedByName}!
+                     </span>`
+                  : isCompleted
+                  ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      ✓ Hecho por ${chore.executedByName || chore.assignedToName}
+                     </span>`
+                  : `<span class="text-[10px] text-amber-400/90 font-medium">⏳ Pendiente</span>`
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button: ¡Lo hago yo! or Toggle Check -->
+        <div class="shrink-0 flex items-center gap-1.5">
+          ${
+            !isCompleted
+              ? `
+                <button
+                  class="btn-steal-chore inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition active:scale-95 shadow-md ${
+                    isAssignedToMe
+                      ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30'
+                      : 'bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 shadow-pink-600/30 pulse-steal'
+                  }"
+                  data-id="${chore.id}"
+                  data-assignee="${chore.assignedToName}"
+                  data-mine="${isAssignedToMe}"
+                  id="btn-steal-${chore.id}"
+                >
+                  <span class="btn-spinner hidden w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  <span class="btn-text">
+                    ${isAssignedToMe ? '✓ Hecho' : '¡Lo hago yo! ⚡'}
+                  </span>
+                </button>
+              `
+              : `
+                <button
+                  class="btn-undo-chore p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
+                  data-id="${chore.id}"
+                  title="Desmarcar y volver a pendiente"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </button>
+              `
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  function attachDashboardActionListeners(container: HTMLElement) {
+    // "¡Lo hago yo!" buttons
+    container.querySelectorAll('.btn-steal-chore').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const choreId = Number(btn.getAttribute('data-id'));
+        const assignee = btn.getAttribute('data-assignee');
+        const isMine = btn.getAttribute('data-mine') === 'true';
+
+        // Set Loading state
+        const spinner = btn.querySelector('.btn-spinner');
+        const text = btn.querySelector('.btn-text');
+        btn.setAttribute('disabled', 'true');
+        spinner?.classList.remove('hidden');
+        if (text) text.textContent = 'Guardando...';
+
+        try {
+          const res = await fetch('/api/chores/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              choreLogId: choreId,
+              userId: activeUser?.id,
+              desiredStatus: 'completed',
+            }),
+          });
+          const result = await res.json();
+
+          if (result.success) {
+            triggerConfetti();
+            if (!isMine) {
+              showToast(`¡Increíble! Has asumido la tarea de ${assignee} 👏`, 'success');
+            } else {
+              showToast('¡Tarea completada con éxito!', 'success');
+            }
+            await loadDashboard();
+            if (myTasksData) loadMyTasks();
+          } else {
+            showToast(result.error || 'Error al completar', 'error');
+            btn.removeAttribute('disabled');
+            spinner?.classList.add('hidden');
+            if (text) text.textContent = isMine ? '✓ Hecho' : '¡Lo hago yo! ⚡';
+          }
+        } catch (err) {
+          showToast('Error de conexión', 'error');
+          btn.removeAttribute('disabled');
+          spinner?.classList.add('hidden');
+        }
+      });
+    });
+
+    // Undo buttons
+    container.querySelectorAll('.btn-undo-chore').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const choreId = Number(btn.getAttribute('data-id'));
+        btn.setAttribute('disabled', 'true');
+        await toggleChore(choreId, 'pending');
+        await loadDashboard();
+      });
+    });
+  }
+
+  // ==========================================
+  // TOGGLE / EXECUTE CHORE HELPER
+  // ==========================================
+  async function toggleChore(choreLogId: number, desiredStatus: 'completed' | 'pending') {
+    if (!activeUser) return;
+
+    try {
+      const res = await fetch('/api/chores/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          choreLogId,
+          userId: activeUser.id,
+          desiredStatus,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        if (desiredStatus === 'completed') {
+          triggerConfetti();
+          showToast(data.message || 'Tarea completada 🎉', 'success');
+        } else {
+          showToast('Tarea restablecida a pendiente', 'info');
+        }
+        await loadMyTasks();
+      } else {
+        showToast(data.error || 'Error al actualizar', 'error');
+      }
+    } catch (err) {
+      showToast('Error de red', 'error');
+    }
+  }
+
+  // ==========================================
+  // VISTA 3: CATÁLOGO DE TAREAS (CARGA Y RENDER)
+  // ==========================================
+  async function loadCatalog() {
+    const container = document.getElementById('catalog-list-container');
+    if (!container) return;
+
+    try {
+      const res = await fetch('/api/catalog');
+      const data = await res.json();
+
+      if (!data.success) {
+        container.innerHTML = `<div class="p-4 text-center text-rose-400 text-xs">${data.error}</div>`;
+        return;
+      }
+
+      catalogData = data.catalog;
+      renderCatalog();
+    } catch (err) {
+      console.error('Error fetching catalog:', err);
+    }
+  }
+
+  function renderCatalog() {
+    const container = document.getElementById('catalog-list-container');
+    if (!container) return;
+
+    let list = catalogData;
+    if (catalogFilterFreq !== 'all') {
+      list = list.filter((c) => c.frequency === catalogFilterFreq);
+    }
+
+    if (list.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full glass-card rounded-2xl p-8 text-center space-y-2">
+          <div class="text-3xl">📭</div>
+          <h4 class="text-sm font-bold text-white">No hay tareas en esta categoría</h4>
+          <p class="text-xs text-slate-400">Pulsa "+ Nueva Tarea" para dar de alta una.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const freqLabels: Record<string, string> = {
+      daily: 'Diaria',
+      twice_weekly: '2 veces/sem',
+      weekly: 'Semanal',
+      biweekly: 'Quincenal',
+      monthly: 'Mensual',
+    };
+
+    const daysName = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+    container.innerHTML = list
+      .map(
+        (item) => `
+        <div class="glass-card glass-card-hover rounded-2xl p-4 flex items-start justify-between gap-3 border border-slate-700/60" id="catalog-card-${item.id}">
+          <div class="flex items-start gap-3 min-w-0 flex-1">
+            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-xl shrink-0">
+              ${item.icon || '🧹'}
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <h4 class="text-sm font-bold text-white tracking-tight truncate">${item.name}</h4>
+              <div class="flex items-center gap-1.5 flex-wrap mt-1">
+                <span class="text-[10px] px-2 py-0.5 rounded-md font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  ${freqLabels[item.frequency] || item.frequency}
+                </span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-400">
+                  ${item.category}
+                </span>
+                ${
+                  item.assignmentMode === 'rotating'
+                    ? `<span class="text-[10px] px-2 py-0.5 rounded-md font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        🔄 Rotativa semanal
+                       </span>`
+                    : `<span class="text-[10px] px-2 py-0.5 rounded-md font-medium bg-slate-800 text-slate-400">
+                        📌 Asignación fija
+                       </span>`
+                }
+              </div>
+
+              <div class="flex items-center gap-2 mt-2 text-[11px] text-slate-400 flex-wrap">
+                <span>${item.assignmentMode === 'rotating' ? 'Punto de partida:' : 'Responsable:'}</span>
+                <span class="inline-flex items-center gap-1 font-semibold text-slate-200">
+                  <span>${item.assigneeAvatar || '👤'}</span>
+                  <span>${item.assigneeName}</span>
+                </span>
+                ${item.assignmentMode === 'rotating' ? '<span class="text-[10px] text-purple-400 font-medium">(rota cada semana)</span>' : ''}
+              </div>
+
+              <div class="text-[11px] text-indigo-300 font-medium mt-1">
+                ${
+                  item.frequency === 'twice_weekly'
+                    ? `📅 Días: <strong>${daysName[item.dayOfWeek ?? 1]}</strong> y <strong>${daysName[item.secondDayOfWeek ?? 4]}</strong>`
+                    : item.frequency === 'weekly'
+                    ? `📅 Día: <strong>${daysName[item.dayOfWeek ?? 1]}</strong>`
+                    : item.frequency === 'daily'
+                    ? `📅 Todos los días`
+                    : ''
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="shrink-0 flex items-center gap-1">
+            <button
+              class="btn-delete-catalog-chore p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
+              data-id="${item.id}"
+              data-name="${item.name}"
+              title="Eliminar tarea del catálogo"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      `
+      )
+      .join('');
+
+    container.querySelectorAll('.btn-delete-catalog-chore').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = Number(btn.getAttribute('data-id'));
+        const name = btn.getAttribute('data-name');
+        if (confirm(`¿Deseas eliminar "${name}" del catálogo de tareas?`)) {
+          await deleteCatalogChore(id);
+        }
+      });
+    });
+  }
+
+  async function deleteCatalogChore(id: number) {
+    try {
+      const res = await fetch(`/api/catalog/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Tarea eliminada del catálogo', 'info');
+        await loadCatalog();
+      } else {
+        showToast(data.error || 'Error al eliminar', 'error');
+      }
+    } catch (err) {
+      showToast('Error de conexión', 'error');
+    }
+  }
+
+  // ==========================================
+  // VISTA 4: CONVIVIENTES & PODIO (CARGA Y RENDER)
+  // ==========================================
+  async function loadRoommates() {
+    const leaderboardEl = document.getElementById('leaderboard-container');
+    const cardsEl = document.getElementById('roommates-cards-container');
+    if (!leaderboardEl || !cardsEl) return;
+
+    if (!dashboardData) {
+      const res = await fetch('/api/chores/dashboard');
+      dashboardData = await res.json();
+    }
+
+    if (!dashboardData) return;
+
+    const stats = dashboardData.userStats || [];
+    const medals = ['🥇', '🥈', '🥉'];
+
+    // Render Leaderboard
+    leaderboardEl.innerHTML = stats
+      .map((item: any, idx: number) => {
+        const medal = idx < 3 ? medals[idx] : `#${idx + 1}`;
+        const isMe = activeUser?.id === item.user.id;
+
+        return `
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60 border ${
+            isMe ? 'border-indigo-500/40 bg-indigo-950/20' : 'border-slate-700/40'
+          }">
+            <div class="flex items-center gap-2.5">
+              <span class="text-base font-bold w-6 text-center">${medal}</span>
+              <span class="text-xl">${item.user.avatar || '👤'}</span>
+              <div>
+                <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                  ${item.user.name}
+                  ${isMe ? '<span class="text-[9px] px-1 py-0.2 bg-indigo-500/20 text-indigo-300 rounded">Tú</span>' : ''}
+                </span>
+                <span class="text-[10px] text-slate-400">
+                  ${item.stolenAndDoneCount > 0 ? `⚡ ${item.stolenAndDoneCount} robos solidarios` : 'Cumplidor constante'}
+                </span>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <span class="text-sm font-extrabold text-emerald-400">${item.totalDone}</span>
+              <span class="text-[10px] text-slate-400 block">hechas</span>
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    // Render Roommates Cards
+    cardsEl.innerHTML = usersList
+      .map((u) => {
+        const uStat = stats.find((s: any) => s.user.id === u.id);
+        const isMe = activeUser?.id === u.id;
+
+        return `
+          <div class="glass-card rounded-2xl p-4 border ${isMe ? 'border-indigo-500/50' : 'border-slate-800'}">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-3xl">${u.avatar || '👤'}</span>
+                <div>
+                  <h4 class="text-sm font-bold text-white flex items-center gap-1.5">
+                    ${u.name}
+                    ${isMe ? '<span class="text-[10px] px-1.5 py-0.2 bg-indigo-600 text-white rounded-full">Activo</span>' : ''}
+                  </h4>
+                  <p class="text-xs text-slate-400">${u.email}</p>
+                </div>
+              </div>
+
+              ${
+                !isMe
+                  ? `<button
+                      class="btn-select-as-active px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition"
+                      data-id="${u.id}"
+                    >
+                      Elegir perfil
+                     </button>`
+                  : ''
+              }
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="p-1 rounded-lg bg-slate-800/40">
+                <span class="text-[10px] text-slate-400 block">Asignadas</span>
+                <span class="font-bold text-white">${uStat?.assignedCount ?? 0}</span>
+              </div>
+              <div class="p-1 rounded-lg bg-slate-800/40">
+                <span class="text-[10px] text-slate-400 block">Hechas</span>
+                <span class="font-bold text-emerald-400">${uStat?.totalDone ?? 0}</span>
+              </div>
+              <div class="p-1 rounded-lg bg-slate-800/40">
+                <span class="text-[10px] text-slate-400 block">Robos ⚡</span>
+                <span class="font-bold text-pink-400">${uStat?.stolenAndDoneCount ?? 0}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    cardsEl.querySelectorAll('.btn-select-as-active').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.getAttribute('data-id'));
+        setActiveUser(id);
+        loadRoommates();
+      });
+    });
+  }
+
+  // ==========================================
+  // EVENT LISTENERS & INITIALIZATION
+  // ==========================================
+  document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Initial Load
+    await loadUsers();
+    await loadMyTasks();
+
+    // 2. Navigation Tabs
+    document.querySelectorAll('.nav-tab').forEach((tabBtn) => {
+      tabBtn.addEventListener('click', () => {
+        const tab = tabBtn.getAttribute('data-tab') as any;
+        if (tab) switchTab(tab);
+      });
+    });
+
+    // 3. User Selector Dropdown Toggle
+    const userBtn = document.getElementById('user-selector-btn');
+    const userMenu = document.getElementById('user-dropdown-menu');
+
+    userBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      userMenu?.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', () => {
+      userMenu?.classList.add('hidden');
+    });
+
+    // 4. Global Sync Button
+    document.getElementById('btn-sync-all')?.addEventListener('click', () => {
+      syncWeek();
+    });
+
+    document.getElementById('btn-refresh-panel')?.addEventListener('click', () => {
+      loadMyTasks();
+    });
+
+    // 5. Panel Filters (Today, Week, Completed)
+    document.querySelectorAll('.panel-filter-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const filter = btn.getAttribute('data-filter') as any;
+        panelFilter = filter;
+
+        document.querySelectorAll('.panel-filter-btn').forEach((b) => {
+          b.classList.remove('bg-indigo-600', 'text-white');
+          b.classList.add('text-slate-400');
+        });
+
+        btn.classList.add('bg-indigo-600', 'text-white');
+        btn.classList.remove('text-slate-400');
+
+        renderPanelTasks();
+      });
+    });
+
+    // 6. Dashboard Grouping Toggle (Por Día vs Por Conviviente)
+    const btnGroupDay = document.getElementById('btn-group-by-day');
+    const btnGroupUser = document.getElementById('btn-group-by-user');
+
+    btnGroupDay?.addEventListener('click', () => {
+      dashboardGroupBy = 'day';
+      btnGroupDay.classList.add('bg-indigo-600', 'text-white');
+      btnGroupDay.classList.remove('text-slate-400');
+      btnGroupUser?.classList.remove('bg-indigo-600', 'text-white');
+      btnGroupUser?.classList.add('text-slate-400');
+      renderDashboardGroups();
+    });
+
+    btnGroupUser?.addEventListener('click', () => {
+      dashboardGroupBy = 'user';
+      btnGroupUser.classList.add('bg-indigo-600', 'text-white');
+      btnGroupUser.classList.remove('text-slate-400');
+      btnGroupDay?.classList.remove('bg-indigo-600', 'text-white');
+      btnGroupDay?.classList.add('text-slate-400');
+      renderDashboardGroups();
+    });
+
+    // 7. Dashboard Status Filter
+    document.getElementById('filter-dashboard-status')?.addEventListener('change', (e) => {
+      dashboardFilterStatus = (e.target as HTMLSelectElement).value as any;
+      renderDashboardGroups();
+    });
+
+    // 8. Catalog Frequency Filter Pills
+    document.querySelectorAll('.catalog-filter-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const freq = btn.getAttribute('data-freq') || 'all';
+        catalogFilterFreq = freq;
+
+        document.querySelectorAll('.catalog-filter-btn').forEach((b) => {
+          b.classList.remove('bg-indigo-600', 'text-white');
+          b.classList.add('bg-slate-800', 'text-slate-300');
+        });
+
+        btn.classList.add('bg-indigo-600', 'text-white');
+        btn.classList.remove('bg-slate-800', 'text-slate-300');
+
+        renderCatalog();
+      });
+    });
+
+    // 9. Quick Emoji Pickers in Modals
+    document.querySelectorAll('.quick-emoji').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const emoji = btn.textContent || '🧹';
+        const input = document.getElementById('input-chore-icon') as HTMLInputElement;
+        if (input) input.value = emoji.trim();
+      });
+    });
+
+    document.querySelectorAll('.quick-avatar').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const avatar = btn.textContent || '👤';
+        const input = document.getElementById('input-user-avatar') as HTMLInputElement;
+        if (input) input.value = avatar.trim();
+      });
+    });
+
+    // 10. Modal Nueva Tarea
+    const modalChore = document.getElementById('modal-new-chore');
+    const openChoreBtn = document.getElementById('btn-open-new-chore-modal');
+    const closeChoreBtn = document.getElementById('btn-close-new-chore-modal');
+    const cancelChoreBtn = document.getElementById('btn-cancel-new-chore');
+    const formChore = document.getElementById('form-new-chore') as HTMLFormElement;
+    const selectFreq = document.getElementById('select-chore-frequency') as HTMLSelectElement | null;
+    const containerSecondDay = document.getElementById('container-second-day');
+    const labelDay1 = document.getElementById('label-chore-day-1');
+
+    // Escuchar cambio en periodicidad para mostrar/ocultar segundo día
+    selectFreq?.addEventListener('change', () => {
+      if (selectFreq.value === 'twice_weekly') {
+        containerSecondDay?.classList.remove('hidden');
+        if (labelDay1) labelDay1.textContent = 'Primer día';
+      } else {
+        containerSecondDay?.classList.add('hidden');
+        if (labelDay1) labelDay1.textContent = 'Día preferido';
+      }
+    });
+
+    // Escuchar cambio en modalidad de reparto (fija vs rotativa)
+    document.querySelectorAll('input[name="assignment-mode"]').forEach((radio) => {
+      radio.addEventListener('change', (e) => {
+        const val = (e.target as HTMLInputElement).value;
+        const descEl = document.getElementById('desc-assignment-mode');
+        const labelAssignee = document.getElementById('label-assignee-select');
+        if (val === 'rotating') {
+          if (descEl) descEl.textContent = '🔄 La tarea irá rotando automáticamente entre todos los convivientes cada semana.';
+          if (labelAssignee) labelAssignee.textContent = 'Punto de partida de la rotación';
+        } else {
+          if (descEl) descEl.textContent = '📌 La tarea estará siempre asignada a la misma persona seleccionada.';
+          if (labelAssignee) labelAssignee.textContent = 'Responsable habitual';
+        }
+      });
+    });
+
+    openChoreBtn?.addEventListener('click', () => {
+      modalChore?.classList.remove('hidden');
+      modalChore?.classList.add('flex');
+    });
+
+    const closeChoreModal = () => {
+      modalChore?.classList.add('hidden');
+      modalChore?.classList.remove('flex');
+    };
+
+    closeChoreBtn?.addEventListener('click', closeChoreModal);
+    cancelChoreBtn?.addEventListener('click', closeChoreModal);
+
+    formChore?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = (document.getElementById('input-chore-name') as HTMLInputElement).value;
+      const frequency = (document.getElementById('select-chore-frequency') as HTMLSelectElement).value;
+      const assignmentMode = (document.querySelector('input[name="assignment-mode"]:checked') as HTMLInputElement)?.value || 'fixed';
+      const defaultAssigneeId = (document.getElementById('select-chore-assignee') as HTMLSelectElement).value;
+      const icon = (document.getElementById('input-chore-icon') as HTMLInputElement).value;
+      const category = (document.getElementById('input-chore-category') as HTMLInputElement).value;
+      const dayOfWeek = (document.getElementById('select-chore-day') as HTMLSelectElement).value;
+      const secondDayOfWeek = (document.getElementById('select-chore-second-day') as HTMLSelectElement)?.value;
+
+      try {
+        const res = await fetch('/api/catalog', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            frequency,
+            assignmentMode,
+            defaultAssigneeId: Number(defaultAssigneeId),
+            icon,
+            category,
+            dayOfWeek: Number(dayOfWeek),
+            secondDayOfWeek: frequency === 'twice_weekly' ? Number(secondDayOfWeek || 4) : undefined,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast('¡Tarea agregada al catálogo y programada!', 'success');
+          closeChoreModal();
+          formChore.reset();
+          await loadCatalog();
+          await loadMyTasks();
+        } else {
+          showToast(data.error || 'Error al guardar tarea', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
+    });
+
+    // 11. Modal Nuevo Conviviente
+    const modalUser = document.getElementById('modal-new-user');
+    const openUserBtn = document.getElementById('btn-open-new-user-modal');
+    const openUserFromDropdown = document.getElementById('btn-open-new-user-from-dropdown');
+    const closeUserBtn = document.getElementById('btn-close-new-user-modal');
+    const cancelUserBtn = document.getElementById('btn-cancel-new-user');
+    const formUser = document.getElementById('form-new-user') as HTMLFormElement;
+
+    const openUserModal = () => {
+      userMenu?.classList.add('hidden');
+      modalUser?.classList.remove('hidden');
+      modalUser?.classList.add('flex');
+    };
+
+    const closeUserModal = () => {
+      modalUser?.classList.add('hidden');
+      modalUser?.classList.remove('flex');
+    };
+
+    openUserBtn?.addEventListener('click', openUserModal);
+    openUserFromDropdown?.addEventListener('click', openUserModal);
+    closeUserBtn?.addEventListener('click', closeUserModal);
+    cancelUserBtn?.addEventListener('click', closeUserModal);
+
+    formUser?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = (document.getElementById('input-user-name') as HTMLInputElement).value;
+      const email = (document.getElementById('input-user-email') as HTMLInputElement).value;
+      const avatar = (document.getElementById('input-user-avatar') as HTMLInputElement).value;
+      const color = (document.getElementById('input-user-color') as HTMLInputElement).value;
+
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, avatar, color }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast(`¡Conviviente ${name} creado con éxito!`, 'success');
+          closeUserModal();
+          formUser.reset();
+          await loadUsers();
+          setActiveUser(data.user.id);
+          if (activeTab === 'roommates') loadRoommates();
+        } else {
+          showToast(data.error || 'Error al crear conviviente', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
+    });
+  });
+</script>

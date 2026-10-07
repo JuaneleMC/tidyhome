@@ -1,0 +1,1 @@
+ALTER TABLE `chore_catalog` ADD `second_day_of_week` integer DEFAULT 4;

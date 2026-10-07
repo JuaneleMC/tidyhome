@@ -1,0 +1,1 @@
+ALTER TABLE `chore_catalog` ADD `assignment_mode` text DEFAULT 'fixed' NOT NULL;
