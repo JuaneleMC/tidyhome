@@ -42,3 +42,53 @@ export const DELETE: APIRoute = async ({ params }) => {
     );
   }
 };
+
+export const PUT: APIRoute = async ({ params, request }) => {
+  try {
+    await initializeDatabase();
+    const id = Number(params.id);
+
+    if (isNaN(id)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'ID de conviviente inválido' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const body = await request.json();
+    const updateData: any = {};
+    if (body.name) updateData.name = body.name.trim();
+    if (body.email) updateData.email = body.email.trim().toLowerCase();
+    if (body.avatar) updateData.avatar = body.avatar;
+    if (body.color) updateData.color = body.color;
+
+    const updated = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
+
+    if (updated.length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Conviviente no encontrado' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, user: updated[0] }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (error: any) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message?.includes('UNIQUE')
+          ? 'Ya existe un usuario con ese correo electrónico'
+          : error.message,
+      }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+};
+
