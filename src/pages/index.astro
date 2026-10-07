@@ -1049,94 +1049,184 @@ import '../styles/global.css';
       return;
     }
 
-    container.innerHTML = listToRender
-      .map((item) => {
-        const isCompleted = item.status === 'completed';
-        const isStolenByOther = isCompleted && item.executedById && item.executedById !== item.assignedToId;
+    function renderChoreCardInPanel(item: ChoreLogItem): string {
+      const isCompleted = item.status === 'completed';
+      const isStolenByOther = isCompleted && item.executedById && item.executedById !== item.assignedToId;
+      const isOverdue = item.isOverdue;
 
-        // Freq label in Spanish
-        const freqLabels: Record<string, string> = {
-          daily: 'Diaria',
-          twice_weekly: '2 veces/sem',
-          weekly: 'Semanal',
-          biweekly: 'Quincenal',
-          monthly: 'Mensual',
-        };
+      // Freq label in Spanish
+      const freqLabels: Record<string, string> = {
+        daily: 'Diaria',
+        twice_weekly: '2 veces/sem',
+        weekly: 'Semanal',
+        biweekly: 'Quincenal',
+        monthly: 'Mensual',
+      };
 
-        return `
-          <div
-            class="glass-card glass-card-hover rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 transition ${
-              isCompleted ? 'opacity-70 bg-slate-900/40 border-emerald-500/20' : 'border-slate-700/60'
-            }"
-            id="chore-card-${item.id}"
-          >
-            <!-- Chore Info -->
-            <div class="flex items-start gap-3 flex-1 min-w-0">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${
-                isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-200'
-              }">
-                ${item.icon || '🧹'}
-              </div>
-
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <h4 class="text-sm font-bold text-white tracking-tight truncate ${
-                    isCompleted ? 'line-through text-slate-400' : ''
-                  }">
-                    ${item.choreName}
-                  </h4>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-slate-800 text-slate-400">
-                    ${freqLabels[item.frequency] || item.frequency}
-                  </span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-indigo-500/10 text-indigo-300">
-                    ${item.category}
-                  </span>
-                  ${
-                    item.assignmentMode === 'rotating'
-                      ? `<span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                          🔄 Rotativa
-                         </span>`
-                      : ''
-                  }
-                </div>
-
-                <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-400">
-                  <span class="font-medium ${item.isOverdue ? 'text-amber-400 font-semibold' : item.isToday ? 'text-indigo-400 font-semibold' : ''}">
-                    ${item.isOverdue ? '⚠️ Atrasada (' + item.targetDate + ')' : item.isToday ? '📅 Para Hoy' : '📅 ' + item.targetDate}
-                  </span>
-
-                  ${
-                    isStolenByOther
-                      ? `<span class="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                          ⚡ Hecho por ${item.executedByName}
-                         </span>`
-                      : isCompleted
-                      ? `<span class="text-[10px] text-emerald-400 font-semibold">✓ Completado</span>`
-                      : ''
-                  }
-                </div>
-              </div>
+      return `
+        <div
+          class="glass-card glass-card-hover rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 transition ${
+            isOverdue
+              ? 'card-overdue'
+              : isCompleted
+              ? 'opacity-70 bg-slate-900/40 border-emerald-500/20'
+              : 'border-slate-700/60'
+          }"
+          id="chore-card-${item.id}"
+        >
+          <!-- Chore Info -->
+          <div class="flex items-start gap-3 flex-1 min-w-0">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${
+              isOverdue
+                ? 'bg-rose-200/60 text-rose-700 ring-1 ring-rose-300'
+                : isCompleted
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : 'bg-slate-800 text-slate-200'
+            }">
+              ${item.icon || '🧹'}
             </div>
 
-            <!-- Interactive Check Action Button -->
-            <button
-              class="btn-toggle-chore w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-90 shrink-0 ${
-                isCompleted
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-400/40'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-600/80 hover:border-indigo-500'
-              }"
-              data-id="${item.id}"
-              data-completed="${isCompleted}"
-              title="${isCompleted ? 'Desmarcar tarea' : 'Marcar como completada'}"
-            >
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <h4 class="text-sm font-bold tracking-tight truncate ${
+                  isOverdue ? 'text-rose-950 font-extrabold' : isCompleted ? 'line-through text-slate-400' : 'text-white'
+                }">
+                  ${item.choreName}
+                </h4>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-slate-800 text-slate-400">
+                  ${freqLabels[item.frequency] || item.frequency}
+                </span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-indigo-500/10 text-indigo-300">
+                  ${item.category}
+                </span>
+                ${
+                  item.assignmentMode === 'rotating'
+                    ? `<span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                        🔄 Rotativa
+                       </span>`
+                    : ''
+                }
+              </div>
+
+              <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-400 flex-wrap">
+                <span class="font-medium ${
+                  isOverdue
+                    ? 'text-rose-600 font-bold'
+                    : item.isToday
+                    ? 'text-indigo-600 font-semibold'
+                    : ''
+                }">
+                  ${
+                    isOverdue
+                      ? '⚠️ Con retraso (' + item.targetDate + ')'
+                      : item.isToday
+                      ? '📅 Para Hoy'
+                      : '📅 ' + item.targetDate
+                  }
+                </span>
+
+                ${
+                  isStolenByOther
+                    ? `<span class="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                        ⚡ Hecho por ${item.executedByName}
+                       </span>`
+                    : isCompleted
+                    ? `<span class="text-[10px] text-emerald-400 font-semibold">✓ Completado</span>`
+                    : ''
+                }
+              </div>
+            </div>
           </div>
-        `;
-      })
-      .join('');
+
+          <!-- Interactive Check Action Button -->
+          <button
+            class="btn-toggle-chore w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-90 shrink-0 ${
+              isCompleted
+                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-400/40'
+                : isOverdue
+                ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-md shadow-rose-500/20'
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-600/80 hover:border-indigo-500'
+            }"
+            data-id="${item.id}"
+            data-completed="${isCompleted}"
+            title="${isCompleted ? 'Desmarcar tarea' : 'Marcar como completada'}"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
+        </div>
+      `;
+    }
+
+    if (panelFilter === 'week') {
+      // Agrupar las tareas de la semana por día (targetDate)
+      const dayMap = new Map<string, ChoreLogItem[]>();
+      for (const item of listToRender) {
+        if (!dayMap.has(item.targetDate)) {
+          dayMap.set(item.targetDate, []);
+        }
+        dayMap.get(item.targetDate)!.push(item);
+      }
+
+      const sortedDates = Array.from(dayMap.keys()).sort();
+      const daysOfWeekEs = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const monthsEs = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+      container.innerHTML = sortedDates
+        .map((dateStr) => {
+          const chores = dayMap.get(dateStr)!;
+          const [y, m, d] = dateStr.split('-').map(Number);
+          const dateObj = new Date(y, m - 1, d);
+          const dayName = daysOfWeekEs[dateObj.getDay()];
+          const dayNum = dateObj.getDate();
+          const monthName = monthsEs[dateObj.getMonth()];
+          const isToday = chores.some((c) => c.isToday);
+          const hasOverdue = chores.some((c) => c.isOverdue);
+          const pendingCount = chores.filter((c) => c.status === 'pending').length;
+          const completedCount = chores.filter((c) => c.status === 'completed').length;
+
+          return `
+            <div class="space-y-2 pt-1 pb-3">
+              <!-- Encabezado de Día -->
+              <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl ${
+                isToday
+                  ? 'bg-indigo-50 border border-indigo-200/90 shadow-xs'
+                  : hasOverdue
+                  ? 'bg-rose-50/90 border border-rose-200/90 shadow-xs'
+                  : 'bg-slate-100/70 border border-slate-200/70'
+              }">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full ${
+                    isToday ? 'bg-indigo-600 ring-4 ring-indigo-200' : hasOverdue ? 'bg-rose-500 ring-4 ring-rose-200' : 'bg-slate-400'
+                  }"></div>
+                  <h3 class="text-xs font-bold ${
+                    isToday ? 'text-indigo-900 font-extrabold' : hasOverdue ? 'text-rose-900 font-extrabold' : 'text-slate-700'
+                  } flex items-center gap-1.5">
+                    <span>${dayName}, ${dayNum} de ${monthName}</span>
+                    ${isToday ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white shadow-xs">Hoy</span>' : ''}
+                    ${hasOverdue ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-xs">⚠️ Con retraso</span>' : ''}
+                  </h3>
+                </div>
+                <span class="text-[11px] font-semibold ${
+                  completedCount === chores.length ? 'text-emerald-700' : 'text-slate-500'
+                }">
+                  ${completedCount === chores.length ? '✓ Al día' : `${pendingCount} pendiente${pendingCount === 1 ? '' : 's'}`}
+                </span>
+              </div>
+
+              <!-- Lista de tarjetas de este día -->
+              <div class="space-y-2">
+                ${chores.map(renderChoreCardInPanel).join('')}
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    } else {
+      // Vista simple (Hoy o Completadas)
+      container.innerHTML = listToRender.map(renderChoreCardInPanel).join('');
+    }
 
     // Attach click events
     container.querySelectorAll('.btn-toggle-chore').forEach((btn) => {
@@ -1342,13 +1432,16 @@ import '../styles/global.css';
    */
   function renderChoreCardInDashboard(chore: ChoreLogItem): string {
     const isCompleted = chore.status === 'completed';
+    const isOverdue = chore.isOverdue;
     const isStolen = isCompleted && chore.executedById && chore.executedById !== chore.assignedToId;
     const isAssignedToMe = activeUser?.id === chore.assignedToId;
 
     return `
       <div
         class="glass-card rounded-xl p-3 flex items-center justify-between gap-3 border transition ${
-          isCompleted
+          isOverdue
+            ? 'card-overdue'
+            : isCompleted
             ? 'bg-emerald-950/20 border-emerald-500/30 text-slate-300'
             : 'bg-slate-900/60 border-slate-700/60 hover:border-slate-600'
         }"
@@ -1357,15 +1450,19 @@ import '../styles/global.css';
         <!-- Icon & Description -->
         <div class="flex items-start gap-2.5 flex-1 min-w-0">
           <div class="w-8 h-8 rounded-lg flex items-center justify-center text-lg shrink-0 ${
-            isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-200'
+            isOverdue
+              ? 'bg-rose-200/60 text-rose-700 ring-1 ring-rose-300'
+              : isCompleted
+              ? 'bg-emerald-500/20 text-emerald-400'
+              : 'bg-slate-800 text-slate-200'
           }">
             ${chore.icon || '🧹'}
           </div>
 
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-xs font-bold text-white truncate ${
-                isCompleted ? 'line-through text-slate-400' : ''
+              <span class="text-xs font-bold truncate ${
+                isOverdue ? 'text-rose-950 font-extrabold' : isCompleted ? 'line-through text-slate-400' : 'text-white'
               }">
                 ${chore.choreName}
               </span>
@@ -1385,7 +1482,7 @@ import '../styles/global.css';
             <div class="flex items-center gap-2 mt-1 flex-wrap text-[11px]">
               <span class="inline-flex items-center gap-1 text-slate-400">
                 <span>${chore.assignedToAvatar}</span>
-                <span class="${isAssignedToMe ? 'text-indigo-300 font-semibold' : ''}">
+                <span class="${isAssignedToMe ? 'text-indigo-600 font-semibold' : ''}">
                   ${chore.assignedToName}
                 </span>
               </span>
@@ -1399,6 +1496,8 @@ import '../styles/global.css';
                   ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                       ✓ Hecho por ${chore.executedByName || chore.assignedToName}
                      </span>`
+                  : isOverdue
+                  ? `<span class="text-[10px] text-rose-700 font-bold bg-rose-100/90 px-1.5 py-0.5 rounded border border-rose-200">⚠️ Con retraso</span>`
                   : `<span class="text-[10px] text-amber-400/90 font-medium">⏳ Pendiente</span>`
               }
             </div>

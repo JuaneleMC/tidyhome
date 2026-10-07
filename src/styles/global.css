@@ -60,6 +60,26 @@ body.theme-pastel .glass-card-hover:hover {
   box-shadow: 0 12px 35px -4px rgba(147, 197, 253, 0.45);
 }
 
+/* Tarjeta de tarea con retraso (rojo pastel clarito) */
+body.theme-pastel .card-overdue,
+.card-overdue {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 55%, #fecdd3 100%) !important;
+  border: 1.5px solid #fda4af !important;
+  box-shadow: 0 4px 18px -2px rgba(244, 63, 94, 0.16) !important;
+}
+
+body.theme-pastel .card-overdue:hover,
+.card-overdue:hover {
+  border-color: #fb7185 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -2px rgba(244, 63, 94, 0.25) !important;
+}
+
+body.theme-pastel .card-overdue h4,
+.card-overdue h4 {
+  color: #881337 !important;
+}
+
 /* Tipografía y textos en modo pastel */
 body.theme-pastel .text-white {
   color: #0f172a;
