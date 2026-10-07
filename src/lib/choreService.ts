@@ -1,7 +1,7 @@
 import { db, rawClient, initializeDatabase } from '../db/client';
 import { users, choreCatalog, choreLog, type ChoreStatusType } from '../db/schema';
 import { eq, and, inArray, gte, lte, desc, asc } from 'drizzle-orm';
-import { getDaysOfWeek, getTodayYMD, getWeekNumber, formatDateYMD } from './dates';
+import { getDaysOfWeek, getTodayYMD, getWeekNumber, formatDateYMD, getMondayOfWeek } from './dates';
 
 export interface ChoreWithDetails {
   id: number;
@@ -47,15 +47,19 @@ export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()
   const weekDateStrings = days.map((d) => d.dateStr);
   const existingLogs = await db
     .select({
+      id: choreLog.id,
       choreId: choreLog.choreId,
       targetDate: choreLog.targetDate,
+      status: choreLog.status,
+      assignedTo: choreLog.assignedTo,
     })
     .from(choreLog)
     .where(inArray(choreLog.targetDate, weekDateStrings));
 
-  const existingMap = new Set(
-    existingLogs.map((log) => `${log.choreId}_${log.targetDate}`)
-  );
+  const existingMap = new Map<string, typeof existingLogs[0]>();
+  for (const log of existingLogs) {
+    existingMap.set(`${log.choreId}_${log.targetDate}`, log);
+  }
 
   const logsToInsert: Array<{
     choreId: number;
@@ -64,34 +68,56 @@ export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()
     assignedTo: number;
   }> = [];
 
+  const logsToUpdateAssignee: Array<{ id: number; assignedTo: number }> = [];
+
   for (const chore of catalogList) {
     // Determinar el asignado de la semana:
     // Si es asignación fija: usa chore.defaultAssigneeId
-    // Si es rotativa semanal: rota automáticamente entre los convivientes según el número de semana
+    // Si es rotativa semanal: el responsable seleccionado es el punto de partida (semana 0).
+    // Cada semana siguiente va rotando al siguiente conviviente de la lista.
     let weekAssigneeId = chore.defaultAssigneeId;
     if (chore.assignmentMode === 'rotating' && allUsers.length > 0) {
       const defaultIndex = allUsers.findIndex((u) => u.id === chore.defaultAssigneeId);
-      const baseIndex = defaultIndex >= 0 ? defaultIndex : (chore.id % allUsers.length);
-      const rotatedIndex = (baseIndex + weekNumber) % allUsers.length;
+      const baseIndex = defaultIndex >= 0 ? defaultIndex : 0;
+
+      let weeksDiff = 0;
+      if (chore.createdAt) {
+        const createdDate = new Date(chore.createdAt);
+        const createdMonday = getMondayOfWeek(createdDate);
+        const targetMonday = getMondayOfWeek(referenceDate);
+        const diffMs = targetMonday.getTime() - createdMonday.getTime();
+        weeksDiff = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+      }
+
+      const rotatedIndex = ((baseIndex + weeksDiff) % allUsers.length + allUsers.length) % allUsers.length;
       weekAssigneeId = allUsers[rotatedIndex].id;
     }
 
     const choreDayOfWeek = chore.dayOfWeek ?? 1; // 1 = Lunes
 
+    const checkAndSchedule = (dateStr: string) => {
+      const key = `${chore.id}_${dateStr}`;
+      const existing = existingMap.get(key);
+      if (!existing) {
+        logsToInsert.push({
+          choreId: chore.id,
+          targetDate: dateStr,
+          status: 'pending',
+          assignedTo: weekAssigneeId,
+        });
+      } else if (existing.status === 'pending' && existing.assignedTo !== weekAssigneeId) {
+        logsToUpdateAssignee.push({
+          id: existing.id,
+          assignedTo: weekAssigneeId,
+        });
+      }
+    };
+
     switch (chore.frequency) {
       case 'daily':
         // Todos los días de la semana
         for (const day of days) {
-          const key = `${chore.id}_${day.dateStr}`;
-          if (!existingMap.has(key)) {
-            logsToInsert.push({
-              choreId: chore.id,
-              targetDate: day.dateStr,
-              status: 'pending',
-              assignedTo: weekAssigneeId,
-            });
-            existingMap.add(key);
-          }
+          checkAndSchedule(day.dateStr);
         }
         break;
 
@@ -104,16 +130,7 @@ export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()
         const targetDay2 = days.find((d) => d.dayOfWeek === secondDayNum) || days[3];
 
         for (const targetDay of [targetDay1, targetDay2]) {
-          const key = `${chore.id}_${targetDay.dateStr}`;
-          if (!existingMap.has(key)) {
-            logsToInsert.push({
-              choreId: chore.id,
-              targetDate: targetDay.dateStr,
-              status: 'pending',
-              assignedTo: weekAssigneeId,
-            });
-            existingMap.add(key);
-          }
+          checkAndSchedule(targetDay.dateStr);
         }
         break;
       }
@@ -121,16 +138,7 @@ export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()
       case 'weekly': {
         // Un día específico de la semana según dayOfWeek del catálogo
         const targetDay = days.find((d) => d.dayOfWeek === choreDayOfWeek) || days[0];
-        const key = `${chore.id}_${targetDay.dateStr}`;
-        if (!existingMap.has(key)) {
-          logsToInsert.push({
-            choreId: chore.id,
-            targetDate: targetDay.dateStr,
-            status: 'pending',
-            assignedTo: weekAssigneeId,
-          });
-          existingMap.add(key);
-        }
+        checkAndSchedule(targetDay.dateStr);
         break;
       }
 
@@ -139,16 +147,7 @@ export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()
         const isBiweeklyMatch = (weekNumber % 2) === (chore.id % 2);
         if (isBiweeklyMatch) {
           const targetDay = days.find((d) => d.dayOfWeek === choreDayOfWeek) || days[0];
-          const key = `${chore.id}_${targetDay.dateStr}`;
-          if (!existingMap.has(key)) {
-            logsToInsert.push({
-              choreId: chore.id,
-              targetDate: targetDay.dateStr,
-              status: 'pending',
-              assignedTo: weekAssigneeId,
-            });
-            existingMap.add(key);
-          }
+          checkAndSchedule(targetDay.dateStr);
         }
         break;
       }
@@ -156,18 +155,8 @@ export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()
       case 'monthly': {
         // Mensual: se programa en la primera semana del mes que contenga ese día
         const targetDay = days.find((d) => d.dayOfWeek === choreDayOfWeek) || days[0];
-        // Si el día del mes es <= 7 (primera semana del mes)
         if (targetDay.dayNumber <= 7) {
-          const key = `${chore.id}_${targetDay.dateStr}`;
-          if (!existingMap.has(key)) {
-            logsToInsert.push({
-              choreId: chore.id,
-              targetDate: targetDay.dateStr,
-              status: 'pending',
-              assignedTo: weekAssigneeId,
-            });
-            existingMap.add(key);
-          }
+          checkAndSchedule(targetDay.dateStr);
         }
         break;
       }
@@ -182,11 +171,19 @@ export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()
     }
   }
 
+  for (const item of logsToUpdateAssignee) {
+    await db
+      .update(choreLog)
+      .set({ assignedTo: item.assignedTo })
+      .where(eq(choreLog.id, item.id));
+  }
+
   return {
     createdCount,
+    updatedCount: logsToUpdateAssignee.length,
     weekStartDate: days[0].dateStr,
     weekEndDate: days[6].dateStr,
-    message: `Sincronización completada: se generaron ${createdCount} nuevas tareas para esta semana.`,
+    message: `Sincronización completada: se generaron ${createdCount} nuevas tareas y se actualizaron ${logsToUpdateAssignee.length} asignaciones.`,
   };
 }
 
