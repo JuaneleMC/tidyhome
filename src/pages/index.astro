@@ -778,6 +778,21 @@ import '../styles/global.css';
         updateActiveUserUI();
         populateUserDropdown();
         populateAssigneeSelect();
+      } else if (data.success && data.users.length === 0) {
+        // Auto-inicializar convivientes y tareas si es la primera vez que arranca
+        try {
+          await fetch('/api/admin/setup');
+          const retryRes = await fetch('/api/users');
+          const retryData = await retryRes.json();
+          if (retryData.success && retryData.users?.length > 0) {
+            usersList = retryData.users;
+            activeUser = usersList[0];
+            localStorage.setItem('tidyhome_active_user_id', String(activeUser.id));
+            updateActiveUserUI();
+            populateUserDropdown();
+            populateAssigneeSelect();
+          }
+        } catch {}
       }
     } catch (err) {
       console.error('Error loading users:', err);
