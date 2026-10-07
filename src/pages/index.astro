@@ -305,6 +305,27 @@ import '../styles/global.css';
         <!-- Rendered by JS -->
       </div>
     </div>
+
+    <!-- Zona de Gestión / Reset de datos -->
+    <div class="glass-card rounded-2xl p-4 border border-rose-500/30 bg-rose-950/15 space-y-2 mt-4">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h4 class="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+            <span>🗑️</span> Vaciar datos de prueba
+          </h4>
+          <p class="text-[11px] text-slate-400 mt-0.5">
+            Borra los convivientes y tareas de prueba para empezar de cero con los de tu casa.
+          </p>
+        </div>
+        <button
+          id="btn-reset-household-data"
+          type="button"
+          class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/20 transition active:scale-95 shrink-0"
+        >
+          Vaciar Todo
+        </button>
+      </div>
+    </div>
   </section>
 
   <!-- ========================================== -->
@@ -756,6 +777,7 @@ import '../styles/global.css';
   }
 
   // ==========================================
+  // ==========================================
   // USER MANAGEMENT & SWITCHING
   // ==========================================
   async function loadUsers() {
@@ -775,25 +797,15 @@ import '../styles/global.css';
         }
 
         localStorage.setItem('tidyhome_active_user_id', String(activeUser.id));
-        updateActiveUserUI();
-        populateUserDropdown();
-        populateAssigneeSelect();
-      } else if (data.success && data.users.length === 0) {
-        // Auto-inicializar convivientes y tareas si es la primera vez que arranca
-        try {
-          await fetch('/api/admin/setup');
-          const retryRes = await fetch('/api/users');
-          const retryData = await retryRes.json();
-          if (retryData.success && retryData.users?.length > 0) {
-            usersList = retryData.users;
-            activeUser = usersList[0];
-            localStorage.setItem('tidyhome_active_user_id', String(activeUser.id));
-            updateActiveUserUI();
-            populateUserDropdown();
-            populateAssigneeSelect();
-          }
-        } catch {}
+      } else {
+        usersList = [];
+        activeUser = null;
+        localStorage.removeItem('tidyhome_active_user_id');
       }
+
+      updateActiveUserUI();
+      populateUserDropdown();
+      populateAssigneeSelect();
     } catch (err) {
       console.error('Error loading users:', err);
     }
@@ -817,21 +829,32 @@ import '../styles/global.css';
   }
 
   function updateActiveUserUI() {
-    if (!activeUser) return;
     const avatarEl = document.getElementById('active-user-avatar');
     const nameEl = document.getElementById('active-user-name');
     const greetingAvatarEl = document.getElementById('panel-greeting-avatar');
     const greetingNameEl = document.getElementById('panel-user-name');
 
-    if (avatarEl) avatarEl.textContent = activeUser.avatar || '👤';
-    if (nameEl) nameEl.textContent = activeUser.name;
-    if (greetingAvatarEl) greetingAvatarEl.textContent = activeUser.avatar || '👤';
-    if (greetingNameEl) greetingNameEl.textContent = activeUser.name;
+    if (activeUser) {
+      if (avatarEl) avatarEl.textContent = activeUser.avatar || '👤';
+      if (nameEl) nameEl.textContent = activeUser.name;
+      if (greetingAvatarEl) greetingAvatarEl.textContent = activeUser.avatar || '👤';
+      if (greetingNameEl) greetingNameEl.textContent = activeUser.name;
+    } else {
+      if (avatarEl) avatarEl.textContent = '👤';
+      if (nameEl) nameEl.textContent = 'Sin convivientes';
+      if (greetingAvatarEl) greetingAvatarEl.textContent = '👋';
+      if (greetingNameEl) greetingNameEl.textContent = 'Bienvenido';
+    }
   }
 
   function populateUserDropdown() {
     const list = document.getElementById('user-dropdown-list');
     if (!list) return;
+
+    if (usersList.length === 0) {
+      list.innerHTML = `<div class="px-2 py-1.5 text-xs text-slate-500 text-center">Sin convivientes dados de alta</div>`;
+      return;
+    }
 
     list.innerHTML = usersList
       .map(
@@ -855,8 +878,8 @@ import '../styles/global.css';
 
     list.querySelectorAll('.user-dropdown-item').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const uid = Number(btn.getAttribute('data-user-id'));
-        setActiveUser(uid);
+        const userId = Number(btn.getAttribute('data-user-id'));
+        setActiveUser(userId);
         document.getElementById('user-dropdown-menu')?.classList.add('hidden');
       });
     });
@@ -866,11 +889,16 @@ import '../styles/global.css';
     const select = document.getElementById('select-chore-assignee') as HTMLSelectElement | null;
     if (!select) return;
 
+    if (usersList.length === 0) {
+      select.innerHTML = `<option value="">Primero añade un conviviente</option>`;
+      return;
+    }
+
     select.innerHTML = usersList
       .map(
         (u) => `
         <option value="${u.id}" ${activeUser?.id === u.id ? 'selected' : ''}>
-          ${u.avatar || '👤'} ${u.name} (${u.email})
+          ${u.avatar || '👤'} ${u.name}
         </option>
       `
       )
@@ -907,8 +935,26 @@ import '../styles/global.css';
   // VISTA 1: MI PANEL (CARGA Y RENDER)
   // ==========================================
   async function loadMyTasks() {
-    if (!activeUser) return;
     const container = document.getElementById('panel-tasks-container');
+    if (!activeUser) {
+      if (container) {
+        container.innerHTML = `
+          <div class="glass-card rounded-2xl p-8 text-center space-y-3">
+            <div class="text-4xl">👋</div>
+            <h3 class="text-sm font-bold text-white">¡Bienvenido a TidyHome!</h3>
+            <p class="text-xs text-slate-400 max-w-xs mx-auto">Aún no hay convivientes dados de alta en la casa. Pulsa el botón para añadir al primer miembro.</p>
+            <button id="btn-empty-add-user" type="button" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition shadow-lg shadow-purple-600/30">
+              ➕ Añadir Conviviente
+            </button>
+          </div>
+        `;
+        document.getElementById('btn-empty-add-user')?.addEventListener('click', () => {
+          switchTab('roommates');
+          (document.getElementById('btn-open-new-user-modal') as HTMLElement)?.click();
+        });
+      }
+      return;
+    }
     if (!container) return;
 
     try {
@@ -1692,13 +1738,28 @@ import '../styles/global.css';
       .join('');
 
     // Render Roommates Cards
+    if (usersList.length === 0) {
+      cardsEl.innerHTML = `
+        <div class="col-span-full glass-card rounded-2xl p-6 text-center space-y-2">
+          <div class="text-3xl">👥</div>
+          <h4 class="text-sm font-bold text-white">No hay convivientes dados de alta</h4>
+          <p class="text-xs text-slate-400">Pulsa "+ Añadir Conviviente" para agregar al primer miembro de la casa.</p>
+        </div>
+      `;
+      const leaderboardEl = document.getElementById('leaderboard-container');
+      if (leaderboardEl) {
+        leaderboardEl.innerHTML = `<div class="p-4 text-center text-xs text-slate-500">El podio se activará cuando haya convivientes y tareas completadas.</div>`;
+      }
+      return;
+    }
+
     cardsEl.innerHTML = usersList
       .map((u) => {
         const uStat = stats.find((s: any) => s.user.id === u.id);
         const isMe = activeUser?.id === u.id;
 
         return `
-          <div class="glass-card rounded-2xl p-4 border ${isMe ? 'border-indigo-500/50' : 'border-slate-800'}">
+          <div class="glass-card rounded-2xl p-4 border ${isMe ? 'border-indigo-500/50' : 'border-slate-800'}" id="user-card-${u.id}">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <span class="text-3xl">${u.avatar || '👤'}</span>
@@ -1711,16 +1772,28 @@ import '../styles/global.css';
                 </div>
               </div>
 
-              ${
-                !isMe
-                  ? `<button
-                      class="btn-select-as-active px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition"
-                      data-id="${u.id}"
-                    >
-                      Elegir perfil
-                     </button>`
-                  : ''
-              }
+              <div class="flex items-center gap-1.5">
+                ${
+                  !isMe
+                    ? `<button
+                        class="btn-select-as-active px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition"
+                        data-id="${u.id}"
+                      >
+                        Elegir
+                       </button>`
+                    : ''
+                }
+                <button
+                  class="btn-delete-roommate p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
+                  data-id="${u.id}"
+                  data-name="${u.name}"
+                  title="Eliminar conviviente"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div class="mt-3 pt-3 border-t border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">
@@ -1747,6 +1820,30 @@ import '../styles/global.css';
         const id = Number(btn.getAttribute('data-id'));
         setActiveUser(id);
         loadRoommates();
+      });
+    });
+
+    cardsEl.querySelectorAll('.btn-delete-roommate').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = Number(btn.getAttribute('data-id'));
+        const name = btn.getAttribute('data-name');
+        if (confirm(`¿Eliminar a "${name}" de la casa? Sus tareas asociadas también se borrarán.`)) {
+          try {
+            const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+              showToast(`Conviviente "${name}" eliminado`, 'success');
+              await loadUsers();
+              await loadRoommates();
+              if (activeTab === 'panel') loadMyTasks();
+              if (activeTab === 'dashboard') loadDashboard();
+            } else {
+              showToast(data.error || 'Error al eliminar', 'error');
+            }
+          } catch (err) {
+            showToast('Error de conexión', 'error');
+          }
+        }
       });
     });
   }
@@ -2013,6 +2110,38 @@ import '../styles/global.css';
         }
       } catch (err) {
         showToast('Error de conexión', 'error');
+      }
+    });
+
+    // 12. Botón Vaciar Todo / Empezar de Cero
+    const btnResetData = document.getElementById('btn-reset-household-data');
+    btnResetData?.addEventListener('click', async () => {
+      const ok = confirm('⚠️ ¿Estás seguro de que deseas vaciar TODOS los datos de prueba (convivientes, tareas del catálogo y registros)? Esta acción dejará la aplicación limpia para empezar de cero con tus datos reales.');
+      if (!ok) return;
+
+      btnResetData.setAttribute('disabled', 'true');
+      const originalText = btnResetData.textContent;
+      btnResetData.textContent = 'Vaciando...';
+
+      try {
+        const res = await fetch('/api/admin/reset', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast('¡Datos de prueba eliminados! Ya puedes dar de alta tus convivientes reales.', 'success');
+          localStorage.removeItem('tidyhome_active_user_id');
+          await loadUsers();
+          await loadMyTasks();
+          if (activeTab === 'dashboard') loadDashboard();
+          if (activeTab === 'catalog') loadCatalog();
+          if (activeTab === 'roommates') loadRoommates();
+        } else {
+          showToast(data.error || 'Error al vaciar los datos', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      } finally {
+        btnResetData.removeAttribute('disabled');
+        btnResetData.textContent = originalText;
       }
     });
   });
