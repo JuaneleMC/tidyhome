@@ -2,6 +2,8 @@
 
 Aplicación web progresiva (PWA) desarrollada con **Astro**, **TypeScript**, **Tailwind CSS** y **Drizzle ORM** conectada a base de datos serverless (Turso/SQLite), diseñada para repartir las tareas del hogar entre convivientes con total flexibilidad.
 
+[![Desplegar en Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FJuaneleMC%2Ftidyhome&env=TURSO_DATABASE_URL,TURSO_AUTH_TOKEN)
+
 ---
 
 ## ✨ Características Principales
