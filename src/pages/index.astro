@@ -1661,6 +1661,177 @@ import '../styles/global.css';
     }
   }
 
+  // ==========================================
+  // MODAL CONTROLLERS (CHORES & USERS)
+  // ==========================================
+  function openEditChoreModal(id: number) {
+    const item = catalogData.find((c) => c.id === id);
+    if (!item) {
+      console.warn('Tarea no encontrada en catálogo para id:', id);
+      return;
+    }
+
+    populateAssigneeSelect();
+
+    const modalChore = document.getElementById('modal-new-chore');
+    const inputEditId = document.getElementById('input-edit-chore-id') as HTMLInputElement | null;
+    const titleEl = document.getElementById('modal-chore-title');
+    const iconEl = document.getElementById('modal-chore-icon');
+    const submitBtn = document.getElementById('btn-submit-new-chore');
+
+    if (inputEditId) inputEditId.value = String(item.id);
+    if (titleEl) titleEl.textContent = 'Editar Tarea';
+    if (iconEl) iconEl.textContent = '✏️';
+    if (submitBtn) submitBtn.textContent = 'Guardar Cambios';
+
+    const nameInput = document.getElementById('input-chore-name') as HTMLInputElement | null;
+    const freqSelect = document.getElementById('select-chore-frequency') as HTMLSelectElement | null;
+    const daySelect = document.getElementById('select-chore-day') as HTMLSelectElement | null;
+    const secondDaySelect = document.getElementById('select-chore-second-day') as HTMLSelectElement | null;
+    const assigneeSelect = document.getElementById('select-chore-assignee') as HTMLSelectElement | null;
+    const iconInput = document.getElementById('input-chore-icon') as HTMLInputElement | null;
+    const categoryInput = document.getElementById('input-chore-category') as HTMLInputElement | null;
+
+    if (nameInput) nameInput.value = item.name || '';
+    if (freqSelect) freqSelect.value = item.frequency || 'weekly';
+    if (daySelect) daySelect.value = String(item.dayOfWeek ?? 1);
+    if (secondDaySelect) secondDaySelect.value = String(item.secondDayOfWeek ?? 4);
+
+    const containerSecondDay = document.getElementById('container-second-day');
+    const labelDay1 = document.getElementById('label-chore-day-1');
+    if (item.frequency === 'twice_weekly') {
+      containerSecondDay?.classList.remove('hidden');
+      if (labelDay1) labelDay1.textContent = 'Primer día';
+    } else {
+      containerSecondDay?.classList.add('hidden');
+      if (labelDay1) labelDay1.textContent = 'Día preferido';
+    }
+
+    const radio = document.querySelector(`input[name="assignment-mode"][value="${item.assignmentMode || 'fixed'}"]`) as HTMLInputElement | null;
+    if (radio) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change'));
+    }
+
+    if (assigneeSelect) assigneeSelect.value = String(item.defaultAssigneeId);
+    if (iconInput) iconInput.value = item.icon || '🧹';
+    if (categoryInput) categoryInput.value = item.category || 'Hogar';
+
+    modalChore?.classList.remove('hidden');
+    modalChore?.classList.add('flex');
+  }
+
+  function openNewChoreModal() {
+    populateAssigneeSelect();
+
+    const modalChore = document.getElementById('modal-new-chore');
+    const formChore = document.getElementById('form-new-chore') as HTMLFormElement | null;
+    const inputEditId = document.getElementById('input-edit-chore-id') as HTMLInputElement | null;
+    const titleEl = document.getElementById('modal-chore-title');
+    const iconEl = document.getElementById('modal-chore-icon');
+    const submitBtn = document.getElementById('btn-submit-new-chore');
+
+    if (inputEditId) inputEditId.value = '';
+    if (titleEl) titleEl.textContent = 'Nueva Tarea';
+    if (iconEl) iconEl.textContent = '✨';
+    if (submitBtn) submitBtn.textContent = 'Guardar y Sincronizar';
+
+    formChore?.reset();
+    document.getElementById('container-second-day')?.classList.add('hidden');
+    const labelDay1 = document.getElementById('label-chore-day-1');
+    if (labelDay1) labelDay1.textContent = 'Día preferido';
+
+    const radio = document.querySelector('input[name="assignment-mode"][value="fixed"]') as HTMLInputElement | null;
+    if (radio) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change'));
+    }
+
+    const assigneeSelect = document.getElementById('select-chore-assignee') as HTMLSelectElement | null;
+    if (assigneeSelect && activeUser) {
+      assigneeSelect.value = String(activeUser.id);
+    }
+
+    modalChore?.classList.remove('hidden');
+    modalChore?.classList.add('flex');
+  }
+
+  function closeChoreModal() {
+    const modalChore = document.getElementById('modal-new-chore');
+    modalChore?.classList.add('hidden');
+    modalChore?.classList.remove('flex');
+  }
+
+  function openEditUserModal(id: number) {
+    const u = usersList.find((user) => user.id === id);
+    if (!u) {
+      console.warn('Conviviente no encontrado para id:', id);
+      return;
+    }
+
+    const modalUser = document.getElementById('modal-new-user');
+    const inputEditId = document.getElementById('input-edit-user-id') as HTMLInputElement | null;
+    const titleEl = document.getElementById('modal-user-title');
+    const iconEl = document.getElementById('modal-user-icon');
+    const submitBtn = document.getElementById('btn-submit-new-user');
+
+    if (inputEditId) inputEditId.value = String(u.id);
+    if (titleEl) titleEl.textContent = 'Editar Conviviente';
+    if (iconEl) iconEl.textContent = '✏️';
+    if (submitBtn) submitBtn.textContent = 'Guardar Cambios';
+
+    const nameInput = document.getElementById('input-user-name') as HTMLInputElement | null;
+    const emailInput = document.getElementById('input-user-email') as HTMLInputElement | null;
+    const avatarInput = document.getElementById('input-user-avatar') as HTMLInputElement | null;
+    const colorInput = document.getElementById('input-user-color') as HTMLInputElement | null;
+
+    if (nameInput) nameInput.value = u.name || '';
+    if (emailInput) emailInput.value = u.email || '';
+    if (avatarInput) avatarInput.value = u.avatar || '👤';
+    if (colorInput) colorInput.value = u.color || '#6366f1';
+
+    document.getElementById('user-dropdown-menu')?.classList.add('hidden');
+    modalUser?.classList.remove('hidden');
+    modalUser?.classList.add('flex');
+  }
+
+  function openNewUserModal() {
+    const modalUser = document.getElementById('modal-new-user');
+    const formUser = document.getElementById('form-new-user') as HTMLFormElement | null;
+    const inputEditId = document.getElementById('input-edit-user-id') as HTMLInputElement | null;
+    const titleEl = document.getElementById('modal-user-title');
+    const iconEl = document.getElementById('modal-user-icon');
+    const submitBtn = document.getElementById('btn-submit-new-user');
+
+    if (inputEditId) inputEditId.value = '';
+    if (titleEl) titleEl.textContent = 'Nuevo Conviviente';
+    if (iconEl) iconEl.textContent = '👋';
+    if (submitBtn) submitBtn.textContent = 'Dar de Alta';
+
+    formUser?.reset();
+    const avatarInput = document.getElementById('input-user-avatar') as HTMLInputElement | null;
+    const colorInput = document.getElementById('input-user-color') as HTMLInputElement | null;
+    if (avatarInput) avatarInput.value = '🧑‍🍳';
+    if (colorInput) colorInput.value = '#8b5cf6';
+
+    document.getElementById('user-dropdown-menu')?.classList.add('hidden');
+    modalUser?.classList.remove('hidden');
+    modalUser?.classList.add('flex');
+  }
+
+  function closeUserModal() {
+    const modalUser = document.getElementById('modal-new-user');
+    modalUser?.classList.add('hidden');
+    modalUser?.classList.remove('flex');
+  }
+
+  (window as any).openEditChoreModal = openEditChoreModal;
+  (window as any).openEditUserModal = openEditUserModal;
+  (window as any).openNewChoreModal = openNewChoreModal;
+  (window as any).openNewUserModal = openNewUserModal;
+  (window as any).closeChoreModal = closeChoreModal;
+  (window as any).closeUserModal = closeUserModal;
+
   function renderCatalog() {
     const container = document.getElementById('catalog-list-container');
     if (!container) return;
@@ -1750,7 +1921,7 @@ import '../styles/global.css';
               data-id="${item.id}"
               title="Editar tarea"
             >
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
             </button>
@@ -1760,7 +1931,7 @@ import '../styles/global.css';
               data-name="${item.name}"
               title="Eliminar tarea"
             >
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
@@ -1771,7 +1942,8 @@ import '../styles/global.css';
       .join('');
 
     container.querySelectorAll('.btn-edit-catalog-chore').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const id = Number(btn.getAttribute('data-id'));
         openEditChoreModal(id);
       });
@@ -1877,23 +2049,23 @@ import '../styles/global.css';
 
         return `
           <div class="glass-card rounded-2xl p-4 border ${isMe ? 'border-indigo-500/50' : 'border-slate-800'}" id="user-card-${u.id}">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <span class="text-3xl">${u.avatar || '👤'}</span>
-                <div>
-                  <h4 class="text-sm font-bold text-white flex items-center gap-1.5">
-                    ${u.name}
-                    ${isMe ? '<span class="text-[10px] px-1.5 py-0.2 bg-indigo-600 text-white rounded-full">Activo</span>' : ''}
+            <div class="flex items-center justify-between gap-2.5 min-w-0">
+              <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <span class="text-3xl shrink-0">${u.avatar || '👤'}</span>
+                <div class="min-w-0 flex-1">
+                  <h4 class="text-sm font-bold text-white flex items-center gap-1.5 truncate">
+                    <span class="truncate">${u.name}</span>
+                    ${isMe ? '<span class="text-[10px] px-1.5 py-0.2 bg-indigo-600 text-white rounded-full shrink-0">Activo</span>' : ''}
                   </h4>
-                  <p class="text-xs text-slate-400">${u.email}</p>
+                  <p class="text-xs text-slate-400 truncate" title="${u.email}">${u.email}</p>
                 </div>
               </div>
 
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 shrink-0">
                 ${
                   !isMe
                     ? `<button
-                        class="btn-select-as-active px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition"
+                        class="btn-select-as-active px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition shrink-0"
                         data-id="${u.id}"
                       >
                         Elegir
@@ -1901,21 +2073,21 @@ import '../styles/global.css';
                     : ''
                 }
                 <button
-                  class="btn-edit-roommate p-1.5 text-slate-500 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition"
+                  class="btn-edit-roommate p-1.5 text-slate-500 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition shrink-0"
                   data-id="${u.id}"
                   title="Editar datos del conviviente"
                 >
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
                 <button
-                  class="btn-delete-roommate p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
+                  class="btn-delete-roommate p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition shrink-0"
                   data-id="${u.id}"
                   data-name="${u.name}"
                   title="Eliminar conviviente"
                 >
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
@@ -1950,7 +2122,8 @@ import '../styles/global.css';
     });
 
     cardsEl.querySelectorAll('.btn-edit-roommate').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const id = Number(btn.getAttribute('data-id'));
         openEditUserModal(id);
       });
@@ -2137,75 +2310,7 @@ import '../styles/global.css';
       });
     });
 
-    const openEditChoreModal = (id: number) => {
-      const item = catalogData.find((c) => c.id === id);
-      if (!item) return;
-
-      (document.getElementById('input-edit-chore-id') as HTMLInputElement).value = String(item.id);
-      const titleEl = document.getElementById('modal-chore-title');
-      const iconEl = document.getElementById('modal-chore-icon');
-      const submitBtn = document.getElementById('btn-submit-new-chore');
-      if (titleEl) titleEl.textContent = 'Editar Tarea';
-      if (iconEl) iconEl.textContent = '✏️';
-      if (submitBtn) submitBtn.textContent = 'Guardar Cambios';
-
-      (document.getElementById('input-chore-name') as HTMLInputElement).value = item.name;
-      (document.getElementById('select-chore-frequency') as HTMLSelectElement).value = item.frequency;
-      (document.getElementById('select-chore-day') as HTMLSelectElement).value = String(item.dayOfWeek ?? 1);
-
-      const secondDaySelect = document.getElementById('select-chore-second-day') as HTMLSelectElement;
-      if (secondDaySelect) secondDaySelect.value = String(item.secondDayOfWeek ?? 4);
-
-      if (item.frequency === 'twice_weekly') {
-        containerSecondDay?.classList.remove('hidden');
-        if (labelDay1) labelDay1.textContent = 'Primer día';
-      } else {
-        containerSecondDay?.classList.add('hidden');
-        if (labelDay1) labelDay1.textContent = 'Día preferido';
-      }
-
-      const radio = document.querySelector(`input[name="assignment-mode"][value="${item.assignmentMode || 'fixed'}"]`) as HTMLInputElement;
-      if (radio) {
-        radio.checked = true;
-        radio.dispatchEvent(new Event('change'));
-      }
-
-      (document.getElementById('select-chore-assignee') as HTMLSelectElement).value = String(item.defaultAssigneeId);
-      (document.getElementById('input-chore-icon') as HTMLInputElement).value = item.icon || '🧹';
-      (document.getElementById('input-chore-category') as HTMLInputElement).value = item.category || 'Hogar';
-
-      modalChore?.classList.remove('hidden');
-      modalChore?.classList.add('flex');
-    };
-
-    openChoreBtn?.addEventListener('click', () => {
-      (document.getElementById('input-edit-chore-id') as HTMLInputElement).value = '';
-      const titleEl = document.getElementById('modal-chore-title');
-      const iconEl = document.getElementById('modal-chore-icon');
-      const submitBtn = document.getElementById('btn-submit-new-chore');
-      if (titleEl) titleEl.textContent = 'Nueva Tarea';
-      if (iconEl) iconEl.textContent = '✨';
-      if (submitBtn) submitBtn.textContent = 'Guardar y Sincronizar';
-
-      formChore?.reset();
-      containerSecondDay?.classList.add('hidden');
-      if (labelDay1) labelDay1.textContent = 'Día preferido';
-
-      const radio = document.querySelector('input[name="assignment-mode"][value="fixed"]') as HTMLInputElement;
-      if (radio) {
-        radio.checked = true;
-        radio.dispatchEvent(new Event('change'));
-      }
-
-      modalChore?.classList.remove('hidden');
-      modalChore?.classList.add('flex');
-    });
-
-    const closeChoreModal = () => {
-      modalChore?.classList.add('hidden');
-      modalChore?.classList.remove('flex');
-    };
-
+    openChoreBtn?.addEventListener('click', openNewChoreModal);
     closeChoreBtn?.addEventListener('click', closeChoreModal);
     cancelChoreBtn?.addEventListener('click', closeChoreModal);
 
@@ -2263,51 +2368,6 @@ import '../styles/global.css';
     const closeUserBtn = document.getElementById('btn-close-new-user-modal');
     const cancelUserBtn = document.getElementById('btn-cancel-new-user');
     const formUser = document.getElementById('form-new-user') as HTMLFormElement;
-
-    const openEditUserModal = (id: number) => {
-      const u = usersList.find((user) => user.id === id);
-      if (!u) return;
-
-      (document.getElementById('input-edit-user-id') as HTMLInputElement).value = String(u.id);
-      const titleEl = document.getElementById('modal-user-title');
-      const iconEl = document.getElementById('modal-user-icon');
-      const submitBtn = document.getElementById('btn-submit-new-user');
-      if (titleEl) titleEl.textContent = 'Editar Conviviente';
-      if (iconEl) iconEl.textContent = '✏️';
-      if (submitBtn) submitBtn.textContent = 'Guardar Cambios';
-
-      (document.getElementById('input-user-name') as HTMLInputElement).value = u.name;
-      (document.getElementById('input-user-email') as HTMLInputElement).value = u.email;
-      (document.getElementById('input-user-avatar') as HTMLInputElement).value = u.avatar || '👤';
-      (document.getElementById('input-user-color') as HTMLInputElement).value = u.color || '#6366f1';
-
-      userMenu?.classList.add('hidden');
-      modalUser?.classList.remove('hidden');
-      modalUser?.classList.add('flex');
-    };
-
-    const openNewUserModal = () => {
-      (document.getElementById('input-edit-user-id') as HTMLInputElement).value = '';
-      const titleEl = document.getElementById('modal-user-title');
-      const iconEl = document.getElementById('modal-user-icon');
-      const submitBtn = document.getElementById('btn-submit-new-user');
-      if (titleEl) titleEl.textContent = 'Nuevo Conviviente';
-      if (iconEl) iconEl.textContent = '👋';
-      if (submitBtn) submitBtn.textContent = 'Dar de Alta';
-
-      formUser?.reset();
-      (document.getElementById('input-user-avatar') as HTMLInputElement).value = '🧑‍🍳';
-      (document.getElementById('input-user-color') as HTMLInputElement).value = '#8b5cf6';
-
-      userMenu?.classList.add('hidden');
-      modalUser?.classList.remove('hidden');
-      modalUser?.classList.add('flex');
-    };
-
-    const closeUserModal = () => {
-      modalUser?.classList.add('hidden');
-      modalUser?.classList.remove('flex');
-    };
 
     openUserBtn?.addEventListener('click', openNewUserModal);
     openUserFromDropdown?.addEventListener('click', openNewUserModal);
