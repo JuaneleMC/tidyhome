@@ -46,6 +46,7 @@ export const choreLog = sqliteTable('chore_log', {
     .references(() => choreCatalog.id, { onDelete: 'cascade' })
     .notNull(),
   targetDate: text('target_date').notNull(), // Formato YYYY-MM-DD
+  originalTargetDate: text('original_target_date'), // Formato YYYY-MM-DD (fecha programada original si se movió al ejecutarse)
   status: text('status', { enum: CHORE_STATUSES }).notNull().default('pending'),
   assignedTo: integer('assigned_to')
     .references(() => users.id, { onDelete: 'cascade' })

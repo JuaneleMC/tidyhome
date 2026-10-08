@@ -4,7 +4,7 @@ import { syncAndGenerateWeekChores } from '../../../lib/choreService';
 
 export const prerender = false;
 
-export const ALL: APIRoute = async () => {
+export const POST: APIRoute = async () => {
   try {
     await seedInitialData();
     const syncResult = await syncAndGenerateWeekChores();

@@ -4,7 +4,7 @@ import { choreLog, choreCatalog, users } from '../../../db/schema';
 
 export const prerender = false;
 
-export const ALL: APIRoute = async () => {
+export const POST: APIRoute = async () => {
   try {
     await initializeDatabase();
 

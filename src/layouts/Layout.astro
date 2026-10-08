@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { isEphemeralStorage } from '../db/client';
 
 interface Props {
   title?: string;
@@ -113,6 +114,27 @@ const {
         </div>
       </div>
     </header>
+    
+    {isEphemeralStorage && (
+      <div class="bg-amber-100/90 border-b border-amber-300 text-amber-950 px-4 py-2 text-xs font-medium">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base shrink-0">⚠️</span>
+            <span>
+              <strong>Almacenamiento temporal (Vercel):</strong> La app se está ejecutando sin <code>TURSO_DATABASE_URL</code>. Los datos se guardan en la memoria temporal (<code>/tmp</code>) y se perderán tras periodos de inactividad. Para guardar datos para siempre, añade tu base de datos de Turso en las variables de entorno de Vercel.
+            </span>
+          </div>
+          <a
+            href="https://turso.tech"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="underline font-bold text-amber-900 shrink-0 hover:text-amber-700"
+          >
+            Turso Cloud (Gratis) →
+          </a>
+        </div>
+      </div>
+    )}
 
     <!-- Main Content Slot -->
     <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-4 sm:px-6">

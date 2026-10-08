@@ -613,6 +613,7 @@ import '../styles/global.css';
     frequency: string;
     assignmentMode: 'fixed' | 'rotating';
     targetDate: string;
+    originalTargetDate: string | null;
     status: 'pending' | 'completed';
     assignedToId: number;
     assignedToName: string;
@@ -735,6 +736,48 @@ import '../styles/global.css';
       }
     } catch (e) {
       // Ignore if not loaded
+    }
+  }
+
+  // ==========================================
+  // BADGE DE FECHA PROGRAMADA ORIGINAL
+  // ==========================================
+  function formatScheduledDateBadge(item: ChoreLogItem): string {
+    // Solo aplica para tareas completadas, no diarias, que tengan fecha programada registrada
+    if (item.status !== 'completed' || item.frequency === 'daily' || !item.originalTargetDate) {
+      return '';
+    }
+
+    const daysOfWeekEs = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const monthsShortEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+    const parts = item.originalTargetDate.split('-').map(Number);
+    if (parts.length !== 3) return '';
+    const [y, m, d] = parts;
+    const dateObj = new Date(y, m - 1, d);
+    const dayName = daysOfWeekEs[dateObj.getDay()];
+    const monthShort = monthsShortEs[dateObj.getMonth()];
+
+    const isMoved = item.originalTargetDate !== item.targetDate;
+
+    if (isMoved) {
+      return `
+        <span
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/90 shadow-xs"
+          title="Tarea movida al día ejecutado (${item.targetDate}). Estaba programada para el ${dayName}, ${d} de ${monthShort}"
+        >
+          <span>📅 Programada:</span> <strong class="font-bold text-indigo-950">${dayName} (${d} ${monthShort})</strong>
+        </span>
+      `;
+    } else {
+      return `
+        <span
+          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200"
+          title="Completada en su día programado (${dayName})"
+        >
+          <span>📅 Programada:</span> <span>${dayName}</span>
+        </span>
+      `;
     }
   }
 
@@ -1134,6 +1177,8 @@ import '../styles/global.css';
                     ? `<span class="text-[10px] text-emerald-400 font-semibold">✓ Completado</span>`
                     : ''
                 }
+
+                ${formatScheduledDateBadge(item)}
               </div>
             </div>
           </div>
@@ -1500,6 +1545,8 @@ import '../styles/global.css';
                   ? `<span class="text-[10px] text-rose-700 font-bold bg-rose-100/90 px-1.5 py-0.5 rounded border border-rose-200">⚠️ Con retraso</span>`
                   : `<span class="text-[10px] text-amber-400/90 font-medium">⏳ Pendiente</span>`
               }
+
+              ${formatScheduledDateBadge(chore)}
             </div>
           </div>
         </div>
@@ -1572,11 +1619,17 @@ import '../styles/global.css';
 
           if (result.success) {
             triggerConfetti();
-            if (!isMine) {
-              showToast(`¡Increíble! Has asumido la tarea de ${assignee} 👏`, 'success');
-            } else {
-              showToast('¡Tarea completada con éxito!', 'success');
+            let msg = !isMine
+              ? `¡Increíble! Has asumido la tarea de ${assignee} 👏`
+              : '¡Tarea completada con éxito!';
+            if (result.wasMoved && result.originalTargetDate) {
+              const origParts = result.originalTargetDate.split('-').map(Number);
+              const origDate = new Date(origParts[0], origParts[1] - 1, origParts[2]);
+              const daysOfWeekEs = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+              const dayName = daysOfWeekEs[origDate.getDay()];
+              msg += ` (Movida a hoy · programada para el ${dayName})`;
             }
+            showToast(msg, 'success');
             await loadDashboard();
             if (myTasksData) loadMyTasks();
           } else {
@@ -1625,11 +1678,20 @@ import '../styles/global.css';
       if (data.success) {
         if (desiredStatus === 'completed') {
           triggerConfetti();
-          showToast(data.message || 'Tarea completada 🎉', 'success');
+          let msg = data.message || 'Tarea completada 🎉';
+          if (data.wasMoved && data.originalTargetDate) {
+            const origParts = data.originalTargetDate.split('-').map(Number);
+            const origDate = new Date(origParts[0], origParts[1] - 1, origParts[2]);
+            const daysOfWeekEs = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+            const dayName = daysOfWeekEs[origDate.getDay()];
+            msg = `¡Tarea completada y movida a hoy! (Programada para el ${dayName})`;
+          }
+          showToast(msg, 'success');
         } else {
-          showToast('Tarea restablecida a pendiente', 'info');
+          showToast('Tarea restablecida a pendiente (en su día programado)', 'info');
         }
         await loadMyTasks();
+        if (dashboardData) loadDashboard();
       } else {
         showToast(data.error || 'Error al actualizar', 'error');
       }

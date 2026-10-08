@@ -4,7 +4,9 @@ import * as schema from './schema';
 
 // Turso Serverless Cloud Database configuration
 // Si TURSO_DATABASE_URL no está configurado, usamos local SQLite (en serverless /tmp/local.db)
-const isServerless = Boolean(process.env.VERCEL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME);
+export const isServerless = Boolean(process.env.VERCEL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME);
+export const isUsingTurso = Boolean(process.env.TURSO_DATABASE_URL || process.env.TURSO_DB_URL);
+export const isEphemeralStorage = isServerless && !isUsingTurso;
 const defaultDb = isServerless ? 'file:/tmp/local.db' : 'file:local.db';
 const url = process.env.TURSO_DATABASE_URL || process.env.TURSO_DB_URL || defaultDb;
 const authToken = process.env.TURSO_AUTH_TOKEN || process.env.TURSO_DATABASE_AUTH_TOKEN || undefined;
@@ -60,6 +62,7 @@ export async function initializeDatabase() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         chore_id INTEGER NOT NULL REFERENCES chore_catalog(id) ON DELETE CASCADE,
         target_date TEXT NOT NULL,
+        original_target_date TEXT,
         status TEXT NOT NULL DEFAULT 'pending',
         assigned_to INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         executed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -68,6 +71,10 @@ export async function initializeDatabase() {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    try {
+      await rawClient.execute(`ALTER TABLE chore_log ADD COLUMN original_target_date TEXT;`);
+    } catch {}
 
     isInitialized = true;
     console.log('✅ Database tables initialized successfully.');
