@@ -38,10 +38,10 @@ const {
     <!-- Canvas Confetti CDN for completions -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js" defer></script>
   </head>
-  <body class="theme-pastel min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white pb-24 sm:pb-20">
+  <body class="theme-pastel h-dvh overflow-hidden flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
     
     <!-- Top Header -->
-    <header class="sticky top-0 z-40 glass-header px-4 py-3 sm:px-6">
+    <header class="shrink-0 z-40 glass-header px-4 py-3 sm:px-6">
       <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
         <!-- Logo -->
         <div class="flex items-center gap-2.5">
@@ -137,8 +137,10 @@ const {
     )}
 
     <!-- Main Content Slot -->
-    <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-4 sm:px-6">
-      <slot />
+    <main class="flex-1 min-h-0 overflow-y-auto overscroll-contain w-full pb-24 sm:pb-20">
+      <div class="max-w-4xl w-full mx-auto px-4 py-4 sm:px-6">
+        <slot />
+      </div>
     </main>
 
     <!-- Bottom Navigation Bar (Mobile First) -->
