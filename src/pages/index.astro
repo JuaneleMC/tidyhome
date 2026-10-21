@@ -1014,8 +1014,31 @@ import '../styles/global.css';
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 done ? 'bg-emerald-500/20 text-emerald-500' : t.isOverdue ? 'bg-rose-500/20 text-rose-500' : 'bg-indigo-500/15 text-indigo-500'
               }">${done ? 'Hecha' : t.isOverdue ? 'Con retraso' : 'Pendiente'}</span>
+              <button
+                class="btn-cal-toggle w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-90 shrink-0 ${
+                  done
+                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
+                    : 'bg-slate-800 text-slate-400 border border-slate-600/80 hover:border-indigo-500'
+                }"
+                data-id="${t.id}" data-done="${done}"
+                title="${done ? 'Desmarcar tarea' : 'Marcar como hecha'}"
+              >
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+              </button>
             </div>`;
         }).join('');
+
+    listEl.querySelectorAll('.btn-cal-toggle').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = Number(btn.getAttribute('data-id'));
+        const isDone = btn.getAttribute('data-done') === 'true';
+        btn.setAttribute('disabled', 'true');
+        btn.classList.add('animate-pulse');
+        await toggleChore(id, isDone ? 'pending' : 'completed');
+        await loadCalendar();
+        openCalendarDay(dateStr);
+      });
+    });
 
     modal.classList.remove('hidden');
   }
