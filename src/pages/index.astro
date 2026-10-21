@@ -202,7 +202,7 @@ import '../styles/global.css';
   <!-- ========================================== -->
   <!-- TAB: CALENDARIO MENSUAL -->
   <!-- ========================================== -->
-  <section id="view-calendar" class="tab-view hidden space-y-4">
+  <section id="view-calendar" class="tab-view hidden space-y-2.5">
     <div class="flex items-center justify-between gap-3">
       <div>
         <h2 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
@@ -346,27 +346,6 @@ import '../styles/global.css';
       </h3>
       <div id="roommates-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <!-- Rendered by JS -->
-      </div>
-    </div>
-
-    <!-- Zona de Gestión / Reset de datos -->
-    <div class="glass-card rounded-2xl p-4 border border-rose-500/30 bg-rose-950/15 space-y-2 mt-4">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <h4 class="text-xs font-bold text-rose-300 flex items-center gap-1.5">
-            <span>🗑️</span> Vaciar datos de prueba
-          </h4>
-          <p class="text-[11px] text-slate-400 mt-0.5">
-            Borra los convivientes y tareas de prueba para empezar de cero con los de tu casa.
-          </p>
-        </div>
-        <button
-          id="btn-reset-household-data"
-          type="button"
-          class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/20 transition active:scale-95 shrink-0"
-        >
-          Vaciar Todo
-        </button>
       </div>
     </div>
   </section>
@@ -962,7 +941,7 @@ import '../styles/global.css';
       const pending = tasks.filter((t) => t.status === 'pending').length;
       html += `
         <button data-cal-date="${dateStr}" style="${style}"
-          class="cal-day relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition active:scale-90 hover:brightness-110 ${cls} ${
+          class="cal-day relative h-10 sm:h-12 rounded-lg flex flex-col items-center justify-center text-xs font-bold transition active:scale-90 hover:brightness-110 ${cls} ${
             isToday ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-white' : ''
           }">
           <span style="${tasks.length ? 'text-shadow:0 1px 2px rgba(0,0,0,.45);' : ''}">${d}</span>
@@ -2756,38 +2735,6 @@ import '../styles/global.css';
         }
       } catch (err) {
         showToast('Error de conexión', 'error');
-      }
-    });
-
-    // 12. Botón Vaciar Todo / Empezar de Cero
-    const btnResetData = document.getElementById('btn-reset-household-data');
-    btnResetData?.addEventListener('click', async () => {
-      const ok = confirm('⚠️ ¿Estás seguro de que deseas vaciar TODOS los datos de prueba (convivientes, tareas del catálogo y registros)? Esta acción dejará la aplicación limpia para empezar de cero con tus datos reales.');
-      if (!ok) return;
-
-      btnResetData.setAttribute('disabled', 'true');
-      const originalText = btnResetData.textContent;
-      btnResetData.textContent = 'Vaciando...';
-
-      try {
-        const res = await fetch('/api/admin/reset', { method: 'POST' });
-        const data = await res.json();
-        if (data.success) {
-          showToast('¡Datos de prueba eliminados! Ya puedes dar de alta tus convivientes reales.', 'success');
-          localStorage.removeItem('tidyhome_active_user_id');
-          await loadUsers();
-          await loadMyTasks();
-          if (activeTab === 'dashboard') loadDashboard();
-          if (activeTab === 'catalog') loadCatalog();
-          if (activeTab === 'roommates') loadRoommates();
-        } else {
-          showToast(data.error || 'Error al vaciar los datos', 'error');
-        }
-      } catch (err) {
-        showToast('Error de conexión', 'error');
-      } finally {
-        btnResetData.removeAttribute('disabled');
-        btnResetData.textContent = originalText;
       }
     });
   });
