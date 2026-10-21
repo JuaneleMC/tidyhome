@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { db } from '../../../db/client';
 import { choreCatalog } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
-import { syncAndGenerateWeekChores } from '../../../lib/choreService';
+import { rescheduleChore } from '../../../lib/choreService';
 
 export const prerender = false;
 
@@ -57,7 +57,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
       .where(eq(choreCatalog.id, id))
       .returning();
 
-    await syncAndGenerateWeekChores();
+    await rescheduleChore(id);
 
     return new Response(JSON.stringify({ success: true, chore: updated[0] }), {
       status: 200,

@@ -71,6 +71,10 @@ export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()
     }
   }
 
+  const completedChoreIds = new Set<number>(
+    existingLogs.filter((l) => l.status === 'completed').map((l) => l.choreId)
+  );
+
   const logsToInsert: Array<{
     choreId: number;
     targetDate: string;
@@ -109,6 +113,9 @@ export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()
       const key = `${chore.id}_${dateStr}`;
       const existing = existingMap.get(key);
       if (!existing) {
+        // Tareas de 1 ocurrencia/semana ya completadas esta semana: no duplicar (p.ej. tras editar el día)
+        const singlePerWeek = chore.frequency === 'weekly' || chore.frequency === 'biweekly' || chore.frequency === 'monthly';
+        if (singlePerWeek && completedChoreIds.has(chore.id)) return;
         logsToInsert.push({
           choreId: chore.id,
           targetDate: dateStr,
@@ -194,6 +201,86 @@ export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()
     weekStartDate: days[0].dateStr,
     weekEndDate: days[6].dateStr,
     message: `Sincronización completada: se generaron ${createdCount} nuevas tareas y se actualizaron ${logsToUpdateAssignee.length} asignaciones.`,
+  };
+}
+
+/**
+ * Reprograma una tarea tras editarla en el catálogo: elimina sus registros pendientes
+ * (de la semana en curso en adelante) y regenera la programación con la nueva configuración.
+ * Las tareas ya completadas se conservan como histórico.
+ */
+export async function rescheduleChore(choreId: number, referenceDate: Date = new Date()) {
+  await initializeDatabase();
+  const mondayStr = formatDateYMD(getMondayOfWeek(referenceDate));
+
+  await db
+    .delete(choreLog)
+    .where(
+      and(
+        eq(choreLog.choreId, choreId),
+        eq(choreLog.status, 'pending'),
+        gte(choreLog.targetDate, mondayStr)
+      )
+    );
+
+  return syncAndGenerateWeekChores(referenceDate);
+}
+
+/**
+ * Datos del calendario mensual: tareas de todos los convivientes entre el primer y último
+ * día del mes. Las semanas actuales/futuras se generan al vuelo; las pasadas solo muestran lo registrado.
+ */
+export async function getMonthCalendar(year: number, month: number) {
+  await initializeDatabase();
+
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDay = new Date(year, month, 0);
+  const firstStr = formatDateYMD(firstDay);
+  const lastStr = formatDateYMD(lastDay);
+  const currentMonday = getMondayOfWeek(new Date());
+
+  // Generar semana a semana (solo desde la semana actual)
+  let cursor = getMondayOfWeek(firstDay);
+  while (cursor.getTime() <= lastDay.getTime()) {
+    if (cursor.getTime() >= currentMonday.getTime()) {
+      await syncAndGenerateWeekChores(new Date(cursor));
+    }
+    cursor = new Date(cursor);
+    cursor.setDate(cursor.getDate() + 7);
+  }
+
+  const logs = await db
+    .select({
+      id: choreLog.id,
+      choreId: choreLog.choreId,
+      choreName: choreCatalog.name,
+      icon: choreCatalog.icon,
+      category: choreCatalog.category,
+      frequency: choreCatalog.frequency,
+      targetDate: choreLog.targetDate,
+      status: choreLog.status,
+      assignedToId: choreLog.assignedTo,
+      executedById: choreLog.executedBy,
+    })
+    .from(choreLog)
+    .innerJoin(choreCatalog, eq(choreLog.choreId, choreCatalog.id))
+    .where(and(gte(choreLog.targetDate, firstStr), lte(choreLog.targetDate, lastStr)))
+    .orderBy(asc(choreLog.targetDate), asc(choreLog.choreId));
+
+  const allUsers = await db.select().from(users).orderBy(users.id);
+  const todayStr = getTodayYMD();
+
+  return {
+    year,
+    month,
+    todayStr,
+    users: allUsers.map((u) => ({ id: u.id, name: u.name, color: u.color || '#6366f1', avatar: u.avatar || '👤' })),
+    tasks: logs.map((l) => ({
+      ...l,
+      icon: l.icon || '🧹',
+      category: l.category || 'Hogar',
+      isOverdue: l.status !== 'completed' && l.targetDate < todayStr,
+    })),
   };
 }
 

@@ -200,6 +200,48 @@ import '../styles/global.css';
   </section>
 
   <!-- ========================================== -->
+  <!-- TAB: CALENDARIO MENSUAL -->
+  <!-- ========================================== -->
+  <section id="view-calendar" class="tab-view hidden space-y-4">
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+          <span>🗓️</span> Calendario
+        </h2>
+        <p class="text-xs text-slate-400 font-medium">Tareas del mes por conviviente</p>
+      </div>
+      <div class="inline-flex items-center gap-1">
+        <button id="btn-cal-prev" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold transition active:scale-90" title="Mes anterior">‹</button>
+        <button id="btn-cal-today" class="px-2.5 h-8 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-[11px] font-semibold transition active:scale-95">Hoy</button>
+        <button id="btn-cal-next" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold transition active:scale-90" title="Mes siguiente">›</button>
+      </div>
+    </div>
+
+    <div class="text-center text-sm font-extrabold text-white tracking-tight" id="cal-month-title">—</div>
+
+    <!-- Filtro por conviviente -->
+    <div id="cal-user-filter" class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs"></div>
+
+    <div class="glass-card rounded-2xl p-2.5 sm:p-3">
+      <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+      </div>
+      <div id="cal-grid" class="grid grid-cols-7 gap-1"></div>
+    </div>
+
+    <!-- Modal desglose del día -->
+    <div id="cal-day-modal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3">
+      <div class="glass-card rounded-2xl w-full max-w-md max-h-[75vh] overflow-y-auto p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 id="cal-day-title" class="text-sm font-extrabold text-white capitalize"></h3>
+          <button id="btn-cal-day-close" class="text-slate-400 hover:text-white text-xl leading-none px-1">&times;</button>
+        </div>
+        <div id="cal-day-list" class="space-y-2"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
   <!-- TAB 3: CATÁLOGO DE TAREAS -->
   <!-- ========================================== -->
   <section id="view-catalog" class="tab-view hidden space-y-4">
@@ -650,7 +692,15 @@ import '../styles/global.css';
   // Application State
   let usersList: User[] = [];
   let activeUser: User | null = null;
-  let activeTab: 'panel' | 'dashboard' | 'catalog' | 'roommates' = 'panel';
+  let activeTab: 'panel' | 'dashboard' | 'calendar' | 'catalog' | 'roommates' = 'panel';
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth() + 1;
+  let calFilterUser: number | 'all' = 'all';
+  let calendarData: {
+    todayStr: string;
+    users: { id: number; name: string; color: string; avatar: string }[];
+    tasks: any[];
+  } | null = null;
   let panelFilter: 'today' | 'week' | 'completed' = 'today';
   let dashboardGroupBy: 'day' | 'user' = 'day';
   let dashboardFilterStatus: 'all' | 'pending' | 'completed' = 'all';
@@ -784,7 +834,159 @@ import '../styles/global.css';
   // ==========================================
   // NAVIGATION & TABS
   // ==========================================
-  function switchTab(tab: 'panel' | 'dashboard' | 'catalog' | 'roommates') {
+  // ==========================================
+  // VISTA: CALENDARIO MENSUAL
+  // ==========================================
+  function escHtml(s: string): string {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  async function loadCalendar() {
+    const grid = document.getElementById('cal-grid');
+    if (!grid) return;
+    try {
+      const res = await fetch(`/api/chores/calendar?year=${calYear}&month=${calMonth}`);
+      const data = await res.json();
+      if (!data.success) {
+        grid.innerHTML = `<div class="col-span-7 p-4 text-center text-rose-400 text-xs">${escHtml(data.error)}</div>`;
+        return;
+      }
+      calendarData = data;
+      renderCalendar();
+    } catch (err) {
+      console.error('Error fetching calendar:', err);
+    }
+  }
+
+  function renderCalendar() {
+    const grid = document.getElementById('cal-grid');
+    const title = document.getElementById('cal-month-title');
+    const filterEl = document.getElementById('cal-user-filter');
+    if (!grid || !calendarData) return;
+
+    const monthsEs = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    if (title) title.textContent = `${monthsEs[calMonth - 1]} ${calYear}`;
+
+    // Filtro de convivientes
+    if (filterEl) {
+      const pill = (id: number | 'all', label: string, color?: string) => {
+        const active = calFilterUser === id;
+        const style = active
+          ? `background:${color || '#6366f1'};color:#fff;`
+          : '';
+        return `<button data-cal-user="${id}" style="${style}" class="cal-user-btn px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap ${
+          active ? 'shadow-md' : 'bg-slate-800 text-slate-300 hover:text-white'
+        }">${label}</button>`;
+      };
+      filterEl.innerHTML =
+        pill('all', 'Todos') +
+        calendarData.users.map((u) => pill(u.id, `${escHtml(u.avatar)} ${escHtml(u.name)}`, u.color)).join('');
+      filterEl.querySelectorAll('.cal-user-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const v = btn.getAttribute('data-cal-user')!;
+          calFilterUser = v === 'all' ? 'all' : Number(v);
+          renderCalendar();
+        });
+      });
+    }
+
+    const userColor = new Map(calendarData.users.map((u) => [u.id, u.color]));
+    const visible = calendarData.tasks.filter((t) => calFilterUser === 'all' || t.assignedToId === calFilterUser);
+    const byDate = new Map<string, any[]>();
+    for (const t of visible) {
+      if (!byDate.has(t.targetDate)) byDate.set(t.targetDate, []);
+      byDate.get(t.targetDate)!.push(t);
+    }
+
+    const first = new Date(calYear, calMonth - 1, 1);
+    const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+    const offset = (first.getDay() + 6) % 7; // Lunes = 0
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    let html = '';
+    for (let i = 0; i < offset; i++) html += '<div></div>';
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${calYear}-${pad(calMonth)}-${pad(d)}`;
+      const tasks = byDate.get(dateStr) || [];
+      const isToday = dateStr === calendarData.todayStr;
+      let style = '';
+      let cls = 'bg-slate-800/40 text-slate-300 border border-slate-700/40';
+
+      if (tasks.length > 0) {
+        const colors = Array.from(new Set(tasks.map((t) => userColor.get(t.assignedToId) || '#6366f1')));
+        if (colors.length === 1) {
+          style = `background:${colors[0]};`;
+        } else {
+          const step = 100 / colors.length;
+          const stops = colors.map((c, i) => `${c} ${i * step}% ${(i + 1) * step}%`).join(',');
+          style = `background:linear-gradient(135deg,${stops});`;
+        }
+        cls = 'text-white border border-white/30 shadow-sm';
+      }
+
+      const pending = tasks.filter((t) => t.status === 'pending').length;
+      html += `
+        <button data-cal-date="${dateStr}" style="${style}"
+          class="cal-day relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition active:scale-90 hover:brightness-110 ${cls} ${
+            isToday ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-white' : ''
+          }">
+          <span style="${tasks.length ? 'text-shadow:0 1px 2px rgba(0,0,0,.45);' : ''}">${d}</span>
+          ${
+            tasks.length
+              ? `<span class="text-[9px] font-semibold leading-none mt-0.5" style="text-shadow:0 1px 2px rgba(0,0,0,.45);">${
+                  pending === 0 ? '✓' : tasks.length
+                }</span>`
+              : ''
+          }
+        </button>`;
+    }
+    grid.innerHTML = html;
+
+    grid.querySelectorAll('.cal-day').forEach((btn) => {
+      btn.addEventListener('click', () => openCalendarDay(btn.getAttribute('data-cal-date')!));
+    });
+  }
+
+  function openCalendarDay(dateStr: string) {
+    if (!calendarData) return;
+    const modal = document.getElementById('cal-day-modal');
+    const titleEl = document.getElementById('cal-day-title');
+    const listEl = document.getElementById('cal-day-list');
+    if (!modal || !titleEl || !listEl) return;
+
+    const [y, m, d] = dateStr.split('-').map(Number);
+    titleEl.textContent = new Date(y, m - 1, d).toLocaleDateString('es-ES', {
+      weekday: 'long', day: 'numeric', month: 'long',
+    });
+
+    const usersMap = new Map(calendarData.users.map((u) => [u.id, u]));
+    const tasks = calendarData.tasks.filter(
+      (t) => t.targetDate === dateStr && (calFilterUser === 'all' || t.assignedToId === calFilterUser)
+    );
+
+    listEl.innerHTML = tasks.length === 0
+      ? '<div class="py-6 text-center text-xs text-slate-400">Sin tareas para este día 🎉</div>'
+      : tasks.map((t) => {
+          const u = usersMap.get(t.assignedToId);
+          const done = t.status === 'completed';
+          return `
+            <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50" style="border-left:4px solid ${u?.color || '#6366f1'}">
+              <span class="text-xl">${escHtml(t.icon)}</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-bold truncate ${done ? 'line-through text-slate-400' : 'text-white'}">${escHtml(t.choreName)}</div>
+                <div class="text-[11px] text-slate-400">${u ? escHtml(u.avatar + ' ' + u.name) : 'Usuario'} · ${escHtml(t.category)}</div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                done ? 'bg-emerald-500/20 text-emerald-500' : t.isOverdue ? 'bg-rose-500/20 text-rose-500' : 'bg-indigo-500/15 text-indigo-500'
+              }">${done ? 'Hecha' : t.isOverdue ? 'Con retraso' : 'Pendiente'}</span>
+            </div>`;
+        }).join('');
+
+    modal.classList.remove('hidden');
+  }
+
+  function switchTab(tab: 'panel' | 'dashboard' | 'calendar' | 'catalog' | 'roommates') {
     activeTab = tab;
 
     // Update bottom nav buttons
@@ -814,6 +1016,8 @@ import '../styles/global.css';
       loadMyTasks();
     } else if (tab === 'dashboard') {
       loadDashboard();
+    } else if (tab === 'calendar') {
+      loadCalendar();
     } else if (tab === 'catalog') {
       loadCatalog();
     } else if (tab === 'roommates') {
@@ -2223,6 +2427,26 @@ import '../styles/global.css';
     // 1. Initial Load
     await loadUsers();
     await loadMyTasks();
+
+    // Calendario: navegación de mes y cierre del desglose
+    const shiftMonth = (delta: number) => {
+      const d = new Date(calYear, calMonth - 1 + delta, 1);
+      calYear = d.getFullYear();
+      calMonth = d.getMonth() + 1;
+      loadCalendar();
+    };
+    document.getElementById('btn-cal-prev')?.addEventListener('click', () => shiftMonth(-1));
+    document.getElementById('btn-cal-next')?.addEventListener('click', () => shiftMonth(1));
+    document.getElementById('btn-cal-today')?.addEventListener('click', () => {
+      calYear = new Date().getFullYear();
+      calMonth = new Date().getMonth() + 1;
+      loadCalendar();
+    });
+    const calModal = document.getElementById('cal-day-modal');
+    document.getElementById('btn-cal-day-close')?.addEventListener('click', () => calModal?.classList.add('hidden'));
+    calModal?.addEventListener('click', (e) => {
+      if (e.target === calModal) calModal.classList.add('hidden');
+    });
 
     // 2. Navigation Tabs
     document.querySelectorAll('.nav-tab').forEach((tabBtn) => {
