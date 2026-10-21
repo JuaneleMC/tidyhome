@@ -22,7 +22,7 @@
    TEMA AZUL PASTEL (AMIGABLE, ACOGEDOR, LUMINOSO)
    =================================================== */
 body.theme-pastel {
-  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 35%, #f0f7ff 70%, #e8f0fe 100%);
+  background: linear-gradient(135deg, #bfd3ee 0%, #c4dcee 35%, #d3e1f2 70%, #cbd9ee 100%);
   background-attachment: fixed;
   color: #1e293b;
 }
