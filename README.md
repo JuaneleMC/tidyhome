@@ -10,7 +10,7 @@ Aplicación web progresiva (PWA) desarrollada con **Astro**, **TypeScript**, **T
 
 1. **📱 Enfoque Mobile-First (PWA):**
    - Interfaz táctil optimizada para teléfonos móviles y tablets.
-   - Barra de navegación inferior fija (*Bottom Nav*) con 4 secciones: **Mi Panel**, **Casa**, **Catálogo** y **Convivientes**.
+   - Barra de navegación inferior fija (*Bottom Nav*) con 4 secciones: **Casa**, **Calendario**, **Tareas** y **Convivientes**.
    - Selector inmediato de perfil activo en la cabecera (cambia de conviviente con un toque sin fricción de login).
    - Manifiesto PWA (`manifest.webmanifest`) y Service Worker (`sw.js`).
 
@@ -142,7 +142,7 @@ npm run build
 | :--- | :--- | :--- |
 | `POST` / `GET` | `/api/chores/generate` | Genera y sincroniza automáticamente las tareas de la semana desde el catálogo |
 | `POST` | `/api/chores/execute` | Ejecución flexible: recibe `choreLogId`, `userId` y `desiredStatus`. Permite registrar al ejecutor real aunque no sea el asignado original |
-| `GET` | `/api/chores/my-tasks?userId=X` | Obtiene tareas de hoy, atrasadas y de la semana del usuario activo |
+| `POST` | `/api/chores/log` | Registra una tarea como hecha en un día (existente o nueva puntual). Recibe `date`, `userId` y `choreId` o `newChore` |
 | `GET` | `/api/chores/dashboard` | Obtiene el estado general de la casa agrupado por días y convivientes con contadores |
 | `GET` / `POST` | `/api/users` | Lista o crea nuevos convivientes |
 | `GET` / `POST` | `/api/catalog` | Lista o crea nuevas tareas en el catálogo |

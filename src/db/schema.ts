@@ -2,7 +2,7 @@ import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 // Frequency enum type
-export const FREQUENCIES = ['daily', 'twice_weekly', 'weekly', 'biweekly', 'monthly'] as const;
+export const FREQUENCIES = ['daily', 'twice_weekly', 'weekly', 'biweekly', 'monthly', 'once'] as const;
 export type FrequencyType = typeof FREQUENCIES[number];
 
 // Assignment mode enum type (Fija o Rotativa semanal)

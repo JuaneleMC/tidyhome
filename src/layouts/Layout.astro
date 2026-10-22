@@ -145,27 +145,12 @@ const {
 
     <!-- Bottom Navigation Bar (Mobile First) -->
     <nav class="fixed bottom-0 left-0 right-0 z-40 glass-nav px-2 py-2 sm:py-2.5">
-      <div class="max-w-md mx-auto grid grid-cols-5 gap-1">
-        <!-- Tab 1: Mi Panel -->
-        <button
-          id="nav-tab-panel"
-          data-tab="panel"
-          class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-indigo-400 transition group active:scale-95"
-        >
-          <div class="nav-icon-container relative p-1 rounded-lg group-hover:bg-slate-800/50 transition">
-            <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-            <span id="badge-my-pending" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-pink-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">0</span>
-          </div>
-          <span class="text-[11px] font-semibold tracking-tight mt-0.5">Mi Panel</span>
-        </button>
-
+      <div class="max-w-md mx-auto grid grid-cols-4 gap-1">
         <!-- Tab 2: Casa / Dashboard -->
         <button
           id="nav-tab-dashboard"
           data-tab="dashboard"
-          class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-400 hover:text-slate-200 transition group active:scale-95"
+          class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-indigo-400 transition group active:scale-95"
         >
           <div class="nav-icon-container relative p-1 rounded-lg group-hover:bg-slate-800/50 transition">
             <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -418,105 +418,6 @@ export async function executeChore(
 }
 
 /**
- * Consulta optimizada: Mis tareas de esta semana
- * Obtiene las tareas asignadas al usuario activo para hoy y el resto de la semana.
- */
-export async function getMyTasks(userId: number, referenceDate: Date = new Date()) {
-  await syncAndGenerateWeekChores(referenceDate);
-
-  const days = getDaysOfWeek(referenceDate);
-  const todayStr = getTodayYMD();
-  const startDate = days[0].dateStr;
-  const endDate = days[6].dateStr;
-
-  // Consultamos los chore_logs de la semana asignados a este usuario
-  const allLogs = await db
-    .select({
-      id: choreLog.id,
-      choreId: choreLog.choreId,
-      choreName: choreCatalog.name,
-      icon: choreCatalog.icon,
-      category: choreCatalog.category,
-      frequency: choreCatalog.frequency,
-      assignmentMode: choreCatalog.assignmentMode,
-      targetDate: choreLog.targetDate,
-      originalTargetDate: choreLog.originalTargetDate,
-      status: choreLog.status,
-      assignedToId: choreLog.assignedTo,
-      executedById: choreLog.executedBy,
-      executionDate: choreLog.executionDate,
-    })
-    .from(choreLog)
-    .innerJoin(choreCatalog, eq(choreLog.choreId, choreCatalog.id))
-    .where(
-      and(
-        eq(choreLog.assignedTo, userId),
-        gte(choreLog.targetDate, startDate),
-        lte(choreLog.targetDate, endDate)
-      )
-    )
-    .orderBy(asc(choreLog.targetDate), asc(choreLog.status));
-
-  // Traer usuarios para resolver nombres
-  const allUsers = await db.select().from(users);
-  const userMap = new Map(allUsers.map((u) => [u.id, u]));
-
-  const formatted: ChoreWithDetails[] = allLogs.map((log) => {
-    const assignedUser = userMap.get(log.assignedToId);
-    const executedUser = log.executedById ? userMap.get(log.executedById) : null;
-    const isCompleted = log.status === 'completed';
-
-    return {
-      id: log.id,
-      choreId: log.choreId,
-      choreName: log.choreName,
-      icon: log.icon || '🧹',
-      category: log.category || 'Hogar',
-      frequency: log.frequency,
-      assignmentMode: (log.assignmentMode || 'fixed') as 'fixed' | 'rotating',
-      targetDate: log.targetDate,
-      originalTargetDate: log.originalTargetDate || null,
-      status: log.status as ChoreStatusType,
-      assignedToId: log.assignedToId,
-      assignedToName: assignedUser?.name || 'Usuario',
-      assignedToColor: assignedUser?.color || '#6366f1',
-      assignedToAvatar: assignedUser?.avatar || '👤',
-      executedById: log.executedById,
-      executedByName: executedUser?.name || null,
-      executedByColor: executedUser?.color || null,
-      executedByAvatar: executedUser?.avatar || null,
-      executionDate: log.executionDate,
-      isStolen: Boolean(isCompleted && log.executedById && log.executedById !== log.assignedToId),
-      isToday: log.targetDate === todayStr,
-      isOverdue: !isCompleted && log.targetDate < todayStr,
-    };
-  });
-
-  // Tareas para hoy
-  const todayTasks = formatted.filter((t) => t.isToday);
-  // Tareas para el resto de la semana
-  const upcomingTasks = formatted.filter((t) => !t.isToday && t.targetDate > todayStr);
-  // Tareas retrasadas
-  const overdueTasks = formatted.filter((t) => t.isOverdue);
-  // Tareas completadas
-  const completedTasks = formatted.filter((t) => t.status === 'completed');
-
-  return {
-    todayTasks,
-    upcomingTasks,
-    overdueTasks,
-    completedTasks,
-    allTasks: formatted,
-    stats: {
-      total: formatted.length,
-      completed: completedTasks.length,
-      pending: formatted.filter((t) => t.status === 'pending').length,
-      progressPct: formatted.length ? Math.round((completedTasks.length / formatted.length) * 100) : 0,
-    },
-  };
-}
-
-/**
  * Consulta optimizada: Estado general de la casa
  * Todas las tareas de la semana agrupadas por días y por usuarios, con métricas globales.
  */
@@ -648,4 +549,76 @@ export async function getHouseholdDashboard(referenceDate: Date = new Date()) {
       weekRange: `${days[0].dayNumber} ${days[0].monthName} - ${days[6].dayNumber} ${days[6].monthName}`,
     },
   };
+}
+
+/**
+ * Registra una tarea como ejecutada en un día concreto (no futuro).
+ * - Si ya hay un registro de esa tarea ese día, lo completa.
+ * - Si no, crea uno nuevo ya completado.
+ * Se puede indicar `newChore` para crear al vuelo una tarea puntual ('once') en el catálogo.
+ */
+export async function logChoreForDate(params: {
+  choreId?: number;
+  newChore?: { name: string; icon?: string; category?: string };
+  date: string; // YYYY-MM-DD
+  userId: number;
+}) {
+  await initializeDatabase();
+  const { date, userId } = params;
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Fecha inválida');
+  if (date > getTodayYMD()) throw new Error('No se puede registrar una tarea en un día futuro');
+
+  const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!user.length) throw new Error(`Usuario con ID ${userId} no encontrado`);
+
+  let choreId = params.choreId;
+  if (!choreId) {
+    const name = params.newChore?.name?.trim();
+    if (!name) throw new Error('Indica una tarea existente o el nombre de una nueva');
+    const inserted = await db
+      .insert(choreCatalog)
+      .values({
+        name,
+        frequency: 'once',
+        assignmentMode: 'fixed',
+        defaultAssigneeId: userId,
+        icon: params.newChore?.icon || '✅',
+        category: params.newChore?.category || 'Hogar',
+      })
+      .returning({ id: choreCatalog.id });
+    choreId = inserted[0].id;
+  } else {
+    const exists = await db.select({ id: choreCatalog.id }).from(choreCatalog).where(eq(choreCatalog.id, choreId)).limit(1);
+    if (!exists.length) throw new Error(`Tarea con ID ${choreId} no encontrada`);
+  }
+
+  const nowIso = new Date().toISOString();
+  const pending = await db
+    .select({ id: choreLog.id })
+    .from(choreLog)
+    .where(and(eq(choreLog.choreId, choreId), eq(choreLog.targetDate, date), eq(choreLog.status, 'pending')))
+    .limit(1);
+
+  if (pending.length) {
+    await db
+      .update(choreLog)
+      .set({ status: 'completed', executedBy: userId, executionDate: nowIso })
+      .where(eq(choreLog.id, pending[0].id));
+    return { success: true, choreLogId: pending[0].id, choreId, created: false };
+  }
+
+  const created = await db
+    .insert(choreLog)
+    .values({
+      choreId,
+      targetDate: date,
+      status: 'completed',
+      assignedTo: userId,
+      executedBy: userId,
+      executionDate: nowIso,
+    })
+    .returning({ id: choreLog.id });
+
+  return { success: true, choreLogId: created[0].id, choreId, created: true };
 }
