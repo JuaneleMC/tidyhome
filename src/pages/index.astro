@@ -6,145 +6,271 @@ import '../styles/global.css';
 <Layout title="TidyHome - Reparto Inteligente de Tareas del Hogar">
   
   <!-- ========================================== -->
-  <!-- TAB 2: CASA / DASHBOARD (VISTA GLOBAL) -->
+  <!-- TAB 1: CALENDARIO (MES + SEMANA ACTUAL) -->
   <!-- ========================================== -->
-  <section id="view-dashboard" class="tab-view block space-y-4">
-    <!-- Household Summary Banner -->
-    <div class="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+  <section id="view-calendar" class="tab-view block space-y-4">
+    <!-- Switcher Superior: Mes vs Semana actual -->
+    <div class="inline-flex p-1 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs font-semibold w-full">
+      <button
+        id="btn-cal-tab-month"
+        type="button"
+        class="cal-view-toggle-btn flex-1 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition shadow-sm"
+      >
+        🗓️ Mes
+      </button>
+      <button
+        id="btn-cal-tab-week"
+        type="button"
+        class="cal-view-toggle-btn flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white font-semibold transition"
+      >
+        📋 Semana actual (Casa)
+      </button>
+    </div>
+
+    <!-- SUB-VIEW 1: MES COMPLETO -->
+    <div id="cal-subview-month" class="space-y-2.5">
       <div class="flex items-center justify-between gap-3">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="text-xl">🏠</span>
-            <h2 class="text-base sm:text-lg font-bold text-white tracking-tight">
-              Estado General de la Casa
-            </h2>
+          <h2 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            <span>🗓️</span> Calendario Mensual
+          </h2>
+          <p class="text-xs text-slate-400 font-medium">Tareas del mes por conviviente</p>
+        </div>
+        <div class="inline-flex items-center gap-1">
+          <button id="btn-cal-prev" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold transition active:scale-90" title="Mes anterior">‹</button>
+          <button id="btn-cal-today" class="px-2.5 h-8 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-[11px] font-semibold transition active:scale-95">Hoy</button>
+          <button id="btn-cal-next" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold transition active:scale-90" title="Mes siguiente">›</button>
+        </div>
+      </div>
+
+      <div class="text-center text-sm font-extrabold text-white tracking-tight" id="cal-month-title">—</div>
+
+      <!-- Filtro por conviviente -->
+      <div id="cal-user-filter" class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs"></div>
+
+      <div class="glass-card rounded-2xl p-2.5 sm:p-3">
+        <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+        </div>
+        <div id="cal-grid" class="grid grid-cols-7 gap-1"></div>
+      </div>
+
+      <!-- Modal desglose del día -->
+      <div id="cal-day-modal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3">
+        <div class="glass-card rounded-2xl w-full max-w-md max-h-[75vh] overflow-y-auto p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 id="cal-day-title" class="text-sm font-extrabold text-white capitalize"></h3>
+            <button id="btn-cal-day-close" class="text-slate-400 hover:text-white text-xl leading-none px-1">&times;</button>
           </div>
-          <p id="dashboard-week-range" class="text-xs text-slate-400 font-medium mt-0.5">
-            Semana actual
-          </p>
+          <div id="cal-day-list" class="space-y-2"></div>
+          <button id="btn-cal-day-add" type="button" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition active:scale-95">
+            + Añadir tarea hecha
+          </button>
         </div>
-
-        <!-- Global Percentage Badge -->
-        <div class="flex flex-col items-end">
-          <span id="dashboard-global-pct" class="text-xl sm:text-2xl font-extrabold text-emerald-400 leading-none">
-            0%
-          </span>
-          <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
-            Completado
-          </span>
-        </div>
-      </div>
-
-      <!-- Progress bar -->
-      <div class="mt-3.5 space-y-1">
-        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
-          <div
-            id="dashboard-progress-bar"
-            class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-indigo-500 rounded-full transition-all duration-500 ease-out"
-            style="width: 0%"
-          ></div>
-        </div>
-        <div class="flex justify-between text-[11px] text-slate-400 pt-0.5">
-          <span><strong id="dashboard-done-count" class="text-emerald-400 font-bold">0</strong> hechas</span>
-          <span><strong id="dashboard-pending-count" class="text-amber-400 font-bold">0</strong> pendientes</span>
-        </div>
-      </div>
-
-      <!-- Household notice banner about "¡Lo hago yo!" -->
-      <div class="mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-2 text-xs text-slate-300">
-        <span class="text-pink-400 text-sm">💡</span>
-        <span>
-          ¿Tienes tiempo libre? Pulsa <strong class="text-pink-400 font-semibold">"¡Lo hago yo!"</strong> en cualquier tarea pendiente para asumirla y completarla.
-        </span>
       </div>
     </div>
 
-    <!-- Dashboard Grouping Toggle: Por Día vs Por Conviviente -->
-    <div class="flex items-center justify-between gap-2">
-      <div class="inline-flex p-1 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs font-semibold">
-        <button
-          id="btn-group-by-day"
-          class="dashboard-group-btn px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition"
-        >
-          📅 Por Día
-        </button>
-        <button
-          id="btn-group-by-user"
-          class="dashboard-group-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition"
-        >
-          👥 Por Conviviente
-        </button>
+    <!-- SUB-VIEW 2: SEMANA ACTUAL (CASA) -->
+    <div id="cal-subview-week" class="hidden space-y-4">
+      <!-- Household Summary Banner -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🏠</span>
+              <h2 class="text-base sm:text-lg font-bold text-white tracking-tight">
+                Estado General de la Casa
+              </h2>
+            </div>
+            <p id="dashboard-week-range" class="text-xs text-slate-400 font-medium mt-0.5">
+              Semana actual
+            </p>
+          </div>
+
+          <!-- Global Percentage Badge -->
+          <div class="flex flex-col items-end">
+            <span id="dashboard-global-pct" class="text-xl sm:text-2xl font-extrabold text-emerald-400 leading-none">
+              0%
+            </span>
+            <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
+              Completado
+            </span>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="mt-3.5 space-y-1">
+          <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+            <div
+              id="dashboard-progress-bar"
+              class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-indigo-500 rounded-full transition-all duration-500 ease-out"
+              style="width: 0%"
+            ></div>
+          </div>
+          <div class="flex justify-between text-[11px] text-slate-400 pt-0.5">
+            <span><strong id="dashboard-done-count" class="text-emerald-400 font-bold">0</strong> hechas</span>
+            <span><strong id="dashboard-pending-count" class="text-amber-400 font-bold">0</strong> pendientes</span>
+          </div>
+        </div>
+
+        <!-- Household notice banner about "¡Lo hago yo!" -->
+        <div class="mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-2 text-xs text-slate-300">
+          <span class="text-pink-400 text-sm">💡</span>
+          <span>
+            ¿Tienes tiempo libre? Pulsa <strong class="text-pink-400 font-semibold">"¡Lo hago yo!"</strong> en cualquier tarea pendiente para asumirla y completarla.
+          </span>
+        </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <span class="text-[11px] text-slate-400 hidden xs:inline">Filtro:</span>
-        <select
-          id="filter-dashboard-status"
-          class="text-xs bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        >
-          <option value="all">Todas las tareas</option>
-          <option value="pending">Solo pendientes</option>
-          <option value="completed">Solo completadas</option>
-        </select>
-      </div>
-    </div>
+      <!-- Dashboard Grouping Toggle: Por Día vs Por Conviviente -->
+      <div class="flex items-center justify-between gap-2">
+        <div class="inline-flex p-1 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs font-semibold">
+          <button
+            id="btn-group-by-day"
+            class="dashboard-group-btn px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition"
+          >
+            📅 Por Día
+          </button>
+          <button
+            id="btn-group-by-user"
+            class="dashboard-group-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition"
+          >
+            👥 Por Conviviente
+          </button>
+        </div>
 
-    <!-- Dashboard Groups Container -->
-    <div id="dashboard-groups-container" class="space-y-4">
-      <!-- Loading Skeleton -->
-      <div class="glass-card rounded-2xl p-4 animate-pulse space-y-3">
-        <div class="h-5 bg-slate-800 rounded w-1/3"></div>
-        <div class="h-16 bg-slate-800 rounded-xl"></div>
-        <div class="h-16 bg-slate-800 rounded-xl"></div>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] text-slate-400 hidden xs:inline">Filtro:</span>
+          <select
+            id="filter-dashboard-status"
+            class="text-xs bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="all">Todas las tareas</option>
+            <option value="pending">Solo pendientes</option>
+            <option value="completed">Solo completadas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Dashboard Groups Container -->
+      <div id="dashboard-groups-container" class="space-y-4">
+        <!-- Loading Skeleton -->
+        <div class="glass-card rounded-2xl p-4 animate-pulse space-y-3">
+          <div class="h-5 bg-slate-800 rounded w-1/3"></div>
+          <div class="h-16 bg-slate-800 rounded-xl"></div>
+          <div class="h-16 bg-slate-800 rounded-xl"></div>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- ========================================== -->
-  <!-- TAB: CALENDARIO MENSUAL -->
+  <!-- TAB 2: GARAJE / VEHÍCULOS -->
   <!-- ========================================== -->
-  <section id="view-calendar" class="tab-view hidden space-y-2.5">
+  <section id="view-garage" class="tab-view hidden space-y-4">
+    <!-- Header with Add Vehicle button -->
     <div class="flex items-center justify-between gap-3">
       <div>
         <h2 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
-          <span>🗓️</span> Calendario
+          <span>🚗</span> Garaje & Flota
         </h2>
-        <p class="text-xs text-slate-400 font-medium">Tareas del mes por conviviente</p>
+        <p class="text-xs text-slate-400 font-medium">Mantenimientos, revisiones e incidencias</p>
       </div>
-      <div class="inline-flex items-center gap-1">
-        <button id="btn-cal-prev" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold transition active:scale-90" title="Mes anterior">‹</button>
-        <button id="btn-cal-today" class="px-2.5 h-8 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-[11px] font-semibold transition active:scale-95">Hoy</button>
-        <button id="btn-cal-next" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold transition active:scale-90" title="Mes siguiente">›</button>
+
+      <button
+        id="btn-open-new-vehicle-modal"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition"
+      >
+        <span class="text-base leading-none">+</span>
+        <span>Añadir Vehículo</span>
+      </button>
+    </div>
+
+    <!-- Fleet Selector Pills -->
+    <div id="garage-fleet-pills" class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+      <!-- Injected by JS -->
+    </div>
+
+    <!-- Active Vehicle Hero Card -->
+    <div id="garage-vehicle-hero" class="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden space-y-3 border border-slate-700/60">
+      <!-- Loading placeholder -->
+      <div class="animate-pulse space-y-2">
+        <div class="h-5 bg-slate-800 rounded w-1/3"></div>
+        <div class="h-8 bg-slate-800 rounded w-1/2"></div>
       </div>
     </div>
 
-    <div class="text-center text-sm font-extrabold text-white tracking-tight" id="cal-month-title">—</div>
-
-    <!-- Filtro por conviviente -->
-    <div id="cal-user-filter" class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs"></div>
-
-    <div class="glass-card rounded-2xl p-2.5 sm:p-3">
-      <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400">
-        <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
-      </div>
-      <div id="cal-grid" class="grid grid-cols-7 gap-1"></div>
+    <!-- Sub-Tabs inside Active Vehicle -->
+    <div class="inline-flex p-1 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs font-semibold w-full">
+      <button
+        id="garage-subtab-btn-maint"
+        type="button"
+        class="garage-subtab-btn flex-1 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition shadow-sm flex items-center justify-center gap-1.5"
+      >
+        <span>🔧 Mantenimientos</span>
+        <span id="badge-count-overdue" class="hidden px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px]">0</span>
+      </button>
+      <button
+        id="garage-subtab-btn-incidents"
+        type="button"
+        class="garage-subtab-btn flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white font-semibold transition flex items-center justify-center gap-1.5"
+      >
+        <span>⚠️ Incidencias</span>
+        <span id="badge-count-incidents" class="hidden px-1.5 py-0.2 bg-amber-500 text-slate-900 font-bold rounded-full text-[10px]">0</span>
+      </button>
+      <button
+        id="garage-subtab-btn-history"
+        type="button"
+        class="garage-subtab-btn flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white font-semibold transition"
+      >
+        📖 Historial
+      </button>
     </div>
 
-    <!-- Modal desglose del día -->
-    <div id="cal-day-modal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3">
-      <div class="glass-card rounded-2xl w-full max-w-md max-h-[75vh] overflow-y-auto p-4 space-y-3">
-        <div class="flex items-center justify-between">
-          <h3 id="cal-day-title" class="text-sm font-extrabold text-white capitalize"></h3>
-          <button id="btn-cal-day-close" class="text-slate-400 hover:text-white text-xl leading-none px-1">&times;</button>
-        </div>
-        <div id="cal-day-list" class="space-y-2"></div>
-        <button id="btn-cal-day-add" type="button" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition active:scale-95">
-          + Añadir tarea hecha
+    <!-- SUB-PANEL 1: MANTENIMIENTOS -->
+    <div id="garage-panel-maint" class="space-y-3">
+      <div class="flex items-center justify-between gap-2 px-1">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Plan del Fabricante</span>
+        <button
+          id="btn-open-new-maint-modal"
+          type="button"
+          class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+        >
+          <span>+ Añadir Tarea</span>
         </button>
+      </div>
+      <div id="garage-maint-list" class="space-y-2.5">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+
+    <!-- SUB-PANEL 2: INCIDENCIAS -->
+    <div id="garage-panel-incidents" class="hidden space-y-3">
+      <div class="flex items-center justify-between gap-2 px-1">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Averías & Síntomas</span>
+        <button
+          id="btn-open-new-incident-modal"
+          type="button"
+          class="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
+        >
+          <span>+ Reportar Síntoma</span>
+        </button>
+      </div>
+      <div id="garage-incidents-list" class="space-y-2.5">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+
+    <!-- SUB-PANEL 3: HISTORIAL (LIBRO DE REVISIONES) -->
+    <div id="garage-panel-history" class="hidden space-y-3">
+      <div class="px-1">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Libro de Revisiones Digital</span>
+      </div>
+      <div id="garage-history-list" class="space-y-2.5">
+        <!-- Injected by JS -->
       </div>
     </div>
   </section>
-
   <!-- ========================================== -->
   <!-- TAB 3: CATÁLOGO DE TAREAS -->
   <!-- ========================================== -->
@@ -579,6 +705,358 @@ import '../styles/global.css';
     </div>
   </div>
 
+
+  <!-- ========================================== -->
+  <!-- MODAL: HISTORIAL DE TAREA DEL CATÁLOGO -->
+  <!-- ========================================== -->
+  <div
+    id="modal-chore-history"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4"
+  >
+    <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl" id="hist-chore-icon">🧹</span>
+          <div>
+            <h3 class="text-base font-bold text-white truncate max-w-[240px]" id="hist-chore-title">Historial</h3>
+            <span class="text-xs text-slate-400" id="hist-chore-freq"></span>
+          </div>
+        </div>
+        <button id="btn-close-chore-history" type="button" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
+      </div>
+
+      <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50 flex items-center justify-between text-xs">
+        <div>
+          <span class="text-slate-400 block text-[10px]">Veces completada</span>
+          <strong class="text-white text-base" id="hist-total-count">0</strong>
+        </div>
+        <div class="text-right">
+          <span class="text-slate-400 block text-[10px]">Última vez realizada</span>
+          <strong class="text-emerald-400 font-semibold" id="hist-last-done">Nunca</strong>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Registro de ejecuciones</h4>
+        <div id="hist-list-container" class="space-y-1.5 max-h-60 overflow-y-auto">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <div class="pt-1 flex justify-end">
+        <button id="btn-done-chore-history" type="button" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ACTUALIZAR KM DEL VEHÍCULO -->
+  <!-- ========================================== -->
+  <div
+    id="modal-update-km"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4"
+  >
+    <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">⚡</span>
+          <div>
+            <h3 class="text-base font-bold text-white">Actualizar Kilometraje</h3>
+            <p class="text-xs text-slate-400" id="modal-km-vehicle-name">Vehículo</p>
+          </div>
+        </div>
+        <button id="btn-close-update-km" type="button" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="form-update-km" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Kilometraje actual</label>
+          <div class="relative">
+            <input
+              type="number"
+              id="input-new-km"
+              required
+              min="0"
+              placeholder="Ej: 148250"
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-base font-bold text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-bold">km</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Fecha de la lectura</label>
+          <input
+            type="date"
+            id="input-date-km"
+            required
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" id="btn-cancel-update-km" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition active:scale-95">Guardar Km</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: REGISTRAR MANTENIMIENTO HECHO -->
+  <!-- ========================================== -->
+  <div
+    id="modal-execute-maintenance"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4"
+  >
+    <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🔧</span>
+          <div>
+            <h3 class="text-base font-bold text-white">Registrar Mantenimiento</h3>
+            <p class="text-xs text-indigo-400 font-semibold" id="modal-exec-maint-name">Tarea</p>
+          </div>
+        </div>
+        <button id="btn-close-exec-maint" type="button" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="form-exec-maint" class="space-y-3">
+        <input type="hidden" id="input-exec-maint-id" />
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Fecha</label>
+            <input type="date" id="input-exec-date" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Km del coche</label>
+            <input type="number" id="input-exec-km" placeholder="Km al realizarlo" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Quién lo llevó / gestionó</label>
+          <select id="select-exec-user" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Taller / Lugar</label>
+            <input type="text" id="input-exec-workshop" placeholder="Ej: Talleres Paco, Concesionario..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Coste (opcional)</label>
+            <input type="text" id="input-exec-cost" placeholder="Ej: 145€" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Notas u observaciones</label>
+          <textarea id="input-exec-notes" rows="2" placeholder="Ej: Aceite 5W30 Sintético, cambio de arandela..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" id="btn-cancel-exec-maint" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition active:scale-95">Registrar Mantenimiento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: NUEVA / EDITAR TAREA DE MANTENIMIENTO -->
+  <!-- ========================================== -->
+  <div
+    id="modal-new-maintenance"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4"
+  >
+    <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white" id="modal-maint-rule-title">Nueva Tarea de Mantenimiento</h3>
+        <button id="btn-close-new-maint" type="button" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="form-new-maintenance" class="space-y-3">
+        <input type="hidden" id="input-maint-rule-id" />
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre de la operación</label>
+          <input type="text" id="input-maint-name" required placeholder="Ej: Cambio de aceite y filtro, ITV, Pastillas..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Cada cuántos km</label>
+            <input type="number" id="input-maint-interval-km" placeholder="Ej: 15000 (o vacío)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Cada cuántos meses</label>
+            <input type="number" id="input-maint-interval-months" placeholder="Ej: 12, 24 (o vacío)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-2 space-y-2">
+          <span class="text-[11px] font-bold text-slate-400 block uppercase">Última vez realizada</span>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">A los kilómetros</label>
+              <input type="number" id="input-maint-last-km" placeholder="Ej: 135000" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">En la fecha</label>
+              <input type="date" id="input-maint-last-date" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" id="btn-cancel-new-maint" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition active:scale-95">Guardar Tarea</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: REPORTAR INCIDENCIA / SÍNTOMA -->
+  <!-- ========================================== -->
+  <div
+    id="modal-new-incident"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4"
+  >
+    <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">Reportar Incidencia o Síntoma</h3>
+        <button id="btn-close-new-incident" type="button" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="form-new-incident" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Síntoma o avería detectada</label>
+          <input type="text" id="input-incident-title" required placeholder="Ej: Ruido al frenar, luz testigo motor, vibración..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Detalles / Cuándo ocurre</label>
+          <textarea id="input-incident-desc" rows="2" placeholder="Ocurre en frío, a más de 100 km/h, etc." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Quién lo detectó</label>
+            <select id="select-incident-user" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Fecha</label>
+            <input type="date" id="input-incident-date" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500" />
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" id="btn-cancel-new-incident" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold text-xs shadow-lg shadow-amber-600/30 transition active:scale-95">Guardar Incidencia</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: RESOLVER INCIDENCIA -->
+  <!-- ========================================== -->
+  <div
+    id="modal-resolve-incident"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4"
+  >
+    <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">Resolver Incidencia</h3>
+        <button id="btn-close-resolve-incident" type="button" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="form-resolve-incident" class="space-y-3">
+        <input type="hidden" id="input-resolve-incident-id" />
+        <p class="text-xs text-amber-300 font-semibold" id="resolve-incident-title-text"></p>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Qué se le hizo / Solución</label>
+          <textarea id="input-resolve-notes" rows="2" required placeholder="Ej: Se cambiaron pastillas delanteras en el taller..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Taller / Reparador</label>
+            <input type="text" id="input-resolve-workshop" placeholder="Ej: Taller Hermanos Paco" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Fecha</label>
+            <input type="date" id="input-resolve-date" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" id="btn-cancel-resolve-incident" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition active:scale-95">Marcar como Resuelta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: NUEVO VEHÍCULO -->
+  <!-- ========================================== -->
+  <div
+    id="modal-new-vehicle"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4"
+  >
+    <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">Añadir Vehículo a la Flota</h3>
+        <button id="btn-close-new-vehicle" type="button" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="form-new-vehicle" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre / Modelo</label>
+          <input type="text" id="input-veh-name" required placeholder="Ej: Seat León, Moto Yamaha, Caravana..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Matrícula (opcional)</label>
+            <input type="text" id="input-veh-plate" placeholder="Ej: 1234-LMN" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white uppercase placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Emoji / Icono</label>
+            <div class="flex items-center gap-1">
+              <input type="text" id="input-veh-icon" value="🚗" maxlength="4" class="w-12 text-center text-xl bg-slate-800 border border-slate-700 rounded-xl py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button type="button" class="quick-veh-icon p-1 text-lg rounded hover:bg-slate-800">🚗</button>
+              <button type="button" class="quick-veh-icon p-1 text-lg rounded hover:bg-slate-800">🚙</button>
+              <button type="button" class="quick-veh-icon p-1 text-lg rounded hover:bg-slate-800">🚐</button>
+              <button type="button" class="quick-veh-icon p-1 text-lg rounded hover:bg-slate-800">🏍️</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50 space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="check-veh-has-mileage" checked class="rounded text-blue-600 focus:ring-0" />
+            <span class="text-xs font-semibold text-slate-200">Tiene cuentakilómetros</span>
+          </label>
+          <div id="container-veh-km">
+            <label class="block text-[11px] text-slate-400 mb-1">Kilometraje inicial</label>
+            <input type="number" id="input-veh-initial-km" value="0" min="0" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" id="btn-cancel-new-vehicle" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition active:scale-95">Dar de Alta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </Layout>
 
 <!-- Client Application Logic in TypeScript -->
@@ -641,7 +1119,11 @@ import '../styles/global.css';
   // Application State
   let usersList: User[] = [];
   let activeUser: User | null = null;
-  let activeTab: 'dashboard' | 'calendar' | 'catalog' | 'roommates' = 'dashboard';
+  let activeTab: 'calendar' | 'garage' | 'catalog' | 'roommates' = 'calendar';
+  let calViewMode: 'month' | 'week' = 'month';
+  let garageData: any[] = [];
+  let activeVehicleId: number | null = null;
+  let garageSubtab: 'maint' | 'incidents' | 'history' = 'maint';
   let calYear = new Date().getFullYear();
   let calMonth = new Date().getMonth() + 1;
   let calFilterUser: number | 'all' = 'all';
@@ -1111,7 +1593,7 @@ import '../styles/global.css';
     }
   }
 
-  function switchTab(tab: 'dashboard' | 'calendar' | 'catalog' | 'roommates') {
+  function switchTab(tab: 'calendar' | 'garage' | 'catalog' | 'roommates') {
     activeTab = tab;
 
     // Update bottom nav buttons
@@ -1137,10 +1619,14 @@ import '../styles/global.css';
     }
 
     // Refresh content for active tab
-    if (tab === 'dashboard') {
-      loadDashboard();
-    } else if (tab === 'calendar') {
-      loadCalendar();
+    if (tab === 'calendar') {
+      if (calViewMode === 'month') {
+        loadCalendar();
+      } else {
+        loadDashboard();
+      }
+    } else if (tab === 'garage') {
+      loadGarage();
     } else if (tab === 'catalog') {
       loadCatalog();
     } else if (tab === 'roommates') {
@@ -1193,8 +1679,10 @@ import '../styles/global.css';
     showToast(`Conviviente activo cambiado a ${user.name}`, 'info');
 
     // Reload active tab
-    if (activeTab === 'dashboard') {
-      loadDashboard();
+    if (activeTab === 'calendar') {
+      if (calViewMode === 'month') loadCalendar(); else loadDashboard();
+    } else if (activeTab === 'garage') {
+      loadGarage();
     }
   }
 
@@ -1281,7 +1769,7 @@ import '../styles/global.css';
       const data = await res.json();
       if (data.success) {
         showToast(data.message || 'Semana sincronizada correctamente', 'success');
-        if (activeTab === 'dashboard') loadDashboard();
+        if (activeTab === 'calendar') { if (calViewMode === 'month') loadCalendar(); else loadDashboard(); } else if (activeTab === 'garage') { loadGarage(); }
       } else {
         showToast(data.error || 'Error al sincronizar', 'error');
       }
@@ -1998,6 +2486,15 @@ import '../styles/global.css';
           <!-- Actions -->
           <div class="shrink-0 flex items-center gap-1">
             <button
+              class="btn-history-catalog-chore p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition"
+              data-id="${item.id}"
+              title="Ver historial de ejecuciones"
+            >
+              <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+            <button
               class="btn-edit-catalog-chore p-1.5 text-slate-500 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition"
               data-id="${item.id}"
               title="Editar tarea"
@@ -2021,6 +2518,14 @@ import '../styles/global.css';
       `
       )
       .join('');
+
+    container.querySelectorAll('.btn-history-catalog-chore').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = Number(btn.getAttribute('data-id'));
+        openChoreHistoryModal(id);
+      });
+    });
 
     container.querySelectorAll('.btn-edit-catalog-chore').forEach((btn) => {
       btn.addEventListener('click', (e) => {
@@ -2059,6 +2564,84 @@ import '../styles/global.css';
   // ==========================================
   // VISTA 4: CONVIVIENTES (CARGA Y RENDER)
   // ==========================================
+  
+  // ==========================================
+  // HISTORIAL DE TAREAS DEL CATÁLOGO
+  // ==========================================
+  async function openChoreHistoryModal(choreId: number) {
+    const modal = document.getElementById('modal-chore-history');
+    const titleEl = document.getElementById('hist-chore-title');
+    const iconEl = document.getElementById('hist-chore-icon');
+    const freqEl = document.getElementById('hist-chore-freq');
+    const totalEl = document.getElementById('hist-total-count');
+    const lastDoneEl = document.getElementById('hist-last-done');
+    const listEl = document.getElementById('hist-list-container');
+
+    if (!modal || !titleEl || !listEl) return;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    listEl.innerHTML = '<div class="py-6 text-center text-xs text-slate-500 animate-pulse">Cargando historial...</div>';
+
+    try {
+      const res = await fetch(`/api/catalog/${choreId}/history`);
+      const data = await res.json();
+
+      if (!data.success) {
+        listEl.innerHTML = `<div class="py-4 text-center text-xs text-rose-400">${escHtml(data.error)}</div>`;
+        return;
+      }
+
+      if (titleEl) titleEl.textContent = data.chore.name;
+      if (iconEl) iconEl.textContent = data.chore.icon || '🧹';
+      if (freqEl) freqEl.textContent = `${data.chore.category} · ${data.chore.frequency === 'once' ? 'Puntual' : data.chore.frequency}`;
+      if (totalEl) totalEl.textContent = String(data.totalDone);
+
+      if (lastDoneEl) {
+        if (data.lastDone) {
+          const parts = data.lastDone.targetDate.split('-').map(Number);
+          const d = new Date(parts[0], parts[1] - 1, parts[2]);
+          const dateStr = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+          lastDoneEl.textContent = `${dateStr} por ${data.lastDone.executedByName || 'Conviviente'}`;
+        } else {
+          lastDoneEl.textContent = 'Nunca realizada';
+        }
+      }
+
+      if (data.history.length === 0) {
+        listEl.innerHTML = '<div class="py-6 text-center text-xs text-slate-500">Aún no se ha registrado ninguna ejecución de esta tarea.</div>';
+      } else {
+        listEl.innerHTML = data.history.map((h: any) => {
+          const parts = h.targetDate.split('-').map(Number);
+          const d = new Date(parts[0], parts[1] - 1, parts[2]);
+          const dateFormatted = d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+          return `
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="text-base">${escHtml(h.executedByAvatar || '👤')}</span>
+                <div>
+                  <span class="font-bold text-white block">${escHtml(h.executedByName || 'Conviviente')}</span>
+                  <span class="text-[10px] text-slate-400">${dateFormatted}</span>
+                </div>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400">
+                ✓ Hecha
+              </span>
+            </div>
+          `;
+        }).join('');
+      }
+    } catch (err) {
+      listEl.innerHTML = '<div class="py-4 text-center text-xs text-rose-400">Error al cargar historial</div>';
+    }
+  }
+
+  function closeChoreHistoryModal() {
+    const modal = document.getElementById('modal-chore-history');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  }
+
   async function loadRoommates() {
     const cardsEl = document.getElementById('roommates-cards-container');
     if (!cardsEl) return;
@@ -2195,13 +2778,586 @@ import '../styles/global.css';
     });
   }
 
+  
+  // ==========================================
+  // MÓDULO GARAJE / VEHÍCULOS
+  // ==========================================
+  async function loadGarage() {
+    try {
+      const res = await fetch('/api/garage');
+      const data = await res.json();
+      if (!data.success) {
+        showToast(data.error || 'Error al cargar garaje', 'error');
+        return;
+      }
+
+      garageData = data.vehicles || [];
+
+      // Check global alert badge for garage
+      const totalOverdue = garageData.reduce((acc, v) => acc + (v.overdueCount || 0) + (v.needsKmUpdate ? 1 : 0), 0);
+      const garageAlertBadge = document.getElementById('badge-garage-alert');
+      if (garageAlertBadge) {
+        garageAlertBadge.classList.toggle('hidden', totalOverdue === 0);
+      }
+
+      // Restore active vehicle or default to first
+      if (garageData.length > 0) {
+        if (!activeVehicleId || !garageData.find((v) => v.id === activeVehicleId)) {
+          activeVehicleId = garageData[0].id;
+        }
+      } else {
+        activeVehicleId = null;
+      }
+
+      renderGarageFleetPills();
+      renderGarageActiveVehicle();
+    } catch (err) {
+      console.error('Error loading garage:', err);
+      showToast('Error de conexión al cargar garaje', 'error');
+    }
+  }
+
+  function renderGarageFleetPills() {
+    const pillsContainer = document.getElementById('garage-fleet-pills');
+    if (!pillsContainer) return;
+
+    if (garageData.length === 0) {
+      pillsContainer.innerHTML = '<span class="text-xs text-slate-500">No hay vehículos registrados</span>';
+      return;
+    }
+
+    pillsContainer.innerHTML = garageData.map((v) => {
+      const isActive = v.id === activeVehicleId;
+      const hasAlert = (v.overdueCount > 0) || v.needsKmUpdate;
+      return `
+        <button
+          type="button"
+          data-vehicle-id="${v.id}"
+          class="btn-garage-vehicle-pill shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition ${
+            isActive
+              ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/30'
+              : 'bg-slate-800/80 text-slate-300 border-slate-700/60 hover:border-slate-500'
+          }"
+        >
+          <span>${escHtml(v.icon || '🚗')}</span>
+          <span>${escHtml(v.name)}</span>
+          ${hasAlert ? '<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>' : ''}
+        </button>
+      `;
+    }).join('');
+
+    pillsContainer.querySelectorAll('.btn-garage-vehicle-pill').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        activeVehicleId = Number(btn.getAttribute('data-vehicle-id'));
+        renderGarageFleetPills();
+        renderGarageActiveVehicle();
+      });
+    });
+  }
+
+  function renderGarageActiveVehicle() {
+    const hero = document.getElementById('garage-vehicle-hero');
+    if (!hero) return;
+
+    const v = garageData.find((item) => item.id === activeVehicleId);
+    if (!v) {
+      hero.innerHTML = `
+        <div class="py-8 text-center space-y-2">
+          <div class="text-3xl">🚗</div>
+          <h4 class="text-sm font-bold text-white">Sin vehículos en el garaje</h4>
+          <p class="text-xs text-slate-400">Pulsa "+ Añadir Vehículo" para agregar tu primer coche o caravana.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Badge counts
+    const countOverdueEl = document.getElementById('badge-count-overdue');
+    const countIncidentsEl = document.getElementById('badge-count-incidents');
+    if (countOverdueEl) {
+      countOverdueEl.textContent = String(v.overdueCount || 0);
+      countOverdueEl.classList.toggle('hidden', (v.overdueCount || 0) === 0);
+    }
+    if (countIncidentsEl) {
+      countIncidentsEl.textContent = String(v.openIncidentsCount || 0);
+      countIncidentsEl.classList.toggle('hidden', (v.openIncidentsCount || 0) === 0);
+    }
+
+    // Hero card
+    hero.innerHTML = `
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-2xl shrink-0">
+            ${escHtml(v.icon || '🚗')}
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              <span>${escHtml(v.name)}</span>
+              ${v.plate ? `<span class="text-xs px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono font-semibold border border-slate-700">${escHtml(v.plate)}</span>` : ''}
+            </h3>
+            <p class="text-xs text-slate-400 font-medium">
+              ${v.hasMileage ? `Última lectura: ${v.lastKmDate || 'Sin registro'}` : 'Vehículo sin cuentakilómetros'}
+            </p>
+          </div>
+        </div>
+
+        ${
+          v.hasMileage
+            ? `
+              <div class="text-right">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Cuentakilómetros</span>
+                <span class="text-lg sm:text-xl font-extrabold text-blue-400 font-mono">${(v.currentKm || 0).toLocaleString('es-ES')} <span class="text-xs font-normal text-slate-400">km</span></span>
+                <button
+                  type="button"
+                  id="btn-hero-update-km"
+                  class="mt-1 px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 text-[11px] font-bold border border-blue-500/30 transition block ml-auto active:scale-95"
+                >
+                  ✏️ Actualizar Km
+                </button>
+              </div>
+            `
+            : ''
+        }
+      </div>
+
+      ${
+        v.needsKmUpdate
+          ? `
+            <div class="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-2 text-xs text-amber-200">
+              <div class="flex items-center gap-1.5">
+                <span>⚠️</span>
+                <span>Hace más de 30 días que no se anotan los kilómetros de este vehículo.</span>
+              </div>
+              <button
+                type="button"
+                id="btn-alert-update-km"
+                class="px-2 py-0.5 rounded-md bg-amber-500 text-slate-900 font-bold text-[10px] shrink-0 active:scale-95"
+              >
+                Anotar
+              </button>
+            </div>
+          `
+          : ''
+      }
+    `;
+
+    document.getElementById('btn-hero-update-km')?.addEventListener('click', openUpdateKmModal);
+    document.getElementById('btn-alert-update-km')?.addEventListener('click', openUpdateKmModal);
+
+    renderGarageSubpanels(v);
+  }
+
+  function setGarageSubtab(subtab: 'maint' | 'incidents' | 'history') {
+    garageSubtab = subtab;
+    const btnMaint = document.getElementById('garage-subtab-btn-maint');
+    const btnInc = document.getElementById('garage-subtab-btn-incidents');
+    const btnHist = document.getElementById('garage-subtab-btn-history');
+
+    const panelMaint = document.getElementById('garage-panel-maint');
+    const panelInc = document.getElementById('garage-panel-incidents');
+    const panelHist = document.getElementById('garage-panel-history');
+
+    [btnMaint, btnInc, btnHist].forEach((b) => {
+      b?.classList.remove('bg-indigo-600', 'text-white', 'font-bold');
+      b?.classList.add('text-slate-400');
+    });
+
+    [panelMaint, panelInc, panelHist].forEach((p) => p?.classList.add('hidden'));
+
+    if (subtab === 'maint') {
+      btnMaint?.classList.add('bg-indigo-600', 'text-white', 'font-bold');
+      btnMaint?.classList.remove('text-slate-400');
+      panelMaint?.classList.remove('hidden');
+    } else if (subtab === 'incidents') {
+      btnInc?.classList.add('bg-indigo-600', 'text-white', 'font-bold');
+      btnInc?.classList.remove('text-slate-400');
+      panelInc?.classList.remove('hidden');
+    } else if (subtab === 'history') {
+      btnHist?.classList.add('bg-indigo-600', 'text-white', 'font-bold');
+      btnHist?.classList.remove('text-slate-400');
+      panelHist?.classList.remove('hidden');
+    }
+  }
+
+  function renderGarageSubpanels(v: any) {
+    // 1. Mantenimientos
+    const maintContainer = document.getElementById('garage-maint-list');
+    if (maintContainer) {
+      if (!v.maintenance || v.maintenance.length === 0) {
+        maintContainer.innerHTML = `
+          <div class="glass-card rounded-2xl p-6 text-center space-y-2">
+            <div class="text-2xl">🔧</div>
+            <p class="text-xs text-slate-400">Sin tareas de mantenimiento configuradas para este vehículo.</p>
+            <button type="button" class="btn-inner-add-maint text-xs text-indigo-400 font-bold hover:underline">+ Añadir primera tarea</button>
+          </div>
+        `;
+        maintContainer.querySelector('.btn-inner-add-maint')?.addEventListener('click', () => openNewMaintModal());
+      } else {
+        maintContainer.innerHTML = v.maintenance.map((m: any) => {
+          const isOverdue = m.status === 'overdue';
+          const isSoon = m.status === 'soon';
+
+          let statusBadge = '';
+          if (isOverdue) {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-xs">⚠️ Vencida</span>';
+          } else if (isSoon) {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-slate-900 shadow-xs">⏳ Próxima</span>';
+          } else {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">✓ Al día</span>';
+          }
+
+          let remainingText = '';
+          if (m.remainingKm !== null && m.remainingKm !== undefined) {
+            if (m.remainingKm <= 0) {
+              remainingText += `<span class="text-rose-400 font-bold">Excedida en ${Math.abs(m.remainingKm).toLocaleString('es-ES')} km</span>`;
+            } else {
+              remainingText += `Faltan ${m.remainingKm.toLocaleString('es-ES')} km`;
+            }
+          }
+          if (m.remainingDays !== null && m.remainingDays !== undefined) {
+            if (remainingText) remainingText += ' · ';
+            if (m.remainingDays <= 0) {
+              remainingText += `<span class="text-rose-400 font-bold">Excedida en ${Math.abs(m.remainingDays)} días</span>`;
+            } else {
+              remainingText += `Faltan ${m.remainingDays} días (${m.nextDueDate})`;
+            }
+          }
+
+          let intervalsText = '';
+          if (m.intervalKm) intervalsText += `Cada ${m.intervalKm.toLocaleString('es-ES')} km`;
+          if (m.intervalMonths) {
+            if (intervalsText) intervalsText += ' o ';
+            intervalsText += `cada ${m.intervalMonths} meses`;
+          }
+
+          return `
+            <div class="glass-card rounded-2xl p-3.5 border transition ${
+              isOverdue
+                ? 'border-rose-500/50 bg-rose-950/15'
+                : isSoon
+                ? 'border-amber-500/40 bg-amber-950/10'
+                : 'border-slate-700/60'
+            }">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h4 class="text-sm font-bold text-white truncate">${escHtml(m.name)}</h4>
+                    ${statusBadge}
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-0.5 font-medium">${intervalsText || 'Sin periodicidad definida'}</p>
+                  <p class="text-xs text-indigo-300 font-semibold mt-1.5">${remainingText || 'Al día'}</p>
+                  <div class="text-[10px] text-slate-400 mt-1">
+                    Última vez: ${m.lastDoneDate || 'Nunca registrada'} ${m.lastDoneKm ? `(${m.lastDoneKm.toLocaleString('es-ES')} km)` : ''}
+                  </div>
+                </div>
+
+                <div class="flex flex-col items-end gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    class="btn-maint-execute px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30 transition active:scale-95"
+                    data-id="${m.id}"
+                    data-name="${escHtml(m.name)}"
+                  >
+                    ✓ Registrar
+                  </button>
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      class="btn-maint-edit p-1 text-slate-400 hover:text-indigo-300 transition"
+                      data-id="${m.id}"
+                      title="Editar regla"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-maint-delete p-1 text-slate-400 hover:text-rose-400 transition"
+                      data-id="${m.id}"
+                      data-name="${escHtml(m.name)}"
+                      title="Eliminar regla"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        maintContainer.querySelectorAll('.btn-maint-execute').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const id = Number(btn.getAttribute('data-id'));
+            const name = btn.getAttribute('data-name') || 'Mantenimiento';
+            openExecuteMaintModal(id, name);
+          });
+        });
+
+        maintContainer.querySelectorAll('.btn-maint-edit').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const id = Number(btn.getAttribute('data-id'));
+            openNewMaintModal(id);
+          });
+        });
+
+        maintContainer.querySelectorAll('.btn-maint-delete').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = Number(btn.getAttribute('data-id'));
+            const name = btn.getAttribute('data-name');
+            if (confirm(`¿Eliminar la tarea "${name}" de este vehículo?`)) {
+              await fetch(`/api/garage/maintenance/${id}`, { method: 'DELETE' });
+              showToast('Tarea eliminada', 'info');
+              loadGarage();
+            }
+          });
+        });
+      }
+    }
+
+    // 2. Incidencias
+    const incContainer = document.getElementById('garage-incidents-list');
+    if (incContainer) {
+      const openIncidents = (v.incidents || []).filter((i: any) => i.status === 'open');
+      if (openIncidents.length === 0) {
+        incContainer.innerHTML = `
+          <div class="glass-card rounded-2xl p-6 text-center space-y-2">
+            <div class="text-2xl">✅</div>
+            <p class="text-xs text-slate-400">Sin incidencias ni averías activas en este vehículo.</p>
+          </div>
+        `;
+      } else {
+        incContainer.innerHTML = openIncidents.map((inc: any) => `
+          <div class="glass-card rounded-2xl p-3.5 border border-amber-500/40 bg-amber-950/15 space-y-2">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">⚠️</span>
+                  <h4 class="text-sm font-bold text-amber-200 truncate">${escHtml(inc.title)}</h4>
+                </div>
+                ${inc.description ? `<p class="text-xs text-slate-300 mt-1">${escHtml(inc.description)}</p>` : ''}
+                <div class="text-[10px] text-slate-400 mt-1 flex items-center gap-2">
+                  <span>Reportado: ${inc.reportedDate}</span>
+                  ${inc.reportedByName ? `<span>por ${escHtml(inc.reportedByName)}</span>` : ''}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="btn-resolve-incident px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 transition active:scale-95 shrink-0"
+                data-id="${inc.id}"
+                data-title="${escHtml(inc.title)}"
+              >
+                ✓ Resolver
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        incContainer.querySelectorAll('.btn-resolve-incident').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const id = Number(btn.getAttribute('data-id'));
+            const title = btn.getAttribute('data-title') || '';
+            openResolveIncidentModal(id, title);
+          });
+        });
+      }
+    }
+
+    // 3. Historial (Libro de revisiones)
+    const histContainer = document.getElementById('garage-history-list');
+    if (histContainer) {
+      if (!v.logs || v.logs.length === 0) {
+        histContainer.innerHTML = `
+          <div class="glass-card rounded-2xl p-6 text-center space-y-2">
+            <div class="text-2xl">📖</div>
+            <p class="text-xs text-slate-400">Aún no hay registros en el libro de revisiones de este vehículo.</p>
+          </div>
+        `;
+      } else {
+        histContainer.innerHTML = v.logs.map((l: any) => `
+          <div class="glass-card rounded-2xl p-3 border border-slate-700/60 text-xs space-y-1">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-white truncate">${escHtml(l.title)}</span>
+              <span class="text-[10px] font-semibold text-slate-400 shrink-0">${l.performedDate}</span>
+            </div>
+            <div class="flex items-center gap-2 text-[11px] text-slate-400 flex-wrap">
+              ${l.performedKm ? `<span class="text-blue-300 font-mono font-bold">${l.performedKm.toLocaleString('es-ES')} km</span>` : ''}
+              ${l.workshop ? `<span class="bg-slate-800 px-1.5 py-0.2 rounded text-slate-300">🏢 ${escHtml(l.workshop)}</span>` : ''}
+              ${l.cost ? `<span class="bg-emerald-500/15 text-emerald-300 px-1.5 py-0.2 rounded font-bold">${escHtml(l.cost)}</span>` : ''}
+              ${l.performedByName ? `<span>por ${escHtml(l.performedByName)}</span>` : ''}
+            </div>
+            ${l.notes ? `<p class="text-[11px] text-slate-400 italic pt-0.5">${escHtml(l.notes)}</p>` : ''}
+          </div>
+        `).join('');
+      }
+    }
+  }
+
+  // Modals for Garage
+  function openUpdateKmModal() {
+    const v = garageData.find((item) => item.id === activeVehicleId);
+    if (!v) return;
+
+    const modal = document.getElementById('modal-update-km');
+    const nameEl = document.getElementById('modal-km-vehicle-name');
+    const inputKm = document.getElementById('input-new-km') as HTMLInputElement;
+    const inputDate = document.getElementById('input-date-km') as HTMLInputElement;
+
+    if (nameEl) nameEl.textContent = `${v.name} ${v.plate ? `(${v.plate})` : ''}`;
+    if (inputKm) inputKm.value = String(v.currentKm || 0);
+    if (inputDate) inputDate.value = new Date().toISOString().split('T')[0];
+
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  }
+
+  function closeUpdateKmModal() {
+    const modal = document.getElementById('modal-update-km');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  }
+
+  function openExecuteMaintModal(maintId: number, name: string) {
+    const v = garageData.find((item) => item.id === activeVehicleId);
+    const modal = document.getElementById('modal-execute-maintenance');
+    const inputId = document.getElementById('input-exec-maint-id') as HTMLInputElement;
+    const titleEl = document.getElementById('modal-exec-maint-name');
+    const inputDate = document.getElementById('input-exec-date') as HTMLInputElement;
+    const inputKm = document.getElementById('input-exec-km') as HTMLInputElement;
+    const selectUser = document.getElementById('select-exec-user') as HTMLSelectElement;
+
+    if (inputId) inputId.value = String(maintId);
+    if (titleEl) titleEl.textContent = name;
+    if (inputDate) inputDate.value = new Date().toISOString().split('T')[0];
+    if (inputKm) inputKm.value = v && v.hasMileage ? String(v.currentKm || 0) : '';
+
+    if (selectUser) {
+      selectUser.innerHTML = usersList.map((u) => `
+        <option value="${u.id}" ${activeUser?.id === u.id ? 'selected' : ''}>${escHtml(u.avatar || '👤')} ${escHtml(u.name)}</option>
+      `).join('');
+    }
+
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  }
+
+  function closeExecuteMaintModal() {
+    const modal = document.getElementById('modal-execute-maintenance');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  }
+
+  function openNewMaintModal(maintId?: number) {
+    const modal = document.getElementById('modal-new-maintenance');
+    const titleEl = document.getElementById('modal-maint-rule-title');
+    const inputId = document.getElementById('input-maint-rule-id') as HTMLInputElement;
+    const inputName = document.getElementById('input-maint-name') as HTMLInputElement;
+    const inputKm = document.getElementById('input-maint-interval-km') as HTMLInputElement;
+    const inputMonths = document.getElementById('input-maint-interval-months') as HTMLInputElement;
+    const inputLastKm = document.getElementById('input-maint-last-km') as HTMLInputElement;
+    const inputLastDate = document.getElementById('input-maint-last-date') as HTMLInputElement;
+
+    const v = garageData.find((item) => item.id === activeVehicleId);
+
+    if (maintId && v) {
+      const item = (v.maintenance || []).find((m: any) => m.id === maintId);
+      if (item) {
+        if (titleEl) titleEl.textContent = 'Editar Tarea de Mantenimiento';
+        if (inputId) inputId.value = String(item.id);
+        if (inputName) inputName.value = item.name || '';
+        if (inputKm) inputKm.value = item.intervalKm ? String(item.intervalKm) : '';
+        if (inputMonths) inputMonths.value = item.intervalMonths ? String(item.intervalMonths) : '';
+        if (inputLastKm) inputLastKm.value = item.lastDoneKm ? String(item.lastDoneKm) : '';
+        if (inputLastDate) inputLastDate.value = item.lastDoneDate || '';
+      }
+    } else {
+      if (titleEl) titleEl.textContent = 'Nueva Tarea de Mantenimiento';
+      if (inputId) inputId.value = '';
+      if (inputName) inputName.value = '';
+      if (inputKm) inputKm.value = '';
+      if (inputMonths) inputMonths.value = '';
+      if (inputLastKm) inputLastKm.value = '';
+      if (inputLastDate) inputLastDate.value = '';
+    }
+
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  }
+
+  function closeNewMaintModal() {
+    const modal = document.getElementById('modal-new-maintenance');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  }
+
+  function openNewIncidentModal() {
+    const modal = document.getElementById('modal-new-incident');
+    const selectUser = document.getElementById('select-incident-user') as HTMLSelectElement;
+    const inputDate = document.getElementById('input-incident-date') as HTMLInputElement;
+    const form = document.getElementById('form-new-incident') as HTMLFormElement;
+
+    form?.reset();
+    if (inputDate) inputDate.value = new Date().toISOString().split('T')[0];
+    if (selectUser) {
+      selectUser.innerHTML = usersList.map((u) => `
+        <option value="${u.id}" ${activeUser?.id === u.id ? 'selected' : ''}>${escHtml(u.avatar || '👤')} ${escHtml(u.name)}</option>
+      `).join('');
+    }
+
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  }
+
+  function closeNewIncidentModal() {
+    const modal = document.getElementById('modal-new-incident');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  }
+
+  function openResolveIncidentModal(incidentId: number, title: string) {
+    const modal = document.getElementById('modal-resolve-incident');
+    const inputId = document.getElementById('input-resolve-incident-id') as HTMLInputElement;
+    const titleEl = document.getElementById('resolve-incident-title-text');
+    const inputDate = document.getElementById('input-resolve-date') as HTMLInputElement;
+    const form = document.getElementById('form-resolve-incident') as HTMLFormElement;
+
+    form?.reset();
+    if (inputId) inputId.value = String(incidentId);
+    if (titleEl) titleEl.textContent = title;
+    if (inputDate) inputDate.value = new Date().toISOString().split('T')[0];
+
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  }
+
+  function closeResolveIncidentModal() {
+    const modal = document.getElementById('modal-resolve-incident');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  }
+
+  function openNewVehicleModal() {
+    const modal = document.getElementById('modal-new-vehicle');
+    const form = document.getElementById('form-new-vehicle') as HTMLFormElement;
+    form?.reset();
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  }
+
+  function closeNewVehicleModal() {
+    const modal = document.getElementById('modal-new-vehicle');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  }
+
   // ==========================================
   // EVENT LISTENERS & INITIALIZATION
   // ==========================================
   document.addEventListener('DOMContentLoaded', async () => {
     // 1. Initial Load
     await loadUsers();
-    await loadDashboard();
+    await loadCalendar();
+    await loadGarage();
 
     // Calendario: navegación de mes y cierre del desglose
     const shiftMonth = (delta: number) => {
@@ -2320,6 +3476,261 @@ import '../styles/global.css';
       });
     });
 
+    
+    // Switcher de vista Calendario: Mes vs Semana
+    document.getElementById('btn-cal-tab-month')?.addEventListener('click', () => setCalendarViewMode('month'));
+    document.getElementById('btn-cal-tab-week')?.addEventListener('click', () => setCalendarViewMode('week'));
+
+    // Subtabs de Garaje
+    document.getElementById('garage-subtab-btn-maint')?.addEventListener('click', () => setGarageSubtab('maint'));
+    document.getElementById('garage-subtab-btn-incidents')?.addEventListener('click', () => setGarageSubtab('incidents'));
+    document.getElementById('garage-subtab-btn-history')?.addEventListener('click', () => setGarageSubtab('history'));
+
+    // Modales de Garaje
+    document.getElementById('btn-close-chore-history')?.addEventListener('click', closeChoreHistoryModal);
+    document.getElementById('btn-done-chore-history')?.addEventListener('click', closeChoreHistoryModal);
+
+    document.getElementById('btn-close-update-km')?.addEventListener('click', closeUpdateKmModal);
+    document.getElementById('btn-cancel-update-km')?.addEventListener('click', closeUpdateKmModal);
+
+    document.getElementById('btn-close-exec-maint')?.addEventListener('click', closeExecuteMaintModal);
+    document.getElementById('btn-cancel-exec-maint')?.addEventListener('click', closeExecuteMaintModal);
+
+    document.getElementById('btn-open-new-maint-modal')?.addEventListener('click', () => openNewMaintModal());
+    document.getElementById('btn-close-new-maint')?.addEventListener('click', closeNewMaintModal);
+    document.getElementById('btn-cancel-new-maint')?.addEventListener('click', closeNewMaintModal);
+
+    document.getElementById('btn-open-new-incident-modal')?.addEventListener('click', openNewIncidentModal);
+    document.getElementById('btn-close-new-incident')?.addEventListener('click', closeNewIncidentModal);
+    document.getElementById('btn-cancel-new-incident')?.addEventListener('click', closeNewIncidentModal);
+
+    document.getElementById('btn-close-resolve-incident')?.addEventListener('click', closeResolveIncidentModal);
+    document.getElementById('btn-cancel-resolve-incident')?.addEventListener('click', closeResolveIncidentModal);
+
+    document.getElementById('btn-open-new-vehicle-modal')?.addEventListener('click', openNewVehicleModal);
+    document.getElementById('btn-close-new-vehicle')?.addEventListener('click', closeNewVehicleModal);
+    document.getElementById('btn-cancel-new-vehicle')?.addEventListener('click', closeNewVehicleModal);
+
+    // Form Update Km
+    document.getElementById('form-update-km')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const km = (document.getElementById('input-new-km') as HTMLInputElement).value;
+      const date = (document.getElementById('input-date-km') as HTMLInputElement).value;
+      try {
+        const res = await fetch('/api/garage/km', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vehicleId: activeVehicleId, km: Number(km), date, userId: activeUser?.id }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          triggerConfetti();
+          showToast('Kilometraje actualizado correctamente', 'success');
+          closeUpdateKmModal();
+          await loadGarage();
+        } else {
+          showToast(data.error || 'Error al actualizar km', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
+    });
+
+    // Form Execute Maintenance
+    document.getElementById('form-exec-maint')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const maintId = (document.getElementById('input-exec-maint-id') as HTMLInputElement).value;
+      const performedDate = (document.getElementById('input-exec-date') as HTMLInputElement).value;
+      const performedKm = (document.getElementById('input-exec-km') as HTMLInputElement).value;
+      const performedBy = (document.getElementById('select-exec-user') as HTMLSelectElement).value;
+      const workshop = (document.getElementById('input-exec-workshop') as HTMLInputElement).value;
+      const cost = (document.getElementById('input-exec-cost') as HTMLInputElement).value;
+      const notes = (document.getElementById('input-exec-notes') as HTMLTextAreaElement).value;
+
+      try {
+        const res = await fetch('/api/garage/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            vehicleId: activeVehicleId,
+            maintenanceId: maintId ? Number(maintId) : null,
+            performedDate,
+            performedKm: performedKm ? Number(performedKm) : null,
+            performedBy: performedBy ? Number(performedBy) : null,
+            workshop,
+            cost,
+            notes,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          triggerConfetti();
+          showToast('Mantenimiento registrado y anotado en historial', 'success');
+          closeExecuteMaintModal();
+          await loadGarage();
+        } else {
+          showToast(data.error || 'Error al guardar', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
+    });
+
+    // Form New/Edit Maintenance
+    document.getElementById('form-new-maintenance')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = (document.getElementById('input-maint-rule-id') as HTMLInputElement).value;
+      const name = (document.getElementById('input-maint-name') as HTMLInputElement).value;
+      const intervalKm = (document.getElementById('input-maint-interval-km') as HTMLInputElement).value;
+      const intervalMonths = (document.getElementById('input-maint-interval-months') as HTMLInputElement).value;
+      const lastDoneKm = (document.getElementById('input-maint-last-km') as HTMLInputElement).value;
+      const lastDoneDate = (document.getElementById('input-maint-last-date') as HTMLInputElement).value;
+
+      try {
+        const res = await fetch('/api/garage/maintenance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: id ? Number(id) : undefined,
+            vehicleId: activeVehicleId,
+            name,
+            intervalKm: intervalKm ? Number(intervalKm) : null,
+            intervalMonths: intervalMonths ? Number(intervalMonths) : null,
+            lastDoneKm: lastDoneKm ? Number(lastDoneKm) : null,
+            lastDoneDate: lastDoneDate || null,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(id ? 'Tarea actualizada' : 'Tarea de mantenimiento creada', 'success');
+          closeNewMaintModal();
+          await loadGarage();
+        } else {
+          showToast(data.error || 'Error al guardar', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
+    });
+
+    // Form Report Incident
+    document.getElementById('form-new-incident')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = (document.getElementById('input-incident-title') as HTMLInputElement).value;
+      const description = (document.getElementById('input-incident-desc') as HTMLTextAreaElement).value;
+      const reportedBy = (document.getElementById('select-incident-user') as HTMLSelectElement).value;
+      const reportedDate = (document.getElementById('input-incident-date') as HTMLInputElement).value;
+
+      try {
+        const res = await fetch('/api/garage/incidents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            vehicleId: activeVehicleId,
+            title,
+            description,
+            reportedBy: reportedBy ? Number(reportedBy) : null,
+            reportedDate,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Incidencia reportada', 'warning');
+          closeNewIncidentModal();
+          await loadGarage();
+        } else {
+          showToast(data.error || 'Error al guardar', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
+    });
+
+    // Form Resolve Incident
+    document.getElementById('form-resolve-incident')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const incidentId = (document.getElementById('input-resolve-incident-id') as HTMLInputElement).value;
+      const resolutionNotes = (document.getElementById('input-resolve-notes') as HTMLTextAreaElement).value;
+      const workshop = (document.getElementById('input-resolve-workshop') as HTMLInputElement).value;
+      const resolvedDate = (document.getElementById('input-resolve-date') as HTMLInputElement).value;
+
+      try {
+        const res = await fetch('/api/garage/incidents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'resolve',
+            incidentId: Number(incidentId),
+            resolutionNotes,
+            workshop,
+            resolvedDate,
+            performedBy: activeUser?.id,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          triggerConfetti();
+          showToast('Incidencia resuelta y archivada', 'success');
+          closeResolveIncidentModal();
+          await loadGarage();
+        } else {
+          showToast(data.error || 'Error al resolver', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
+    });
+
+    // Form New Vehicle
+    document.getElementById('form-new-vehicle')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = (document.getElementById('input-veh-name') as HTMLInputElement).value;
+      const plate = (document.getElementById('input-veh-plate') as HTMLInputElement).value;
+      const icon = (document.getElementById('input-veh-icon') as HTMLInputElement).value;
+      const hasMileage = (document.getElementById('check-veh-has-mileage') as HTMLInputElement).checked;
+      const currentKm = (document.getElementById('input-veh-initial-km') as HTMLInputElement).value;
+
+      try {
+        const res = await fetch('/api/garage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            plate,
+            icon,
+            hasMileage,
+            currentKm: hasMileage && currentKm ? Number(currentKm) : 0,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          triggerConfetti();
+          showToast('Vehículo añadido al garaje', 'success');
+          closeNewVehicleModal();
+          activeVehicleId = data.vehicle.id;
+          await loadGarage();
+        } else {
+          showToast(data.error || 'Error al crear vehículo', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
+    });
+
+    // Vehicle icon buttons
+    document.querySelectorAll('.quick-veh-icon').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById('input-veh-icon') as HTMLInputElement;
+        if (input) input.value = (btn.textContent || '🚗').trim();
+      });
+    });
+
+    // Toggle container veh km
+    document.getElementById('check-veh-has-mileage')?.addEventListener('change', (e) => {
+      const checked = (e.target as HTMLInputElement).checked;
+      document.getElementById('container-veh-km')?.classList.toggle('hidden', !checked);
+    });
+
     // 10. Modal Nueva Tarea
     const modalChore = document.getElementById('modal-new-chore');
     const openChoreBtn = document.getElementById('btn-open-new-chore-modal');
@@ -2332,6 +3743,22 @@ import '../styles/global.css';
 
     // Escuchar cambio en periodicidad para mostrar/ocultar segundo día
     selectFreq?.addEventListener('change', () => {
+      const isOnce = selectFreq.value === 'once';
+      const containerDay1 = document.getElementById('container-day-1');
+      const labelAssignee = document.getElementById('label-assignee-select');
+      const selectAssignee = document.getElementById('select-chore-assignee') as HTMLSelectElement | null;
+
+      if (containerDay1) containerDay1.classList.toggle('hidden', isOnce);
+      if (selectAssignee) {
+        if (isOnce) {
+          selectAssignee.removeAttribute('required');
+          if (labelAssignee) labelAssignee.textContent = 'Responsable (Opcional para puntuales)';
+        } else {
+          selectAssignee.setAttribute('required', 'true');
+          if (labelAssignee) labelAssignee.textContent = 'Responsable habitual';
+        }
+      }
+
       if (selectFreq.value === 'twice_weekly') {
         containerSecondDay?.classList.remove('hidden');
         if (labelDay1) labelDay1.textContent = 'Primer día';

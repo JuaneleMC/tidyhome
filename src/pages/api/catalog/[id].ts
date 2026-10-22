@@ -44,7 +44,11 @@ export const PUT: APIRoute = async ({ params, request }) => {
     const updateData: any = {};
     if (body.name) updateData.name = body.name.trim();
     if (body.frequency) updateData.frequency = body.frequency;
-    if (body.defaultAssigneeId) updateData.defaultAssigneeId = Number(body.defaultAssigneeId);
+    if (body.frequency === 'once' && !body.defaultAssigneeId) {
+      updateData.defaultAssigneeId = null;
+    } else if (body.defaultAssigneeId) {
+      updateData.defaultAssigneeId = Number(body.defaultAssigneeId);
+    }
     if (body.icon) updateData.icon = body.icon;
     if (body.category) updateData.category = body.category;
     if (body.dayOfWeek !== undefined) updateData.dayOfWeek = Number(body.dayOfWeek);

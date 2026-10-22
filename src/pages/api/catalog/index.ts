@@ -25,7 +25,7 @@ export const GET: APIRoute = async () => {
         assigneeAvatar: users.avatar,
       })
       .from(choreCatalog)
-      .innerJoin(users, eq(choreCatalog.defaultAssigneeId, users.id))
+      .leftJoin(users, eq(choreCatalog.defaultAssigneeId, users.id))
       .orderBy(choreCatalog.id);
 
     return new Response(JSON.stringify({ success: true, catalog }), {
@@ -46,11 +46,12 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
     const { name, frequency, assignmentMode, defaultAssigneeId, icon, category, dayOfWeek, secondDayOfWeek } = body;
 
-    if (!name || !frequency || !defaultAssigneeId) {
+    const isOnce = frequency === 'once';
+    if (!name || !frequency || (!defaultAssigneeId && !isOnce)) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Nombre, periodicidad y responsable por defecto son obligatorios.',
+          error: 'Nombre y periodicidad son obligatorios (y responsable si no es puntual).',
         }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
@@ -65,7 +66,7 @@ export const POST: APIRoute = async ({ request }) => {
         name: name.trim(),
         frequency: frequency as FrequencyType,
         assignmentMode: assignmentMode || 'fixed',
-        defaultAssigneeId: Number(defaultAssigneeId),
+        defaultAssigneeId: defaultAssigneeId ? Number(defaultAssigneeId) : null,
         icon: icon || '🧹',
         category: category || 'Hogar',
         dayOfWeek: firstDay,
