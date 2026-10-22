@@ -133,79 +133,149 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Sembrado inicial de los 3 vehículos si la tabla está vacía
-    const existingVehicles = await rawClient.execute('SELECT COUNT(*) as count FROM vehicles');
-    const vCount = Number(existingVehicles.rows[0]?.count || 0);
-    if (vCount === 0) {
-      const todayStr = new Date().toISOString().split('T')[0];
+    // ==========================================
+    // 1. DEDUPLICACIÓN DEFENSIVA DE VEHÍCULOS
+    // ==========================================
+    try {
+      const allVehiclesRes = await rawClient.execute('SELECT id, name, plate FROM vehicles ORDER BY id ASC');
+      const seen = new Map<string, number>();
+      for (const row of allVehiclesRes.rows) {
+        const vId = Number(row.id);
+        const key = (String(row.plate || '').trim() || String(row.name || '').trim()).toLowerCase();
+        if (seen.has(key)) {
+          const canonicalId = seen.get(key)!;
+          // Reasociar logs e incidencias
+          await rawClient.execute({
+            sql: 'UPDATE vehicle_maintenance_logs SET vehicle_id = ? WHERE vehicle_id = ?',
+            args: [canonicalId, vId],
+          });
+          await rawClient.execute({
+            sql: 'UPDATE vehicle_incidents SET vehicle_id = ? WHERE vehicle_id = ?',
+            args: [canonicalId, vId],
+          });
 
-      // 1. Peugeot 5008 5116HLK
-      const res1 = await rawClient.execute({
-        sql: 'INSERT INTO vehicles (name, plate, icon, color, has_mileage, current_km, last_km_date) VALUES (?, ?, ?, ?, 1, ?, ?) RETURNING id',
-        args: ['Peugeot 5008', '5116HLK', '🚙', '#3b82f6', 148000, todayStr],
-      });
-      const id1 = res1.rows[0]?.id;
-      if (id1) {
-        await rawClient.execute({
-          sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [id1, 'Cambio de aceite y filtro', 15000, 12, 138000, '2025-11-10'],
+          // Verificar si canonical tiene tareas de mantenimiento
+          const canonicalMaint = await rawClient.execute({
+            sql: 'SELECT COUNT(*) as count FROM vehicle_maintenance WHERE vehicle_id = ?',
+            args: [canonicalId],
+          });
+          const dupMaint = await rawClient.execute({
+            sql: 'SELECT COUNT(*) as count FROM vehicle_maintenance WHERE vehicle_id = ?',
+            args: [vId],
+          });
+
+          if (Number(canonicalMaint.rows[0]?.count || 0) === 0 && Number(dupMaint.rows[0]?.count || 0) > 0) {
+            await rawClient.execute({
+              sql: 'UPDATE vehicle_maintenance SET vehicle_id = ? WHERE vehicle_id = ?',
+              args: [canonicalId, vId],
+            });
+          } else {
+            await rawClient.execute({
+              sql: 'DELETE FROM vehicle_maintenance WHERE vehicle_id = ?',
+              args: [vId],
+            });
+          }
+
+          // Eliminar el vehículo duplicado
+          await rawClient.execute({
+            sql: 'DELETE FROM vehicles WHERE id = ?',
+            args: [vId],
+          });
+          console.log(`🧹 Vehículo duplicado eliminado (id: ${vId}, mantenido id: ${canonicalId}).`);
+        } else {
+          seen.set(key, vId);
+        }
+      }
+    } catch (dedupErr) {
+      console.error('Error en deduplicación defensiva de vehículos:', dedupErr);
+    }
+
+    // ==========================================
+    // 2. ASEGURAR VEHÍCULOS INICIALES Y SUS MANTENIMIENTOS
+    // ==========================================
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const defaultFleet = [
+      {
+        name: 'Peugeot 5008',
+        plate: '5116HLK',
+        icon: '🚙',
+        color: '#3b82f6',
+        hasMileage: 1,
+        currentKm: 148000,
+        maintenances: [
+          { name: 'Cambio de aceite y filtro', intervalKm: 15000, intervalMonths: 12, lastDoneKm: 138000, lastDoneDate: '2025-11-10' },
+          { name: 'Filtro de aire y habitáculo', intervalKm: 30000, intervalMonths: 24, lastDoneKm: 125000, lastDoneDate: '2025-04-15' },
+          { name: 'Filtro de combustible', intervalKm: 60000, intervalMonths: null, lastDoneKm: 125000, lastDoneDate: '2025-04-15' },
+          { name: 'Líquido de frenos', intervalKm: null, intervalMonths: 24, lastDoneKm: null, lastDoneDate: '2024-10-10' },
+          { name: 'ITV', intervalKm: null, intervalMonths: 12, lastDoneKm: null, lastDoneDate: '2025-09-18' },
+        ],
+      },
+      {
+        name: 'Renault Megane',
+        plate: 'LU 1199 W',
+        icon: '🚗',
+        color: '#10b981',
+        hasMileage: 1,
+        currentKm: 192000,
+        maintenances: [
+          { name: 'Cambio de aceite y filtro', intervalKm: 15000, intervalMonths: 12, lastDoneKm: 185000, lastDoneDate: '2025-12-05' },
+          { name: 'Filtro de aire', intervalKm: 30000, intervalMonths: 24, lastDoneKm: 170000, lastDoneDate: '2025-02-20' },
+          { name: 'Revisión de frenos', intervalKm: 20000, intervalMonths: 12, lastDoneKm: 180000, lastDoneDate: '2025-07-15' },
+          { name: 'ITV', intervalKm: null, intervalMonths: 12, lastDoneKm: null, lastDoneDate: '2025-06-12' },
+        ],
+      },
+      {
+        name: 'Caravana',
+        plate: '',
+        icon: '🚐',
+        color: '#f59e0b',
+        hasMileage: 0,
+        currentKm: 0,
+        maintenances: [
+          { name: 'ITV', intervalKm: null, intervalMonths: 24, lastDoneKm: null, lastDoneDate: '2024-05-20' },
+        ],
+      },
+    ];
+
+    for (const v of defaultFleet) {
+      let vehicleId: number | null = null;
+      const searchRes = v.plate
+        ? await rawClient.execute({
+            sql: 'SELECT id FROM vehicles WHERE plate = ? LIMIT 1',
+            args: [v.plate],
+          })
+        : await rawClient.execute({
+            sql: 'SELECT id FROM vehicles WHERE name = ? LIMIT 1',
+            args: [v.name],
+          });
+
+      if (searchRes.rows.length > 0) {
+        vehicleId = Number(searchRes.rows[0].id);
+      } else {
+        const ins = await rawClient.execute({
+          sql: 'INSERT INTO vehicles (name, plate, icon, color, has_mileage, current_km, last_km_date) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id',
+          args: [v.name, v.plate, v.icon, v.color, v.hasMileage, v.currentKm, todayStr],
         });
-        await rawClient.execute({
-          sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [id1, 'Filtro de aire y habitáculo', 30000, 24, 125000, '2025-04-15'],
-        });
-        await rawClient.execute({
-          sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [id1, 'Filtro de combustible', 60000, null, 125000, '2025-04-15'],
-        });
-        await rawClient.execute({
-          sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [id1, 'Líquido de frenos', null, 24, null, '2024-10-10'],
-        });
-        await rawClient.execute({
-          sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [id1, 'ITV', null, 12, null, '2025-09-18'],
-        });
+        vehicleId = Number(ins.rows[0]?.id);
       }
 
-      // 2. Renault Megane LU 1199 W
-      const res2 = await rawClient.execute({
-        sql: 'INSERT INTO vehicles (name, plate, icon, color, has_mileage, current_km, last_km_date) VALUES (?, ?, ?, ?, 1, ?, ?) RETURNING id',
-        args: ['Renault Megane', 'LU 1199 W', '🚗', '#10b981', 192000, todayStr],
-      });
-      const id2 = res2.rows[0]?.id;
-      if (id2) {
-        await rawClient.execute({
-          sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [id2, 'Cambio de aceite y filtro', 15000, 12, 185000, '2025-12-05'],
+      if (vehicleId) {
+        // Asegurar que tenga sus tareas de mantenimiento iniciales si no tiene ninguna
+        const countRes = await rawClient.execute({
+          sql: 'SELECT COUNT(*) as count FROM vehicle_maintenance WHERE vehicle_id = ?',
+          args: [vehicleId],
         });
-        await rawClient.execute({
-          sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [id2, 'Filtro de aire', 30000, 24, 170000, '2025-02-20'],
-        });
-        await rawClient.execute({
-          sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [id2, 'Revisión de frenos', 20000, 12, 180000, '2025-07-15'],
-        });
-        await rawClient.execute({
-          sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, ?, ?, ?, ?)',
-          args: [id2, 'ITV', null, 12, null, '2025-06-12'],
-        });
+        const currentMaintCount = Number(countRes.rows[0]?.count || 0);
+        if (currentMaintCount === 0 && v.maintenances.length > 0) {
+          for (const m of v.maintenances) {
+            await rawClient.execute({
+              sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, ?, ?, ?, ?)',
+              args: [vehicleId, m.name, m.intervalKm, m.intervalMonths, m.lastDoneKm, m.lastDoneDate],
+            });
+          }
+        }
       }
-
-      // 3. Caravana (sin cuentakilómetros, solo ITV)
-      const res3 = await rawClient.execute({
-        sql: 'INSERT INTO vehicles (name, plate, icon, color, has_mileage, current_km, last_km_date) VALUES (?, ?, ?, ?, 0, 0, ?) RETURNING id',
-        args: ['Caravana', '', '🚐', '#f59e0b', todayStr],
-      });
-      const id3 = res3.rows[0]?.id;
-      if (id3) {
-        await rawClient.execute({
-          sql: 'INSERT INTO vehicle_maintenance (vehicle_id, name, interval_km, interval_months, last_done_km, last_done_date) VALUES (?, ?, null, ?, null, ?)',
-          args: [id3, 'ITV', 24, '2024-05-20'],
-        });
-      }
-      console.log('✅ 3 vehículos iniciales sembrados (Peugeot 5008, Renault Megane, Caravana).');
     }
 
     isInitialized = true;

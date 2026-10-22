@@ -2894,6 +2894,15 @@ import '../styles/global.css';
             <h3 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span>${escHtml(v.name)}</span>
               ${v.plate ? `<span class="text-xs px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono font-semibold border border-slate-700">${escHtml(v.plate)}</span>` : ''}
+              <button
+                type="button"
+                class="btn-delete-active-vehicle text-slate-500 hover:text-rose-400 p-1 text-xs transition"
+                data-id="${v.id}"
+                data-name="${escHtml(v.name)}"
+                title="Eliminar este vehículo"
+              >
+                🗑️
+              </button>
             </h3>
             <p class="text-xs text-slate-400 font-medium">
               ${v.hasMileage ? `Última lectura: ${v.lastKmDate || 'Sin registro'}` : 'Vehículo sin cuentakilómetros'}
@@ -2940,6 +2949,28 @@ import '../styles/global.css';
           : ''
       }
     `;
+
+    hero.querySelector('.btn-delete-active-vehicle')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const target = e.currentTarget as HTMLElement;
+      const id = Number(target.getAttribute('data-id'));
+      const name = target.getAttribute('data-name');
+      if (confirm(`¿Eliminar definitivamente el vehículo "${name}" y todos sus mantenimientos e incidencias?`)) {
+        try {
+          const res = await fetch(`/api/garage/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            showToast('Vehículo eliminado', 'info');
+            activeVehicleId = null;
+            await loadGarage();
+          } else {
+            showToast(data.error || 'Error al eliminar vehículo', 'error');
+          }
+        } catch {
+          showToast('Error de conexión', 'error');
+        }
+      }
+    });
 
     document.getElementById('btn-hero-update-km')?.addEventListener('click', openUpdateKmModal);
     document.getElementById('btn-alert-update-km')?.addEventListener('click', openUpdateKmModal);
