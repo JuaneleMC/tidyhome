@@ -1634,6 +1634,36 @@ import '../styles/global.css';
     }
   }
 
+  function setCalendarViewMode(mode: 'month' | 'week') {
+    calViewMode = mode;
+    const btnMonth = document.getElementById('btn-cal-tab-month');
+    const btnWeek = document.getElementById('btn-cal-tab-week');
+    const subviewMonth = document.getElementById('cal-subview-month');
+    const subviewWeek = document.getElementById('cal-subview-week');
+
+    if (mode === 'month') {
+      btnMonth?.classList.add('bg-indigo-600', 'text-white', 'font-bold');
+      btnMonth?.classList.remove('text-slate-400');
+      btnWeek?.classList.remove('bg-indigo-600', 'text-white', 'font-bold');
+      btnWeek?.classList.add('text-slate-400');
+
+      subviewMonth?.classList.remove('hidden');
+      subviewWeek?.classList.add('hidden');
+
+      loadCalendar();
+    } else {
+      btnWeek?.classList.add('bg-indigo-600', 'text-white', 'font-bold');
+      btnWeek?.classList.remove('text-slate-400');
+      btnMonth?.classList.remove('bg-indigo-600', 'text-white', 'font-bold');
+      btnMonth?.classList.add('text-slate-400');
+
+      subviewWeek?.classList.remove('hidden');
+      subviewMonth?.classList.add('hidden');
+
+      loadDashboard();
+    }
+  }
+
   // ==========================================
   // ==========================================
   // USER MANAGEMENT & SWITCHING
