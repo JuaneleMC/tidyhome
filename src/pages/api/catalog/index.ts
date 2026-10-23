@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db, initializeDatabase } from '../../../db/client';
 import { choreCatalog, users, type FrequencyType } from '../../../db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, asc } from 'drizzle-orm';
 import { syncAndGenerateWeekChores } from '../../../lib/choreService';
 
 export const prerender = false;
@@ -26,7 +26,9 @@ export const GET: APIRoute = async () => {
       })
       .from(choreCatalog)
       .leftJoin(users, eq(choreCatalog.defaultAssigneeId, users.id))
-      .orderBy(choreCatalog.id);
+      .orderBy(asc(choreCatalog.name));
+
+    catalog.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
 
     return new Response(JSON.stringify({ success: true, catalog }), {
       status: 200,

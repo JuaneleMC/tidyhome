@@ -231,17 +231,20 @@ import '../styles/global.css';
     <div id="garage-panel-maint" class="space-y-3">
       <div class="flex items-center justify-between gap-2 px-1">
         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Plan del Fabricante</span>
-        <button
-          id="btn-open-new-maint-modal"
-          type="button"
-          class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
-        >
-          <span>+ Añadir Tarea</span>
-        </button>
       </div>
-      <div id="garage-maint-list" class="space-y-2.5">
+      <div id="garage-maint-list" class="space-y-2.5 pb-20">
         <!-- Injected by JS -->
       </div>
+
+      <button
+        id="btn-open-new-maint-modal"
+        type="button"
+        class="fixed bottom-24 right-4 sm:bottom-24 sm:right-6 z-40 inline-flex items-center gap-1.5 px-4 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-xl shadow-indigo-600/40 active:scale-95 transition"
+        title="Añadir mantenimiento"
+      >
+        <span class="text-xl leading-none">+</span>
+        <span>Añadir Mantenimiento</span>
+      </button>
     </div>
 
     <!-- SUB-PANEL 2: INCIDENCIAS -->
@@ -348,9 +351,10 @@ import '../styles/global.css';
 
       <button
         id="btn-open-new-user-modal"
-        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-600/20 active:scale-95 transition"
+        class="fixed bottom-24 right-4 sm:bottom-24 sm:right-6 z-40 inline-flex items-center gap-1.5 px-4 py-3 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-sm font-bold shadow-xl shadow-purple-600/40 active:scale-95 transition"
+        title="Añadir Conviviente"
       >
-        <span class="text-base leading-none">+</span>
+        <span class="text-xl leading-none">+</span>
         <span>Añadir Conviviente</span>
       </button>
     </div>
@@ -360,7 +364,7 @@ import '../styles/global.css';
       <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
         Lista de Convivientes
       </h3>
-      <div id="roommates-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div id="roommates-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pb-20">
         <!-- Rendered by JS -->
       </div>
     </div>
@@ -873,7 +877,7 @@ import '../styles/global.css';
   >
     <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-white" id="modal-maint-rule-title">Nueva Tarea de Mantenimiento</h3>
+        <h3 class="text-base font-bold text-white" id="modal-maint-rule-title">Nuevo Mantenimiento</h3>
         <button id="btn-close-new-maint" type="button" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
       </div>
 
@@ -912,7 +916,7 @@ import '../styles/global.css';
 
         <div class="pt-2 flex justify-end gap-2">
           <button type="button" id="btn-cancel-new-maint" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold">Cancelar</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition active:scale-95">Guardar Tarea</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition active:scale-95">Guardar Mantenimiento</button>
         </div>
       </form>
     </div>
@@ -1387,6 +1391,7 @@ import '../styles/global.css';
     const tasks = calendarData.tasks.filter(
       (t) => t.targetDate === dateStr && (calFilterUser === 'all' || t.assignedToId === calFilterUser)
     );
+    tasks.sort((a, b) => a.choreName.localeCompare(b.choreName, 'es', { sensitivity: 'base' }));
 
     listEl.innerHTML = tasks.length === 0
       ? '<div class="py-6 text-center text-xs text-slate-400">Sin tareas para este día 🎉</div>'
@@ -1673,7 +1678,7 @@ import '../styles/global.css';
       const res = await fetch('/api/users');
       const data = await res.json();
       if (data.success && data.users.length > 0) {
-        usersList = data.users;
+        usersList = data.users.sort((a: any, b: any) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
 
         // Restore active user from localStorage or pick the first
         const savedUserId = localStorage.getItem('tidyhome_active_user_id');
@@ -1868,7 +1873,7 @@ import '../styles/global.css';
     container.innerHTML = days
       .map((dayGroup) => {
         const day = dayGroup.day;
-        let chores = dayGroup.chores;
+        let chores = [...dayGroup.chores];
 
         // Apply status filter
         if (dashboardFilterStatus === 'pending') {
@@ -1876,6 +1881,8 @@ import '../styles/global.css';
         } else if (dashboardFilterStatus === 'completed') {
           chores = chores.filter((c) => c.status === 'completed');
         }
+
+        chores.sort((a, b) => a.choreName.localeCompare(b.choreName, 'es', { sensitivity: 'base' }));
 
         const isToday = day.isToday;
 
@@ -1949,6 +1956,8 @@ import '../styles/global.css';
         } else if (dashboardFilterStatus === 'completed') {
           userChores = userChores.filter((c) => c.status === 'completed');
         }
+
+        userChores.sort((a, b) => a.choreName.localeCompare(b.choreName, 'es', { sensitivity: 'base' }));
 
         const totalUser = allChores.filter((c) => c.assignedToId === user.id).length;
         const doneUser = allChores.filter((c) => c.assignedToId === user.id && c.status === 'completed').length;
@@ -2434,10 +2443,11 @@ import '../styles/global.css';
     const container = document.getElementById('catalog-list-container');
     if (!container) return;
 
-    let list = catalogData;
+    let list = [...catalogData];
     if (catalogFilterFreq !== 'all') {
       list = list.filter((c) => c.frequency === catalogFilterFreq);
     }
+    list.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
 
     if (list.length === 0) {
       container.innerHTML = `
@@ -2697,7 +2707,11 @@ import '../styles/global.css';
       return;
     }
 
-    cardsEl.innerHTML = usersList
+    const sortedUsers = [...usersList].sort((a, b) =>
+      a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
+    );
+
+    cardsEl.innerHTML = sortedUsers
       .map((u) => {
         const uStat = stats.find((s: any) => s.user.id === u.id);
         const isMe = activeUser?.id === u.id;
@@ -3058,12 +3072,37 @@ import '../styles/global.css';
           <div class="glass-card rounded-2xl p-6 text-center space-y-2">
             <div class="text-2xl">🔧</div>
             <p class="text-xs text-slate-400">Sin tareas de mantenimiento configuradas para este vehículo.</p>
-            <button type="button" class="btn-inner-add-maint text-xs text-indigo-400 font-bold hover:underline">+ Añadir primera tarea</button>
+            <button type="button" class="btn-inner-add-maint text-xs text-indigo-400 font-bold hover:underline">+ Añadir primer mantenimiento</button>
           </div>
         `;
         maintContainer.querySelector('.btn-inner-add-maint')?.addEventListener('click', () => openNewMaintModal());
       } else {
-        maintContainer.innerHTML = v.maintenance.map((m: any) => {
+        const sortedMaintenance = [...(v.maintenance || [])].sort((a: any, b: any) => {
+          const aOverdue = a.status === 'overdue';
+          const bOverdue = b.status === 'overdue';
+          if (aOverdue && !bOverdue) return -1;
+          if (!aOverdue && bOverdue) return 1;
+
+          const getUrgency = (item: any) => {
+            const candidates: number[] = [];
+            if (item.remainingDays !== null && item.remainingDays !== undefined) {
+              candidates.push(item.remainingDays);
+            }
+            if (item.remainingKm !== null && item.remainingKm !== undefined) {
+              candidates.push(item.remainingKm / 40);
+            }
+            if (candidates.length === 0) return Infinity;
+            return Math.min(...candidates);
+          };
+
+          const aScore = getUrgency(a);
+          const bScore = getUrgency(b);
+          if (aScore !== bScore) return aScore - bScore;
+
+          return (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' });
+        });
+
+        maintContainer.innerHTML = sortedMaintenance.map((m: any) => {
           const isOverdue = m.status === 'overdue';
           const isSoon = m.status === 'soon';
 
@@ -3079,7 +3118,7 @@ import '../styles/global.css';
           let remainingText = '';
           if (m.remainingKm !== null && m.remainingKm !== undefined) {
             if (m.remainingKm <= 0) {
-              remainingText += `<span class="text-rose-400 font-bold">Excedida en ${Math.abs(m.remainingKm).toLocaleString('es-ES')} km</span>`;
+              remainingText += `<span class="${isOverdue ? 'text-rose-700 font-extrabold' : 'text-rose-600 font-bold'}">Excedida en ${Math.abs(m.remainingKm).toLocaleString('es-ES')} km</span>`;
             } else {
               remainingText += `Faltan ${m.remainingKm.toLocaleString('es-ES')} km`;
             }
@@ -3087,7 +3126,7 @@ import '../styles/global.css';
           if (m.remainingDays !== null && m.remainingDays !== undefined) {
             if (remainingText) remainingText += ' · ';
             if (m.remainingDays <= 0) {
-              remainingText += `<span class="text-rose-400 font-bold">Excedida en ${Math.abs(m.remainingDays)} días</span>`;
+              remainingText += `<span class="${isOverdue ? 'text-rose-700 font-extrabold' : 'text-rose-600 font-bold'}">Excedida en ${Math.abs(m.remainingDays)} días</span>`;
             } else {
               remainingText += `Faltan ${m.remainingDays} días (${m.nextDueDate})`;
             }
@@ -3103,7 +3142,7 @@ import '../styles/global.css';
           return `
             <div class="glass-card rounded-2xl p-3.5 border transition ${
               isOverdue
-                ? 'border-rose-500/50 bg-rose-950/15'
+                ? 'card-overdue border-rose-300'
                 : isSoon
                 ? 'border-amber-500/40 bg-amber-950/10'
                 : 'border-slate-700/60'
@@ -3111,12 +3150,12 @@ import '../styles/global.css';
               <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <h4 class="text-sm font-bold text-white truncate">${escHtml(m.name)}</h4>
+                    <h4 class="text-sm font-bold truncate ${isOverdue ? 'text-rose-950 font-extrabold' : 'text-white'}">${escHtml(m.name)}</h4>
                     ${statusBadge}
                   </div>
-                  <p class="text-[11px] text-slate-400 mt-0.5 font-medium">${intervalsText || 'Sin periodicidad definida'}</p>
-                  <p class="text-xs text-indigo-300 font-semibold mt-1.5">${remainingText || 'Al día'}</p>
-                  <div class="text-[10px] text-slate-400 mt-1">
+                  <p class="text-[11px] mt-0.5 font-medium ${isOverdue ? 'text-rose-900/80 font-semibold' : 'text-slate-400'}">${intervalsText || 'Sin periodicidad definida'}</p>
+                  <p class="text-xs font-semibold mt-1.5 ${isOverdue ? 'text-rose-800 font-bold' : 'text-indigo-400'}">${remainingText || 'Al día'}</p>
+                  <div class="text-[10px] mt-1 ${isOverdue ? 'text-rose-800/80 font-medium' : 'text-slate-400'}">
                     Última vez: ${m.lastDoneDate || 'Nunca registrada'} ${m.lastDoneKm ? `(${m.lastDoneKm.toLocaleString('es-ES')} km)` : ''}
                   </div>
                 </div>
@@ -3133,7 +3172,7 @@ import '../styles/global.css';
                   <div class="flex items-center gap-1">
                     <button
                       type="button"
-                      class="btn-maint-edit p-1 text-slate-400 hover:text-indigo-300 transition"
+                      class="btn-maint-edit p-1 text-slate-400 hover:text-indigo-400 transition"
                       data-id="${m.id}"
                       title="Editar regla"
                     >
@@ -3332,7 +3371,7 @@ import '../styles/global.css';
     if (maintId && v) {
       const item = (v.maintenance || []).find((m: any) => m.id === maintId);
       if (item) {
-        if (titleEl) titleEl.textContent = 'Editar Tarea de Mantenimiento';
+        if (titleEl) titleEl.textContent = 'Editar Mantenimiento';
         if (inputId) inputId.value = String(item.id);
         if (inputName) inputName.value = item.name || '';
         if (inputKm) inputKm.value = item.intervalKm ? String(item.intervalKm) : '';
@@ -3341,7 +3380,7 @@ import '../styles/global.css';
         if (inputLastDate) inputLastDate.value = item.lastDoneDate || '';
       }
     } else {
-      if (titleEl) titleEl.textContent = 'Nueva Tarea de Mantenimiento';
+      if (titleEl) titleEl.textContent = 'Nuevo Mantenimiento';
       if (inputId) inputId.value = '';
       if (inputName) inputName.value = '';
       if (inputKm) inputKm.value = '';

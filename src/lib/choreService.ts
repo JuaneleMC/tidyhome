@@ -492,6 +492,7 @@ export async function getHouseholdDashboard(referenceDate: Date = new Date()) {
   // Agrupación por días de la semana
   const choresByDay = days.map((day) => {
     const dayChores = formattedChores.filter((c) => c.targetDate === day.dateStr);
+    dayChores.sort((a, b) => a.choreName.localeCompare(b.choreName, 'es', { sensitivity: 'base' }));
     const completedCount = dayChores.filter((c) => c.status === 'completed').length;
     return {
       day,

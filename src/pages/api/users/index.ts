@@ -1,14 +1,15 @@
 import type { APIRoute } from 'astro';
 import { db, initializeDatabase } from '../../../db/client';
 import { users } from '../../../db/schema';
-import { desc } from 'drizzle-orm';
+import { desc, asc } from 'drizzle-orm';
 
 export const prerender = false;
 
 export const GET: APIRoute = async () => {
   try {
     await initializeDatabase();
-    const allUsers = await db.select().from(users).orderBy(users.id);
+    const allUsers = await db.select().from(users).orderBy(asc(users.name));
+    allUsers.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
     return new Response(JSON.stringify({ success: true, users: allUsers }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

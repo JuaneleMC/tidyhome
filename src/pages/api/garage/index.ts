@@ -75,6 +75,38 @@ function computeMaintenanceStatus(item: any, currentKm: number, hasMileage: bool
   };
 }
 
+function sortMaintenanceItems(items: any[]) {
+  return [...items].sort((a, b) => {
+    const aOverdue = a.status === 'overdue';
+    const bOverdue = b.status === 'overdue';
+    if (aOverdue && !bOverdue) return -1;
+    if (!aOverdue && bOverdue) return 1;
+
+    // Both overdue or both not overdue: compare remaining urgency
+    const getUrgencyScore = (item: any) => {
+      const candidates: number[] = [];
+      if (item.remainingDays !== null && item.remainingDays !== undefined) {
+        candidates.push(item.remainingDays);
+      }
+      if (item.remainingKm !== null && item.remainingKm !== undefined) {
+        // Average 40 km/day equivalent to normalize days vs km
+        candidates.push(item.remainingKm / 40);
+      }
+      if (candidates.length === 0) return Infinity;
+      return Math.min(...candidates);
+    };
+
+    const aScore = getUrgencyScore(a);
+    const bScore = getUrgencyScore(b);
+
+    if (aScore !== bScore) {
+      return aScore - bScore;
+    }
+
+    return (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' });
+  });
+}
+
 export const GET: APIRoute = async () => {
   try {
     await initializeDatabase();
@@ -128,8 +160,8 @@ export const GET: APIRoute = async () => {
         reportedByAvatar: inc.reportedBy ? userMap.get(inc.reportedBy)?.avatar : null,
       }));
 
-      const computedItems = items.map((item) =>
-        computeMaintenanceStatus(item, v.currentKm || 0, Boolean(v.hasMileage))
+      const computedItems = sortMaintenanceItems(
+        items.map((item) => computeMaintenanceStatus(item, v.currentKm || 0, Boolean(v.hasMileage)))
       );
 
       // Calcular si toca actualizar km (> 30 días sin registrar)

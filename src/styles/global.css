@@ -76,8 +76,27 @@ body.theme-pastel .card-overdue:hover,
 }
 
 body.theme-pastel .card-overdue h4,
-.card-overdue h4 {
+.card-overdue h4,
+body.theme-pastel .card-overdue .card-title,
+.card-overdue .card-title,
+body.theme-pastel .card-overdue .text-white,
+.card-overdue .text-white {
   color: #881337 !important;
+}
+
+body.theme-pastel .card-overdue .text-slate-400,
+.card-overdue .text-slate-400 {
+  color: #9f1239 !important;
+}
+
+body.theme-pastel .card-overdue .text-slate-300,
+.card-overdue .text-slate-300 {
+  color: #be123c !important;
+}
+
+body.theme-pastel .card-overdue .text-indigo-300,
+.card-overdue .text-indigo-300 {
+  color: #b91c1c !important;
 }
 
 /* Tipografía y textos en modo pastel */
@@ -101,12 +120,19 @@ body.theme-pastel .text-slate-500 {
   color: #64748b;
 }
 
-/* Excepciones para botones con fondo de color sólido (mantienen texto blanco) */
-body.theme-pastel [class*="bg-indigo-"] .text-white,
-body.theme-pastel [class*="bg-purple-"] .text-white,
-body.theme-pastel [class*="bg-emerald-"] .text-white,
-body.theme-pastel [class*="bg-rose-"] .text-white,
-body.theme-pastel [class*="bg-pink-"] .text-white,
+/* Excepciones para botones o badges con fondo de color sólido (mantienen texto blanco) */
+body.theme-pastel button[class*="bg-indigo-"] .text-white,
+body.theme-pastel button[class*="bg-purple-"] .text-white,
+body.theme-pastel button[class*="bg-emerald-"] .text-white,
+body.theme-pastel button[class*="bg-rose-"] .text-white,
+body.theme-pastel button[class*="bg-pink-"] .text-white,
+body.theme-pastel span[class*="bg-indigo-"] .text-white,
+body.theme-pastel span[class*="bg-purple-"] .text-white,
+body.theme-pastel span[class*="bg-emerald-"] .text-white,
+body.theme-pastel span[class*="bg-rose-"] .text-white,
+body.theme-pastel span[class*="bg-pink-"] .text-white,
+body.theme-pastel span[class*="bg-rose-500"],
+body.theme-pastel span[class*="bg-rose-600"],
 body.theme-pastel button[class*="bg-indigo-"],
 body.theme-pastel button[class*="bg-purple-"],
 body.theme-pastel button[class*="bg-emerald-"],
