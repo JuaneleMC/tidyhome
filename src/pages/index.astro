@@ -3029,15 +3029,15 @@ import '../styles/global.css';
       ${
         v.needsKmUpdate
           ? `
-            <div class="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-2 text-xs text-amber-200">
-              <div class="flex items-center gap-1.5">
-                <span>⚠️</span>
-                <span>Hace más de 30 días que no se anotan los kilómetros de este vehículo.</span>
+            <div class="p-2.5 rounded-xl bg-amber-100/90 border border-amber-300/80 flex items-center justify-between gap-2 text-xs text-amber-950 font-semibold shadow-xs">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="shrink-0 text-sm">⚠️</span>
+                <span class="leading-tight">Hace más de 30 días que no se anotan los kilómetros de este vehículo.</span>
               </div>
               <button
                 type="button"
                 id="btn-alert-update-km"
-                class="px-2 py-0.5 rounded-md bg-amber-500 text-slate-900 font-bold text-[10px] shrink-0 active:scale-95"
+                class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shrink-0 shadow-xs active:scale-95 transition"
               >
                 Anotar
               </button>
@@ -3184,39 +3184,41 @@ import '../styles/global.css';
           }
 
           return `
-            <div class="glass-card rounded-2xl p-3.5 border transition ${
+            <div class="glass-card rounded-2xl p-3 border transition ${
               isOverdue
                 ? 'card-overdue border-rose-300'
                 : isSoon
-                ? 'border-amber-500/40 bg-amber-950/10'
+                ? 'border-amber-400/80 bg-amber-50/60'
                 : 'border-slate-700/60'
             }">
-              <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start justify-between gap-2.5">
                 <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <h4 class="text-sm font-bold truncate ${isOverdue ? 'text-rose-950 font-extrabold' : 'text-white'}">${escHtml(m.name)}</h4>
-                    ${statusBadge}
+                  <div class="flex items-start gap-1.5 flex-wrap">
+                    <h4 class="text-xs sm:text-sm font-bold break-words leading-tight ${isOverdue ? 'text-rose-950 font-extrabold' : 'text-white'}">${escHtml(m.name)}</h4>
+                    <span class="shrink-0">${statusBadge}</span>
                   </div>
-                  <p class="text-[11px] mt-0.5 font-medium ${isOverdue ? 'text-rose-900/80 font-semibold' : 'text-slate-400'}">${intervalsText || 'Sin periodicidad definida'}</p>
-                  <p class="text-xs font-semibold mt-1.5 ${isOverdue ? 'text-rose-800 font-bold' : 'text-indigo-400'}">${remainingText || 'Al día'}</p>
-                  <div class="text-[10px] mt-1 ${isOverdue ? 'text-rose-800/80 font-medium' : 'text-slate-400'}">
+                  <div class="text-[11px] leading-tight mt-1 flex items-center gap-1.5 flex-wrap">
+                    <span class="${isOverdue ? 'text-rose-800 font-bold' : 'text-indigo-600 font-semibold'}">${remainingText || 'Al día'}</span>
+                    <span class="text-slate-400 text-[10px]">(${intervalsText || 'Sin periodicidad'})</span>
+                  </div>
+                  <div class="text-[10px] leading-tight mt-0.5 ${isOverdue ? 'text-rose-900/70 font-medium' : 'text-slate-400'}">
                     Última vez: ${m.lastDoneDate || 'Nunca registrada'} ${m.lastDoneKm ? `(${m.lastDoneKm.toLocaleString('es-ES')} km)` : ''}
                   </div>
                 </div>
 
-                <div class="flex flex-col items-end gap-1.5 shrink-0">
+                <div class="flex flex-col items-end gap-1 shrink-0">
                   <button
                     type="button"
-                    class="btn-maint-execute px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30 transition active:scale-95"
+                    class="btn-maint-execute px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-xs transition active:scale-95"
                     data-id="${m.id}"
                     data-name="${escHtml(m.name)}"
                   >
                     ✓ Registrar
                   </button>
-                  <div class="flex items-center gap-1">
+                  <div class="flex items-center gap-0.5">
                     <button
                       type="button"
-                      class="btn-maint-edit p-1 text-slate-400 hover:text-indigo-400 transition"
+                      class="btn-maint-edit p-1 text-slate-400 hover:text-indigo-400 transition text-xs"
                       data-id="${m.id}"
                       title="Editar regla"
                     >
@@ -3224,7 +3226,7 @@ import '../styles/global.css';
                     </button>
                     <button
                       type="button"
-                      class="btn-maint-delete p-1 text-slate-400 hover:text-rose-400 transition"
+                      class="btn-maint-delete p-1 text-slate-400 hover:text-rose-400 transition text-xs"
                       data-id="${m.id}"
                       data-name="${escHtml(m.name)}"
                       title="Eliminar regla"
@@ -3280,15 +3282,15 @@ import '../styles/global.css';
         `;
       } else {
         incContainer.innerHTML = openIncidents.map((inc: any) => `
-          <div class="glass-card rounded-2xl p-3.5 border border-amber-500/40 bg-amber-950/15 space-y-2">
-            <div class="flex items-start justify-between gap-3">
+          <div class="glass-card rounded-2xl p-3 border border-amber-300/80 bg-amber-50/70 space-y-1.5">
+            <div class="flex items-start justify-between gap-2.5">
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-base">⚠️</span>
-                  <h4 class="text-sm font-bold text-amber-200 truncate">${escHtml(inc.title)}</h4>
+                <div class="flex items-start gap-1.5 flex-wrap">
+                  <span class="text-sm shrink-0">⚠️</span>
+                  <h4 class="text-xs sm:text-sm font-bold text-amber-950 break-words leading-tight">${escHtml(inc.title)}</h4>
                 </div>
-                ${inc.description ? `<p class="text-xs text-slate-300 mt-1">${escHtml(inc.description)}</p>` : ''}
-                <div class="text-[10px] text-slate-400 mt-1 flex items-center gap-2">
+                ${inc.description ? `<p class="text-xs text-slate-600 mt-1 break-words leading-tight">${escHtml(inc.description)}</p>` : ''}
+                <div class="text-[10px] text-slate-500 mt-0.5 flex items-center gap-2">
                   <span>Reportado: ${inc.reportedDate}</span>
                   ${inc.reportedByName ? `<span>por ${escHtml(inc.reportedByName)}</span>` : ''}
                 </div>
@@ -3296,7 +3298,7 @@ import '../styles/global.css';
 
               <button
                 type="button"
-                class="btn-resolve-incident px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 transition active:scale-95 shrink-0"
+                class="btn-resolve-incident px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition active:scale-95 shrink-0"
                 data-id="${inc.id}"
                 data-title="${escHtml(inc.title)}"
               >

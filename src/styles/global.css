@@ -274,6 +274,18 @@ body.theme-pastel .bg-rose-950\/15 {
   border-color: #fecdd3 !important;
 }
 
+/* Avisos y alertas de color ámbar (mantenimientos y km) */
+body.theme-pastel .bg-amber-950\/15,
+body.theme-pastel .bg-amber-500\/15 {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+}
+
+body.theme-pastel .text-amber-200,
+body.theme-pastel .text-amber-300 {
+  color: #78350f !important;
+}
+
 /* Barra de progreso de fondo */
 body.theme-pastel .bg-slate-800\/80.rounded-full,
 body.theme-pastel .bg-slate-800.rounded-full {
