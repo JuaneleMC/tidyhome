@@ -1256,6 +1256,37 @@ import '../styles/global.css';
     }
   }
 
+  function formatScheduledDateForUserView(chore: ChoreLogItem): string {
+    const dateStr = chore.originalTargetDate || chore.targetDate;
+    if (!dateStr) return '';
+
+    const daysOfWeekEs = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const monthsShortEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+    const parts = dateStr.split('-').map(Number);
+    if (parts.length !== 3) return '';
+    const [y, m, d] = parts;
+    const dateObj = new Date(y, m - 1, d);
+    const dayName = daysOfWeekEs[dateObj.getDay()];
+    const monthShort = monthsShortEs[dateObj.getMonth()];
+
+    const today = new Date();
+    const isToday =
+      today.getFullYear() === y && today.getMonth() === m - 1 && today.getDate() === d;
+
+    return `
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
+        isToday
+          ? 'bg-indigo-500/20 text-indigo-700 border border-indigo-500/30'
+          : 'bg-slate-800 text-slate-300 border border-slate-700/60'
+      }" title="Programada para: ${dayName}, ${d} de ${monthShort}">
+        <span>📅</span>
+        <span>${dayName} ${d} ${monthShort}</span>
+        ${isToday ? '<span class="text-[9px] px-1 py-0.1 bg-indigo-600 text-white rounded font-bold uppercase">Hoy</span>' : ''}
+      </span>
+    `;
+  }
+
   // ==========================================
   // NAVIGATION & TABS
   // ==========================================
@@ -1957,7 +1988,13 @@ import '../styles/global.css';
           userChores = userChores.filter((c) => c.status === 'completed');
         }
 
-        userChores.sort((a, b) => a.choreName.localeCompare(b.choreName, 'es', { sensitivity: 'base' }));
+        userChores.sort((a, b) => {
+          const dateA = a.originalTargetDate || a.targetDate || '';
+          const dateB = b.originalTargetDate || b.targetDate || '';
+          const dateComp = dateA.localeCompare(dateB);
+          if (dateComp !== 0) return dateComp;
+          return a.choreName.localeCompare(b.choreName, 'es', { sensitivity: 'base' });
+        });
 
         const totalUser = allChores.filter((c) => c.assignedToId === user.id).length;
         const doneUser = allChores.filter((c) => c.assignedToId === user.id && c.status === 'completed').length;
@@ -2001,7 +2038,7 @@ import '../styles/global.css';
                   ? `<div class="py-3 text-center text-xs text-slate-500">
                       Sin tareas asignadas con el filtro actual.
                      </div>`
-                  : userChores.map((chore) => renderChoreCardInDashboard(chore)).join('')
+                  : userChores.map((chore) => renderChoreCardInDashboard(chore, { showScheduledDate: true })).join('')
               }
             </div>
           </div>
@@ -2015,11 +2052,12 @@ import '../styles/global.css';
   /**
    * Render individual chore card in Dashboard with the "¡Lo hago yo!" button
    */
-  function renderChoreCardInDashboard(chore: ChoreLogItem): string {
+  function renderChoreCardInDashboard(chore: ChoreLogItem, options: { showScheduledDate?: boolean } = {}): string {
     const isCompleted = chore.status === 'completed';
     const isOverdue = chore.isOverdue;
     const isStolen = isCompleted && chore.executedById && chore.executedById !== chore.assignedToId;
     const isAssignedToMe = activeUser?.id === chore.assignedToId;
+    const showScheduledDate = options.showScheduledDate ?? false;
 
     return `
       <div
@@ -2063,14 +2101,20 @@ import '../styles/global.css';
               }
             </div>
 
-            <!-- Details: Assignee & Executor -->
+            <!-- Details: Assignee, Date & Status -->
             <div class="flex items-center gap-2 mt-1 flex-wrap text-[11px]">
-              <span class="inline-flex items-center gap-1 text-slate-400">
-                <span>${chore.assignedToAvatar}</span>
-                <span class="${isAssignedToMe ? 'text-indigo-600 font-semibold' : ''}">
-                  ${chore.assignedToName}
-                </span>
-              </span>
+              ${
+                showScheduledDate
+                  ? formatScheduledDateForUserView(chore)
+                  : `
+                    <span class="inline-flex items-center gap-1 text-slate-400">
+                      <span>${chore.assignedToAvatar}</span>
+                      <span class="${isAssignedToMe ? 'text-indigo-600 font-semibold' : ''}">
+                        ${chore.assignedToName}
+                      </span>
+                    </span>
+                  `
+              }
 
               ${
                 isStolen
@@ -2086,7 +2130,7 @@ import '../styles/global.css';
                   : `<span class="text-[10px] text-amber-400/90 font-medium">⏳ Pendiente</span>`
               }
 
-              ${formatScheduledDateBadge(chore)}
+              ${!showScheduledDate ? formatScheduledDateBadge(chore) : ''}
             </div>
           </div>
         </div>
