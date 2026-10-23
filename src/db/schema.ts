@@ -191,6 +191,55 @@ export const vehicleMaintenanceLogsRelations = relations(vehicleMaintenanceLogs,
   }),
 }));
 
+// ==========================================
+// MÓDULO LISTA DE LA COMPRA (SUPERMERCADO)
+// ==========================================
+
+export const SHOPPING_CATEGORIES = [
+  'Frutas y Verduras',
+  'Lácteos y Huevos',
+  'Carnicería y Charcutería',
+  'Pescadería',
+  'Panadería y Cereales',
+  'Despensa y Conservas',
+  'Bebidas',
+  'Limpieza y Hogar',
+  'Higiene y Cuidado',
+  'Congelados',
+  'Snacks y Dulces',
+  'Otros',
+] as const;
+
+export type ShoppingCategoryType = typeof SHOPPING_CATEGORIES[number];
+
+export const shoppingItems = sqliteTable('shopping_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  category: text('category').default('Otros'),
+  quantity: text('quantity'), // Ej: "2 packs", "1 kg"
+  notes: text('notes'), // Ej: "De la marca blanca, semi"
+  addedBy: integer('added_by')
+    .references(() => users.id, { onDelete: 'set null' }),
+  isBought: integer('is_bought').default(0), // 0 = pendiente, 1 = comprado
+  boughtBy: integer('bought_by')
+    .references(() => users.id, { onDelete: 'set null' }),
+  boughtAt: text('bought_at'), // ISO string cuando se tacha
+  createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
+});
+
+export const shoppingItemsRelations = relations(shoppingItems, ({ one }) => ({
+  addedByUser: one(users, {
+    fields: [shoppingItems.addedBy],
+    references: [users.id],
+    relationName: 'addedByUser',
+  }),
+  boughtByUser: one(users, {
+    fields: [shoppingItems.boughtBy],
+    references: [users.id],
+    relationName: 'boughtByUser',
+  }),
+}));
+
 export const vehicleIncidentsRelations = relations(vehicleIncidents, ({ one }) => ({
   vehicle: one(vehicles, {
     fields: [vehicleIncidents.vehicleId],
@@ -214,4 +263,6 @@ export type VehicleMaintenanceItem = typeof vehicleMaintenance.$inferSelect;
 export type NewVehicleMaintenanceItem = typeof vehicleMaintenance.$inferInsert;
 export type VehicleMaintenanceLog = typeof vehicleMaintenanceLogs.$inferSelect;
 export type VehicleIncident = typeof vehicleIncidents.$inferSelect;
+export type ShoppingItem = typeof shoppingItems.$inferSelect;
+export type NewShoppingItem = typeof shoppingItems.$inferInsert;
 

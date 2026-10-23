@@ -371,6 +371,137 @@ import '../styles/global.css';
   </section>
 
   <!-- ========================================== -->
+  <!-- TAB 3: LISTA DE LA COMPRA (SUPERMERCADO) -->
+  <!-- ========================================== -->
+  <section id="view-shopping" class="tab-view hidden space-y-4">
+    <!-- Header with stats and actions -->
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+          <span>🛒</span> Lista de la Compra
+        </h2>
+        <p class="text-xs text-slate-400 font-medium">Anota lo que falta y táchalo en el súper</p>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button
+          id="btn-shopping-clear-bought"
+          type="button"
+          class="hidden text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border border-slate-700/60 hover:border-rose-500/30 font-semibold transition active:scale-95"
+          title="Borrar productos ya comprados"
+        >
+          🧹 Limpiar comprados
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Add Input (Listonic style: fast and intuitive) -->
+    <div class="glass-card rounded-2xl p-3 border border-emerald-500/30 bg-slate-900/90 shadow-xl shadow-emerald-950/20">
+      <form id="form-quick-add-shopping" class="space-y-2">
+        <div class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🛒</span>
+            <input
+              type="text"
+              id="input-shopping-name"
+              placeholder="Añadir producto... (ej: Leche, Manzanas, Papel higiénico)"
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              autocomplete="off"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            id="btn-shopping-add"
+            class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-md shadow-emerald-600/30 active:scale-95 transition flex items-center gap-1 shrink-0"
+          >
+            <span>+</span>
+            <span class="hidden xs:inline">Añadir</span>
+          </button>
+        </div>
+
+        <!-- Optional details row -->
+        <div class="flex items-center gap-2 pt-0.5 text-xs flex-wrap">
+          <input
+            type="text"
+            id="input-shopping-qty"
+            placeholder="Cant. (ej: 2 packs, 1 kg)"
+            class="w-32 bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          />
+          <select
+            id="select-shopping-category"
+            class="bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          >
+            <option value="auto">🏷️ Categoría: Auto</option>
+            <option value="Frutas y Verduras">🍎 Frutas y Verduras</option>
+            <option value="Lácteos y Huevos">🥛 Lácteos y Huevos</option>
+            <option value="Carnicería y Charcutería">🥩 Carnicería</option>
+            <option value="Pescadería">🐟 Pescadería</option>
+            <option value="Panadería y Cereales">🥖 Panadería</option>
+            <option value="Despensa y Conservas">🥫 Despensa</option>
+            <option value="Bebidas">🥤 Bebidas</option>
+            <option value="Limpieza y Hogar">🧹 Limpieza</option>
+            <option value="Higiene y Cuidado">🧴 Higiene</option>
+            <option value="Congelados">❄️ Congelados</option>
+            <option value="Snacks y Dulces">🍫 Snacks</option>
+            <option value="Otros">📦 Otros</option>
+          </select>
+          <input
+            type="text"
+            id="input-shopping-notes"
+            placeholder="Nota (marca, detalle...)"
+            class="flex-1 min-w-[120px] bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          />
+        </div>
+      </form>
+    </div>
+
+    <!-- Quick suggestions / Favourites pills -->
+    <div class="space-y-1.5">
+      <div class="flex items-center justify-between text-[11px] text-slate-400">
+        <span>⚡ Habituales con 1 toque:</span>
+      </div>
+      <div id="shopping-quick-pills" class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Category Filter pills -->
+    <div id="shopping-category-filter" class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+      <!-- Filter buttons: Todas, Fruta, Lácteos... -->
+    </div>
+
+    <!-- Shopping Status Bar -->
+    <div id="shopping-status-bar" class="flex items-center justify-between text-xs px-1 text-slate-400">
+      <span id="shopping-pending-count-label">0 artículos por comprar</span>
+      <span id="shopping-active-shopper" class="text-slate-500"></span>
+    </div>
+
+    <!-- Pending Shopping Items (Grouped by Category) -->
+    <div id="shopping-pending-container" class="space-y-3 pb-4">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- Bought Items Section (Collapsible) -->
+    <div id="shopping-bought-wrapper" class="hidden space-y-2 pt-3 border-t border-slate-800 pb-20">
+      <div class="flex items-center justify-between">
+        <button
+          id="btn-toggle-bought-section"
+          type="button"
+          class="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-200 transition"
+        >
+          <span id="bought-chevron" class="text-[10px]">▼</span>
+          <span>Ya en el carro (<span id="shopping-bought-count">0</span>)</span>
+        </button>
+      </div>
+
+      <div id="shopping-bought-container" class="space-y-1.5">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
   <!-- MODAL: NUEVA TAREA (CATÁLOGO) -->
   <!-- ========================================== -->
   <div
@@ -451,7 +582,7 @@ import '../styles/global.css';
         </div>
 
         <!-- Modo de Asignación: Fija o Rotativa -->
-        <div>
+        <div id="container-assignment-mode">
           <label class="block text-xs font-semibold text-slate-300 mb-1.5">Modalidad de reparto</label>
           <div class="grid grid-cols-2 gap-2">
             <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 cursor-pointer hover:border-slate-500 transition has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-950/30">
@@ -475,11 +606,10 @@ import '../styles/global.css';
           </p>
         </div>
 
-        <div>
+        <div id="container-assignee">
           <label id="label-assignee-select" class="block text-xs font-semibold text-slate-300 mb-1">Responsable habitual</label>
           <select
             id="select-chore-assignee"
-            required
             class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <!-- Options populated by JS -->
@@ -1123,7 +1253,10 @@ import '../styles/global.css';
   // Application State
   let usersList: User[] = [];
   let activeUser: User | null = null;
-  let activeTab: 'calendar' | 'garage' | 'catalog' | 'roommates' = 'calendar';
+  let activeTab: 'calendar' | 'garage' | 'catalog' | 'roommates' | 'shopping' = 'calendar';
+  let shoppingItemsList: any[] = [];
+  let shoppingCategoryFilter: string = 'all';
+  let isBoughtSectionOpen: boolean = true;
   let calViewMode: 'month' | 'week' = 'month';
   let garageData: any[] = [];
   let activeVehicleId: number | null = null;
@@ -1629,7 +1762,7 @@ import '../styles/global.css';
     }
   }
 
-  function switchTab(tab: 'calendar' | 'garage' | 'catalog' | 'roommates') {
+  function switchTab(tab: 'calendar' | 'garage' | 'catalog' | 'roommates' | 'shopping') {
     activeTab = tab;
 
     // Update bottom nav buttons
@@ -1667,6 +1800,8 @@ import '../styles/global.css';
       loadCatalog();
     } else if (tab === 'roommates') {
       loadRoommates();
+    } else if (tab === 'shopping') {
+      loadShoppingList();
     }
   }
 
@@ -1812,15 +1947,18 @@ import '../styles/global.css';
       return;
     }
 
-    select.innerHTML = usersList
-      .map(
-        (u) => `
-        <option value="${u.id}" ${activeUser?.id === u.id ? 'selected' : ''}>
-          ${u.avatar || '👤'} ${u.name}
-        </option>
-      `
-      )
-      .join('');
+    select.innerHTML = `
+      <option value="">Sin responsable (Libre / Cualquiera)</option>
+      ${usersList
+        .map(
+          (u) => `
+          <option value="${u.id}" ${activeUser?.id === u.id ? 'selected' : ''}>
+            ${u.avatar || '👤'} ${u.name}
+          </option>
+        `
+        )
+        .join('')}
+    `;
   }
 
   // ==========================================
@@ -2058,6 +2196,8 @@ import '../styles/global.css';
     const isStolen = isCompleted && chore.executedById && chore.executedById !== chore.assignedToId;
     const isAssignedToMe = activeUser?.id === chore.assignedToId;
     const showScheduledDate = options.showScheduledDate ?? false;
+    const isPunctual = chore.frequency === 'once' || !chore.assignedToId || chore.assignedToName === 'Sin responsable';
+    const isShoppingChore = chore.choreName.toLowerCase().includes('compra');
 
     return `
       <div
@@ -2097,6 +2237,10 @@ import '../styles/global.css';
                   ? `<span class="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30 shrink-0">
                       🔄 Rotativa
                      </span>`
+                  : isPunctual
+                  ? `<span class="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0">
+                      ⚡ Puntual
+                     </span>`
                   : ''
               }
             </div>
@@ -2106,9 +2250,11 @@ import '../styles/global.css';
               ${
                 showScheduledDate
                   ? formatScheduledDateForUserView(chore)
+                  : isPunctual && !isCompleted
+                  ? ''
                   : `
                     <span class="inline-flex items-center gap-1 text-slate-400">
-                      <span>${chore.assignedToAvatar}</span>
+                      <span>${chore.assignedToAvatar || '👤'}</span>
                       <span class="${isAssignedToMe ? 'text-indigo-600 font-semibold' : ''}">
                         ${chore.assignedToName}
                       </span>
@@ -2138,22 +2284,35 @@ import '../styles/global.css';
         <!-- Action Button: ¡Lo hago yo! or Toggle Check -->
         <div class="shrink-0 flex items-center gap-1.5">
           ${
+            isShoppingChore
+              ? `
+                <button
+                  type="button"
+                  class="btn-chore-go-shopping inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition active:scale-95 shadow-sm"
+                  title="Abrir la lista de la compra"
+                >
+                  🛒 Lista
+                </button>
+              `
+              : ''
+          }
+          ${
             !isCompleted
               ? `
                 <button
                   class="btn-steal-chore inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition active:scale-95 shadow-md ${
-                    isAssignedToMe
+                    isAssignedToMe || isPunctual
                       ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30'
                       : 'bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 shadow-pink-600/30 pulse-steal'
                   }"
                   data-id="${chore.id}"
                   data-assignee="${chore.assignedToName}"
-                  data-mine="${isAssignedToMe}"
+                  data-mine="${isAssignedToMe || isPunctual}"
                   id="btn-steal-${chore.id}"
                 >
                   <span class="btn-spinner hidden w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                   <span class="btn-text">
-                    ${isAssignedToMe ? '✓ Hecho' : '¡Lo hago yo! ⚡'}
+                    ${isAssignedToMe || isPunctual ? '✓ Hecho' : '¡Lo hago yo! ⚡'}
                   </span>
                 </button>
               `
@@ -2344,7 +2503,10 @@ import '../styles/global.css';
     const categoryInput = document.getElementById('input-chore-category') as HTMLInputElement | null;
 
     if (nameInput) nameInput.value = item.name || '';
-    if (freqSelect) freqSelect.value = item.frequency || 'weekly';
+    if (freqSelect) {
+      freqSelect.value = item.frequency || 'weekly';
+      freqSelect.dispatchEvent(new Event('change'));
+    }
     if (daySelect) daySelect.value = String(item.dayOfWeek ?? 1);
     if (secondDaySelect) secondDaySelect.value = String(item.secondDayOfWeek ?? 4);
 
@@ -2364,7 +2526,7 @@ import '../styles/global.css';
       radio.dispatchEvent(new Event('change'));
     }
 
-    if (assigneeSelect) assigneeSelect.value = String(item.defaultAssigneeId);
+    if (assigneeSelect) assigneeSelect.value = item.defaultAssigneeId ? String(item.defaultAssigneeId) : '';
     if (iconInput) iconInput.value = item.icon || '🧹';
     if (categoryInput) categoryInput.value = item.category || 'Hogar';
 
@@ -2388,6 +2550,11 @@ import '../styles/global.css';
     if (submitBtn) submitBtn.textContent = 'Guardar y Sincronizar';
 
     formChore?.reset();
+    const freqSelect = document.getElementById('select-chore-frequency') as HTMLSelectElement | null;
+    if (freqSelect) {
+      freqSelect.value = 'weekly';
+      freqSelect.dispatchEvent(new Event('change'));
+    }
     document.getElementById('container-second-day')?.classList.add('hidden');
     const labelDay1 = document.getElementById('label-chore-day-1');
     if (labelDay1) labelDay1.textContent = 'Día preferido';
@@ -2534,7 +2701,11 @@ import '../styles/global.css';
                   ${item.category}
                 </span>
                 ${
-                  item.assignmentMode === 'rotating'
+                  item.frequency === 'once'
+                    ? `<span class="text-[10px] px-2 py-0.5 rounded-md font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        ⚡ Puntual
+                       </span>`
+                    : item.assignmentMode === 'rotating'
                     ? `<span class="text-[10px] px-2 py-0.5 rounded-md font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
                         🔄 Rotativa semanal
                        </span>`
@@ -2544,6 +2715,10 @@ import '../styles/global.css';
                 }
               </div>
 
+              ${
+                item.frequency === 'once' || !item.assigneeName
+                  ? ''
+                  : `
               <div class="flex items-center gap-2 mt-2 text-[11px] text-slate-400 flex-wrap">
                 <span>${item.assignmentMode === 'rotating' ? 'Punto de partida:' : 'Responsable:'}</span>
                 <span class="inline-flex items-center gap-1 font-semibold text-slate-200">
@@ -2552,6 +2727,23 @@ import '../styles/global.css';
                 </span>
                 ${item.assignmentMode === 'rotating' ? '<span class="text-[10px] text-purple-400 font-medium">(rota cada semana)</span>' : ''}
               </div>
+                  `
+              }
+
+              ${
+                item.name.toLowerCase().includes('compra')
+                  ? `
+                    <div class="mt-2.5">
+                      <button
+                        type="button"
+                        class="btn-catalog-go-shopping inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition active:scale-95"
+                      >
+                        🛒 Abrir lista de la compra →
+                      </button>
+                    </div>
+                  `
+                  : ''
+              }
 
               <div class="text-[11px] text-indigo-300 font-medium mt-1">
                 ${
@@ -2866,7 +3058,466 @@ import '../styles/global.css';
     });
   }
 
-  
+  // ==========================================
+  // MÓDULO LISTA DE LA COMPRA (SUPERMERCADO)
+  // ==========================================
+
+  const SHOPPING_CATEGORIES_DATA: Record<string, { icon: string; color: string; bg: string }> = {
+    'Frutas y Verduras': { icon: '🍎', color: 'text-emerald-400', bg: 'bg-emerald-500/15 border-emerald-500/30' },
+    'Lácteos y Huevos': { icon: '🥛', color: 'text-amber-300', bg: 'bg-amber-500/15 border-amber-500/30' },
+    'Carnicería y Charcutería': { icon: '🥩', color: 'text-rose-400', bg: 'bg-rose-500/15 border-rose-500/30' },
+    'Pescadería': { icon: '🐟', color: 'text-cyan-400', bg: 'bg-cyan-500/15 border-cyan-500/30' },
+    'Panadería y Cereales': { icon: '🥖', color: 'text-yellow-400', bg: 'bg-yellow-500/15 border-yellow-500/30' },
+    'Despensa y Conservas': { icon: '🥫', color: 'text-orange-400', bg: 'bg-orange-500/15 border-orange-500/30' },
+    'Bebidas': { icon: '🥤', color: 'text-blue-400', bg: 'bg-blue-500/15 border-blue-500/30' },
+    'Limpieza y Hogar': { icon: '🧹', color: 'text-teal-400', bg: 'bg-teal-500/15 border-teal-500/30' },
+    'Higiene y Cuidado': { icon: '🧴', color: 'text-pink-400', bg: 'bg-pink-500/15 border-pink-500/30' },
+    'Congelados': { icon: '❄️', color: 'text-sky-300', bg: 'bg-sky-500/15 border-sky-500/30' },
+    'Snacks y Dulces': { icon: '🍫', color: 'text-purple-400', bg: 'bg-purple-500/15 border-purple-500/30' },
+    'Otros': { icon: '📦', color: 'text-slate-400', bg: 'bg-slate-500/15 border-slate-500/30' },
+  };
+
+  const QUICK_SHOPPING_SUGGESTIONS = [
+    { name: 'Leche', icon: '🥛', cat: 'Lácteos y Huevos' },
+    { name: 'Huevos', icon: '🥚', cat: 'Lácteos y Huevos' },
+    { name: 'Pan', icon: '🥖', cat: 'Panadería y Cereales' },
+    { name: 'Plátanos', icon: '🍌', cat: 'Frutas y Verduras' },
+    { name: 'Tomates', icon: '🍅', cat: 'Frutas y Verduras' },
+    { name: 'Papel higiénico', icon: '🧻', cat: 'Limpieza y Hogar' },
+    { name: 'Aceite de oliva', icon: '🫒', cat: 'Despensa y Conservas' },
+    { name: 'Café', icon: '☕', cat: 'Despensa y Conservas' },
+    { name: 'Detergente', icon: '🧺', cat: 'Limpieza y Hogar' },
+    { name: 'Agua', icon: '💧', cat: 'Bebidas' },
+  ];
+
+  async function loadShoppingList() {
+    try {
+      const res = await fetch('/api/shopping');
+      const data = await res.json();
+      if (data.success) {
+        shoppingItemsList = data.items || [];
+        updateShoppingBadge();
+        renderShoppingList();
+      }
+    } catch (err) {
+      console.error('Error fetching shopping list:', err);
+    }
+  }
+
+  function updateShoppingBadge() {
+    const badge = document.getElementById('badge-shopping-count');
+    const pendingCount = shoppingItemsList.filter((i) => !i.isBought).length;
+    if (badge) {
+      if (pendingCount > 0) {
+        badge.textContent = pendingCount > 99 ? '99+' : String(pendingCount);
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+  }
+
+  function renderShoppingList() {
+    const pendingContainer = document.getElementById('shopping-pending-container');
+    const boughtContainer = document.getElementById('shopping-bought-container');
+    const boughtWrapper = document.getElementById('shopping-bought-wrapper');
+    const clearBoughtBtn = document.getElementById('btn-shopping-clear-bought');
+    const quickPillsContainer = document.getElementById('shopping-quick-pills');
+    const catFilterContainer = document.getElementById('shopping-category-filter');
+    const countLabel = document.getElementById('shopping-pending-count-label');
+    const boughtCountLabel = document.getElementById('shopping-bought-count');
+    const activeShopperEl = document.getElementById('shopping-active-shopper');
+
+    if (!pendingContainer || !boughtContainer) return;
+
+    const pendingItems = shoppingItemsList.filter((i) => !i.isBought);
+    const boughtItems = shoppingItemsList.filter((i) => i.isBought);
+
+    // Update counts and status
+    if (countLabel) {
+      countLabel.textContent = `${pendingItems.length} ${pendingItems.length === 1 ? 'artículo pendiente' : 'artículos por comprar'}`;
+    }
+    if (boughtCountLabel) {
+      boughtCountLabel.textContent = String(boughtItems.length);
+    }
+    if (activeShopperEl) {
+      activeShopperEl.textContent = activeUser ? `Tachando como: ${activeUser.avatar || '👤'} ${activeUser.name}` : '';
+    }
+
+    // Toggle Clear Bought button & Bought section
+    if (clearBoughtBtn) {
+      clearBoughtBtn.classList.toggle('hidden', boughtItems.length === 0);
+    }
+    if (boughtWrapper) {
+      boughtWrapper.classList.toggle('hidden', boughtItems.length === 0);
+    }
+
+    // Render Quick Suggestions Pills
+    if (quickPillsContainer) {
+      quickPillsContainer.innerHTML = QUICK_SHOPPING_SUGGESTIONS.map((sug) => {
+        const isAlreadyPending = pendingItems.some((i) => i.name.toLowerCase().trim() === sug.name.toLowerCase().trim());
+        return `
+          <button
+            type="button"
+            class="btn-quick-shopping-pill shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-medium transition active:scale-95 ${
+              isAlreadyPending
+                ? 'bg-slate-800/40 text-slate-500 border-slate-800 cursor-default opacity-60'
+                : 'bg-slate-800/80 hover:bg-emerald-950/40 text-slate-200 hover:text-emerald-300 border-slate-700/60 hover:border-emerald-500/30'
+            }"
+            data-name="${escHtml(sug.name)}"
+            data-cat="${escHtml(sug.cat)}"
+            ${isAlreadyPending ? 'disabled' : ''}
+          >
+            <span>${sug.icon}</span>
+            <span>${escHtml(sug.name)}</span>
+            ${isAlreadyPending ? '<span class="text-[10px] text-emerald-400">✓</span>' : '<span class="text-slate-500">+</span>'}
+          </button>
+        `;
+      }).join('');
+
+      quickPillsContainer.querySelectorAll('.btn-quick-shopping-pill:not([disabled])').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const name = btn.getAttribute('data-name');
+          const cat = btn.getAttribute('data-cat');
+          if (name) addShoppingItem(name, cat || undefined);
+        });
+      });
+    }
+
+    // Render Category Filter Pills
+    if (catFilterContainer) {
+      const categoriesPresent = Array.from(new Set(pendingItems.map((i) => i.category || 'Otros')));
+      if (categoriesPresent.length > 1) {
+        catFilterContainer.classList.remove('hidden');
+        catFilterContainer.innerHTML = `
+          <button
+            type="button"
+            class="btn-shopping-cat-filter px-3 py-1 rounded-lg text-xs font-semibold transition ${
+              shoppingCategoryFilter === 'all'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-slate-800 text-slate-400 hover:text-white'
+            }"
+            data-cat="all"
+          >
+            Todos (${pendingItems.length})
+          </button>
+          ${categoriesPresent
+            .map((cat) => {
+              const count = pendingItems.filter((i) => (i.category || 'Otros') === cat).length;
+              const meta = SHOPPING_CATEGORIES_DATA[cat] || SHOPPING_CATEGORIES_DATA['Otros'];
+              const isActive = shoppingCategoryFilter === cat;
+              return `
+                <button
+                  type="button"
+                  class="btn-shopping-cat-filter shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition ${
+                    isActive
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                      : 'bg-slate-800/80 text-slate-300 hover:text-white border-slate-700/60'
+                  }"
+                  data-cat="${escHtml(cat)}"
+                >
+                  <span>${meta.icon}</span>
+                  <span>${escHtml(cat)}</span>
+                  <span class="text-[10px] px-1 py-0.2 rounded bg-slate-900/60 font-bold">${count}</span>
+                </button>
+              `;
+            })
+            .join('')}
+        `;
+
+        catFilterContainer.querySelectorAll('.btn-shopping-cat-filter').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            shoppingCategoryFilter = btn.getAttribute('data-cat') || 'all';
+            renderShoppingList();
+          });
+        });
+      } else {
+        catFilterContainer.classList.add('hidden');
+      }
+    }
+
+    // Filter pending items
+    let filteredPending = [...pendingItems];
+    if (shoppingCategoryFilter !== 'all') {
+      filteredPending = filteredPending.filter((i) => (i.category || 'Otros') === shoppingCategoryFilter);
+    }
+
+    // Render Pending Items Grouped by Category
+    if (pendingItems.length === 0) {
+      pendingContainer.innerHTML = `
+        <div class="glass-card rounded-2xl p-8 text-center space-y-2 border border-slate-800">
+          <div class="text-4xl">🎉</div>
+          <h4 class="text-sm font-bold text-white">¡No falta nada en la despensa!</h4>
+          <p class="text-xs text-slate-400 max-w-sm mx-auto">
+            Usa el buscador de arriba o toca en los habituales para apuntar lo que se vaya gastando en casa.
+          </p>
+        </div>
+      `;
+    } else if (filteredPending.length === 0) {
+      pendingContainer.innerHTML = `
+        <div class="glass-card rounded-2xl p-6 text-center space-y-1 text-slate-400 text-xs">
+          <p>No hay artículos pendientes en esta categoría.</p>
+        </div>
+      `;
+    } else {
+      // Group by category
+      const groupsMap = new Map<string, any[]>();
+      for (const item of filteredPending) {
+        const cat = item.category || 'Otros';
+        if (!groupsMap.has(cat)) groupsMap.set(cat, []);
+        groupsMap.get(cat)!.push(item);
+      }
+
+      pendingContainer.innerHTML = Array.from(groupsMap.entries())
+        .map(([cat, items]) => {
+          const meta = SHOPPING_CATEGORIES_DATA[cat] || SHOPPING_CATEGORIES_DATA['Otros'];
+          return `
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-1.5 px-1 pt-1 text-xs font-bold ${meta.color}">
+                <span>${meta.icon}</span>
+                <span class="tracking-tight uppercase text-[11px]">${escHtml(cat)}</span>
+                <span class="text-[10px] text-slate-500 font-normal">(${items.length})</span>
+              </div>
+
+              <div class="space-y-1">
+                ${items
+                  .map(
+                    (item) => `
+                  <div
+                    class="glass-card glass-card-hover rounded-xl p-3 flex items-center justify-between gap-3 border border-slate-700/60 hover:border-slate-600 transition"
+                    id="shopping-item-${item.id}"
+                  >
+                    <!-- Checkbox and Name -->
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        class="btn-toggle-shopping-item w-7 h-7 rounded-full border-2 border-slate-600 hover:border-emerald-500 hover:bg-emerald-500/10 flex items-center justify-center transition active:scale-90 shrink-0 group"
+                        data-id="${item.id}"
+                        data-bought="true"
+                        title="Marcar como comprado"
+                      >
+                        <span class="opacity-0 group-hover:opacity-100 text-emerald-400 text-xs font-bold transition">✓</span>
+                      </button>
+
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap leading-tight">
+                          <span class="text-sm font-semibold text-white break-words">
+                            ${escHtml(item.name)}
+                          </span>
+                          ${
+                            item.quantity
+                              ? `<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                  ${escHtml(item.quantity)}
+                                 </span>`
+                              : ''
+                          }
+                        </div>
+
+                        ${
+                          item.notes
+                            ? `<p class="text-xs text-slate-400 italic mt-0.5 break-words">${escHtml(item.notes)}</p>`
+                            : ''
+                        }
+
+                        <div class="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                          ${
+                            item.addedByName
+                              ? `<span class="inline-flex items-center gap-1">
+                                  <span>${escHtml(item.addedByAvatar || '👤')}</span>
+                                  <span>${escHtml(item.addedByName)}</span>
+                                 </span>`
+                              : ''
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Delete button -->
+                    <button
+                      type="button"
+                      class="btn-delete-shopping-item p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition shrink-0"
+                      data-id="${item.id}"
+                      title="Eliminar de la lista"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                `
+                  )
+                  .join('')}
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    // Render Bought Items
+    if (boughtContainer && boughtItems.length > 0) {
+      boughtContainer.innerHTML = boughtItems
+        .map(
+          (item) => `
+        <div
+          class="glass-card rounded-xl p-2.5 flex items-center justify-between gap-3 border border-slate-800/80 bg-slate-900/40 opacity-70 hover:opacity-100 transition"
+          id="shopping-item-${item.id}"
+        >
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <button
+              type="button"
+              class="btn-toggle-shopping-item w-6 h-6 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center text-emerald-400 text-xs font-bold transition active:scale-90 shrink-0"
+              data-id="${item.id}"
+              data-bought="false"
+              title="Desmarcar (volver a pendientes)"
+            >
+              ✓
+            </button>
+
+            <div class="min-w-0 flex-1">
+              <span class="text-xs line-through text-slate-400 font-medium break-words">
+                ${escHtml(item.name)}
+              </span>
+              ${item.quantity ? `<span class="text-[10px] text-slate-400 ml-1">(${escHtml(item.quantity)})</span>` : ''}
+              ${
+                item.boughtByName
+                  ? `<span class="text-[10px] text-slate-400 block mt-0.5">Comprado por ${escHtml(item.boughtByAvatar || '👤')} ${escHtml(item.boughtByName)}</span>`
+                  : ''
+              }
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn-delete-shopping-item p-1 text-slate-500 hover:text-rose-400 rounded-lg transition shrink-0"
+            data-id="${item.id}"
+            title="Eliminar de la lista"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      `
+        )
+        .join('');
+    }
+
+    attachShoppingActionListeners();
+  }
+
+  function attachShoppingActionListeners() {
+    // Toggle item bought
+    document.querySelectorAll('.btn-toggle-shopping-item').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = Number(btn.getAttribute('data-id'));
+        const isBought = btn.getAttribute('data-bought') === 'true';
+        await toggleShoppingItem(id, isBought);
+      });
+    });
+
+    // Delete item
+    document.querySelectorAll('.btn-delete-shopping-item').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = Number(btn.getAttribute('data-id'));
+        await deleteShoppingItem(id);
+      });
+    });
+  }
+
+  async function addShoppingItem(name: string, category?: string, quantity?: string, notes?: string) {
+    if (!name || !name.trim()) return;
+
+    try {
+      const res = await fetch('/api/shopping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          category: category && category !== 'auto' ? category : undefined,
+          quantity: quantity?.trim() || undefined,
+          notes: notes?.trim() || undefined,
+          addedBy: activeUser?.id,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast(`"${name.trim()}" añadido a la compra 🛒`, 'success');
+        await loadShoppingList();
+      } else {
+        showToast(data.error || 'Error al añadir artículo', 'error');
+      }
+    } catch (err) {
+      showToast('Error de conexión', 'error');
+    }
+  }
+
+  async function toggleShoppingItem(id: number, isBought: boolean) {
+    // Optimistic update
+    const item = shoppingItemsList.find((i) => i.id === id);
+    if (item) {
+      item.isBought = isBought;
+      item.boughtById = isBought && activeUser ? activeUser.id : null;
+      item.boughtByName = isBought && activeUser ? activeUser.name : null;
+      item.boughtByAvatar = isBought && activeUser ? activeUser.avatar : null;
+      updateShoppingBadge();
+      renderShoppingList();
+    }
+
+    try {
+      const res = await fetch(`/api/shopping/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isBought,
+          boughtBy: isBought && activeUser ? activeUser.id : null,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        showToast('Error al actualizar artículo', 'error');
+        await loadShoppingList();
+      }
+    } catch (err) {
+      showToast('Error de conexión', 'error');
+      await loadShoppingList();
+    }
+  }
+
+  async function deleteShoppingItem(id: number) {
+    try {
+      const res = await fetch(`/api/shopping/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        shoppingItemsList = shoppingItemsList.filter((i) => i.id !== id);
+        updateShoppingBadge();
+        renderShoppingList();
+      } else {
+        showToast(data.error || 'Error al eliminar', 'error');
+      }
+    } catch (err) {
+      showToast('Error de conexión', 'error');
+    }
+  }
+
+  async function clearBoughtShoppingItems() {
+    try {
+      const res = await fetch('/api/shopping/clear-bought', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Artículos comprados archivados ✅', 'success');
+        await loadShoppingList();
+      } else {
+        showToast(data.error || 'Error al limpiar', 'error');
+      }
+    } catch (err) {
+      showToast('Error de conexión', 'error');
+    }
+  }
+
   // ==========================================
   // MÓDULO GARAJE / VEHÍCULOS
   // ==========================================
@@ -3513,6 +4164,7 @@ import '../styles/global.css';
     await loadUsers();
     await loadCalendar();
     await loadGarage();
+    await loadShoppingList();
 
     // Calendario: navegación de mes y cierre del desglose
     const shiftMonth = (delta: number) => {
@@ -3896,21 +4548,24 @@ import '../styles/global.css';
     const containerSecondDay = document.getElementById('container-second-day');
     const labelDay1 = document.getElementById('label-chore-day-1');
 
-    // Escuchar cambio en periodicidad para mostrar/ocultar segundo día
+    // Escuchar cambio en periodicidad para mostrar/ocultar segundo día y responsable
     selectFreq?.addEventListener('change', () => {
       const isOnce = selectFreq.value === 'once';
       const containerDay1 = document.getElementById('container-day-1');
-      const labelAssignee = document.getElementById('label-assignee-select');
+      const containerAssignmentMode = document.getElementById('container-assignment-mode');
+      const containerAssignee = document.getElementById('container-assignee');
       const selectAssignee = document.getElementById('select-chore-assignee') as HTMLSelectElement | null;
 
       if (containerDay1) containerDay1.classList.toggle('hidden', isOnce);
+      if (containerAssignmentMode) containerAssignmentMode.classList.toggle('hidden', isOnce);
+      if (containerAssignee) containerAssignee.classList.toggle('hidden', isOnce);
+
       if (selectAssignee) {
         if (isOnce) {
           selectAssignee.removeAttribute('required');
-          if (labelAssignee) labelAssignee.textContent = 'Responsable (Opcional para puntuales)';
+          selectAssignee.value = '';
         } else {
           selectAssignee.setAttribute('required', 'true');
-          if (labelAssignee) labelAssignee.textContent = 'Responsable habitual';
         }
       }
 
@@ -3955,6 +4610,9 @@ import '../styles/global.css';
       const dayOfWeek = (document.getElementById('select-chore-day') as HTMLSelectElement).value;
       const secondDayOfWeek = (document.getElementById('select-chore-second-day') as HTMLSelectElement)?.value;
 
+      const isOnce = frequency === 'once';
+      const cleanAssigneeId = isOnce || !defaultAssigneeId ? null : Number(defaultAssigneeId);
+
       const url = editId ? `/api/catalog/${editId}` : '/api/catalog';
       const method = editId ? 'PUT' : 'POST';
 
@@ -3965,8 +4623,8 @@ import '../styles/global.css';
           body: JSON.stringify({
             name,
             frequency,
-            assignmentMode,
-            defaultAssigneeId: Number(defaultAssigneeId),
+            assignmentMode: isOnce ? 'fixed' : assignmentMode,
+            defaultAssigneeId: cleanAssigneeId,
             icon,
             category,
             dayOfWeek: Number(dayOfWeek),
@@ -4040,6 +4698,50 @@ import '../styles/global.css';
         }
       } catch (err) {
         showToast('Error de conexión', 'error');
+      }
+    });
+
+    // 12. Shopping List Listeners
+    const formQuickAdd = document.getElementById('form-quick-add-shopping') as HTMLFormElement | null;
+    formQuickAdd?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const inputName = document.getElementById('input-shopping-name') as HTMLInputElement | null;
+      const inputQty = document.getElementById('input-shopping-qty') as HTMLInputElement | null;
+      const selectCat = document.getElementById('select-shopping-category') as HTMLSelectElement | null;
+      const inputNotes = document.getElementById('input-shopping-notes') as HTMLInputElement | null;
+
+      if (!inputName || !inputName.value.trim()) return;
+
+      const name = inputName.value.trim();
+      const qty = inputQty?.value.trim();
+      const cat = selectCat?.value;
+      const notes = inputNotes?.value.trim();
+
+      await addShoppingItem(name, cat, qty, notes);
+
+      inputName.value = '';
+      if (inputQty) inputQty.value = '';
+      if (inputNotes) inputNotes.value = '';
+      if (selectCat) selectCat.value = 'auto';
+      inputName.focus();
+    });
+
+    document.getElementById('btn-shopping-clear-bought')?.addEventListener('click', clearBoughtShoppingItems);
+
+    document.getElementById('btn-toggle-bought-section')?.addEventListener('click', () => {
+      isBoughtSectionOpen = !isBoughtSectionOpen;
+      const container = document.getElementById('shopping-bought-container');
+      const chevron = document.getElementById('bought-chevron');
+      if (container) container.classList.toggle('hidden', !isBoughtSectionOpen);
+      if (chevron) chevron.textContent = isBoughtSectionOpen ? '▼' : '▶';
+    });
+
+    // Delegation for go-shopping shortcuts (from chores card or catalog)
+    document.addEventListener('click', (e) => {
+      const target = (e.target as HTMLElement).closest('.btn-catalog-go-shopping, .btn-chore-go-shopping');
+      if (target) {
+        e.preventDefault();
+        switchTab('shopping');
       }
     });
   });

@@ -145,26 +145,55 @@ const {
 
     <!-- Bottom Navigation Bar (Mobile First) -->
     <nav class="fixed bottom-0 left-0 right-0 z-40 glass-nav px-2 py-2 sm:py-2.5">
-      <div class="max-w-md mx-auto grid grid-cols-4 gap-1">
+      <div class="max-w-md mx-auto grid grid-cols-5 gap-1">
         <!-- Tab 1: Calendario (Mes + Semana) -->
         <button
           id="nav-tab-calendar"
           data-tab="calendar"
-          class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-indigo-400 transition group active:scale-95"
+          class="nav-tab flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl text-indigo-400 transition group active:scale-95"
         >
           <div class="nav-icon-container relative p-1 rounded-lg group-hover:bg-slate-800/50 transition">
             <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <span class="text-[11px] font-semibold tracking-tight mt-0.5">Calendario</span>
+          <span class="text-[10px] sm:text-[11px] font-semibold tracking-tight mt-0.5">Agenda</span>
         </button>
 
-        <!-- Tab 2: Garaje / Vehículos -->
+        <!-- Tab 2: Catálogo de Tareas -->
+        <button
+          id="nav-tab-catalog"
+          data-tab="catalog"
+          class="nav-tab flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl text-slate-400 hover:text-slate-200 transition group active:scale-95"
+        >
+          <div class="nav-icon-container relative p-1 rounded-lg group-hover:bg-slate-800/50 transition">
+            <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <span class="text-[10px] sm:text-[11px] font-semibold tracking-tight mt-0.5">Tareas</span>
+        </button>
+
+        <!-- Tab 3: Lista de la Compra -->
+        <button
+          id="nav-tab-shopping"
+          data-tab="shopping"
+          class="nav-tab flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl text-slate-400 hover:text-slate-200 transition group active:scale-95"
+        >
+          <div class="nav-icon-container relative p-1 rounded-lg group-hover:bg-slate-800/50 transition">
+            <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span id="badge-shopping-count" class="hidden absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-emerald-500 text-[9px] font-bold text-white rounded-full flex items-center justify-center">0</span>
+          </div>
+          <span class="text-[10px] sm:text-[11px] font-semibold tracking-tight mt-0.5">Compra</span>
+        </button>
+
+        <!-- Tab 4: Garaje / Vehículos -->
         <button
           id="nav-tab-garage"
           data-tab="garage"
-          class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-400 hover:text-slate-200 transition group active:scale-95"
+          class="nav-tab flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl text-slate-400 hover:text-slate-200 transition group active:scale-95"
         >
           <div class="nav-icon-container relative p-1 rounded-lg group-hover:bg-slate-800/50 transition">
             <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -173,35 +202,21 @@ const {
             </svg>
             <span id="badge-garage-alert" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full"></span>
           </div>
-          <span class="text-[11px] font-semibold tracking-tight mt-0.5">Garaje</span>
+          <span class="text-[10px] sm:text-[11px] font-semibold tracking-tight mt-0.5">Garaje</span>
         </button>
 
-        <!-- Tab 3: Catálogo -->
-        <button
-          id="nav-tab-catalog"
-          data-tab="catalog"
-          class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-400 hover:text-slate-200 transition group active:scale-95"
-        >
-          <div class="nav-icon-container relative p-1 rounded-lg group-hover:bg-slate-800/50 transition">
-            <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          </div>
-          <span class="text-[11px] font-semibold tracking-tight mt-0.5">Tareas</span>
-        </button>
-
-        <!-- Tab 4: Convivientes -->
+        <!-- Tab 5: Convivientes -->
         <button
           id="nav-tab-roommates"
           data-tab="roommates"
-          class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-400 hover:text-slate-200 transition group active:scale-95"
+          class="nav-tab flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl text-slate-400 hover:text-slate-200 transition group active:scale-95"
         >
           <div class="nav-icon-container relative p-1 rounded-lg group-hover:bg-slate-800/50 transition">
             <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
-          <span class="text-[11px] font-semibold tracking-tight mt-0.5">Convivientes</span>
+          <span class="text-[10px] sm:text-[11px] font-semibold tracking-tight mt-0.5">Equipo</span>
         </button>
       </div>
     </nav>

@@ -133,6 +133,21 @@ export async function initializeDatabase() {
       );
     `);
 
+    await rawClient.execute(`
+      CREATE TABLE IF NOT EXISTS shopping_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        category TEXT DEFAULT 'Otros',
+        quantity TEXT,
+        notes TEXT,
+        added_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        is_bought INTEGER DEFAULT 0,
+        bought_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        bought_at TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // ==========================================
     // 1. DEDUPLICACIÓN DEFENSIVA DE VEHÍCULOS
     // ==========================================
@@ -277,6 +292,18 @@ export async function initializeDatabase() {
         }
       }
     }
+
+    // Asegurar que exista la tarea puntual "Hacer la compra" en el catálogo (sin responsable asignado)
+    try {
+      const shoppingChore = await rawClient.execute({
+        sql: "SELECT id FROM chore_catalog WHERE name = 'Hacer la compra' LIMIT 1",
+      });
+      if (shoppingChore.rows.length === 0) {
+        await rawClient.execute({
+          sql: "INSERT INTO chore_catalog (name, frequency, assignment_mode, default_assignee_id, icon, category, day_of_week) VALUES ('Hacer la compra', 'once', 'fixed', NULL, '🛒', 'Compras', 1)",
+        });
+      }
+    } catch {}
 
     isInitialized = true;
     console.log('✅ Database tables initialized successfully.');
