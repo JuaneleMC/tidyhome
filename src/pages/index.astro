@@ -3928,20 +3928,19 @@ import '../styles/global.css';
 
                 return `
                   <div
-                    class="glass-card rounded-2xl p-3 flex items-center justify-between gap-2.5 transition duration-200 ${
+                    class="btn-catalog-card-tap glass-card rounded-2xl p-3 flex items-center justify-between gap-3 transition-all duration-200 cursor-pointer select-none active:scale-[0.98] ${
                       inList
                         ? 'bg-emerald-500/15 border-emerald-500/80 ring-2 ring-emerald-500/40 shadow-md shadow-emerald-950/20'
-                        : 'border-slate-700/60 hover:border-slate-500 bg-slate-900/60'
+                        : 'border-slate-700/60 hover:border-emerald-500/50 hover:bg-slate-800/70 bg-slate-900/60'
                     }"
                     id="catalog-card-${item.id}"
+                    data-id="${item.id}"
+                    data-inlist="${inList}"
+                    title="${inList ? 'Aumentar cantidad en la compra' : 'Tocar para añadir a la lista de la compra'}"
                   >
-                    <!-- Left: Info and Tap Action -->
-                    <div
-                      class="btn-catalog-card-tap flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer select-none"
-                      data-id="${item.id}"
-                      data-inlist="${inList}"
-                    >
-                      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xl shrink-0 ${
+                    <!-- Icono y Datos -->
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${
                         inList ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-300'
                       }">
                         ${meta.icon}
@@ -3954,27 +3953,29 @@ import '../styles/global.css';
                           </span>
                           ${
                             inList
-                              ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-black bg-emerald-500 text-slate-950 flex items-center gap-0.5 shadow-sm">
+                              ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-black bg-emerald-500 text-slate-950 flex items-center gap-0.5 shadow-sm whitespace-nowrap">
                                   <span>✓</span> En la compra
                                  </span>`
                               : ''
                           }
                         </div>
 
-                        <div class="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-400">
-                          <span>${escHtml(item.category)}</span>
-                          <span>•</span>
-                          <span class="text-slate-300 font-medium">Unidad: <strong>${escHtml(item.defaultUnit || 'ud')}</strong></span>
+                        <div class="flex items-center gap-2 mt-1 text-xs text-slate-400 flex-wrap">
+                          <span class="text-slate-400 font-medium">${escHtml(item.category)}</span>
+                          <span class="text-slate-600">•</span>
+                          <span class="whitespace-nowrap font-medium text-slate-300">
+                            Unidad: <strong class="text-white">${escHtml(item.defaultUnit || 'ud')}</strong>
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    <!-- Right Controls -->
-                    <div class="shrink-0 flex items-center gap-1">
+                    <!-- Controles derecha -->
+                    <div class="shrink-0 flex items-center gap-1.5">
                       ${
                         inList
                           ? `
-                            <!-- Si ya está en la compra: Stepper rápido en la misma tarjeta -->
+                            <!-- Si ya está en la compra: Stepper rápido -->
                             <div class="inline-flex items-center rounded-xl bg-slate-800/90 border border-emerald-500/50 p-0.5 shadow-sm">
                               <button
                                 type="button"
@@ -3985,7 +3986,7 @@ import '../styles/global.css';
                               >
                                 ${Number(item.currentQty || 1) <= 1 ? '🗑' : '−'}
                               </button>
-                              <span class="font-extrabold text-xs px-1.5 text-emerald-300">
+                              <span class="font-extrabold text-xs px-2 text-emerald-300">
                                 ${escHtml(item.currentQty || 1)}
                               </span>
                               <button
@@ -3999,28 +4000,17 @@ import '../styles/global.css';
                               </button>
                             </div>
                           `
-                          : `
-                            <!-- Si no está: botón añadir con 1 toque -->
-                            <button
-                              type="button"
-                              class="btn-quick-add-from-catalog px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 text-xs font-bold transition active:scale-95 flex items-center gap-1 shrink-0"
-                              data-id="${item.id}"
-                              title="Añadir a la lista de la compra"
-                            >
-                              <span class="text-base leading-none">+</span>
-                              <span>Añadir</span>
-                            </button>
-                          `
+                          : ''
                       }
 
                       <!-- Botón para editar artículo genérico del catálogo -->
                       <button
                         type="button"
-                        class="btn-edit-catalog-item p-1.5 text-slate-500 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition shrink-0"
+                        class="btn-edit-catalog-item p-2 text-slate-400 hover:text-indigo-400 hover:bg-slate-800/80 rounded-xl transition shrink-0 active:scale-90"
                         data-id="${item.id}"
-                        title="Editar nombre o unidad por defecto"
+                        title="Editar nombre, categoría o unidad por defecto"
                       >
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                       </button>
@@ -4105,18 +4095,11 @@ import '../styles/global.css';
   }
 
   function attachCatalogActionListeners() {
-    // Quick Add button from catalog
-    document.querySelectorAll('.btn-quick-add-from-catalog').forEach((btn) => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const id = Number(btn.getAttribute('data-id'));
-        await addFromCatalog(id);
-      });
-    });
-
-    // Tap on card body: if not in list, add it! If already in list, increase qty!
+    // Tap en cualquier punto de la tarjeta: si no está en la lista la añade, y si ya está incrementa cantidad
     document.querySelectorAll('.btn-catalog-card-tap').forEach((cardTap) => {
-      cardTap.addEventListener('click', async () => {
+      cardTap.addEventListener('click', async (e) => {
+        // Ignorar si se pulsó un botón interno (como stepper o lápiz de editar)
+        if ((e.target as HTMLElement).closest('button')) return;
         const id = Number(cardTap.getAttribute('data-id'));
         await addFromCatalog(id);
       });
