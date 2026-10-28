@@ -212,11 +212,24 @@ export const SHOPPING_CATEGORIES = [
 
 export type ShoppingCategoryType = typeof SHOPPING_CATEGORIES[number];
 
+// Catálogo de Artículos en uso (Despensa / Catálogo permanente tipo Listonic)
+export const shoppingCatalog = sqliteTable('shopping_catalog', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull().unique(),
+  category: text('category').default('Otros'),
+  defaultUnit: text('default_unit').default('ud'), // Ej: "pack 6L", "garrafa 5L", "100gr", "botella"
+  defaultQty: integer('default_qty').default(1),
+  createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
+});
+
 export const shoppingItems = sqliteTable('shopping_items', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  catalogId: integer('catalog_id')
+    .references(() => shoppingCatalog.id, { onDelete: 'set null' }),
   name: text('name').notNull(),
   category: text('category').default('Otros'),
-  quantity: text('quantity'), // Ej: "2 packs", "1 kg"
+  quantity: text('quantity').default('1'), // Cantidad numérica o texto: "1", "2", etc.
+  unit: text('unit').default('ud'), // Unidad: "pack 6L", "garrafa 5L", "100gr", "botella", etc.
   notes: text('notes'), // Ej: "De la marca blanca, semi"
   addedBy: integer('added_by')
     .references(() => users.id, { onDelete: 'set null' }),
@@ -227,7 +240,15 @@ export const shoppingItems = sqliteTable('shopping_items', {
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
 });
 
+export const shoppingCatalogRelations = relations(shoppingCatalog, ({ many }) => ({
+  shoppingItems: many(shoppingItems),
+}));
+
 export const shoppingItemsRelations = relations(shoppingItems, ({ one }) => ({
+  catalogItem: one(shoppingCatalog, {
+    fields: [shoppingItems.catalogId],
+    references: [shoppingCatalog.id],
+  }),
   addedByUser: one(users, {
     fields: [shoppingItems.addedBy],
     references: [users.id],
@@ -263,6 +284,8 @@ export type VehicleMaintenanceItem = typeof vehicleMaintenance.$inferSelect;
 export type NewVehicleMaintenanceItem = typeof vehicleMaintenance.$inferInsert;
 export type VehicleMaintenanceLog = typeof vehicleMaintenanceLogs.$inferSelect;
 export type VehicleIncident = typeof vehicleIncidents.$inferSelect;
+export type ShoppingCatalogItem = typeof shoppingCatalog.$inferSelect;
+export type NewShoppingCatalogItem = typeof shoppingCatalog.$inferInsert;
 export type ShoppingItem = typeof shoppingItems.$inferSelect;
 export type NewShoppingItem = typeof shoppingItems.$inferInsert;
 

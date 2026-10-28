@@ -190,3 +190,133 @@ export function detectShoppingCategory(productName: string): ShoppingCategoryTyp
 
   return 'Otros';
 }
+
+export const COMMON_SHOPPING_UNITS = [
+  'ud',
+  'pack 6L',
+  'garrafa 5L',
+  '100gr',
+  '250gr',
+  '500gr',
+  '1 kg',
+  'botella',
+  'pack 6 latas',
+  'barra',
+  'docena',
+  'bote',
+  'paquete',
+  'caja',
+] as const;
+
+export interface UnitRule {
+  unit: string;
+  keywords: string[];
+}
+
+const UNIT_RULES: UnitRule[] = [
+  {
+    unit: 'pack 6L',
+    keywords: ['leche', 'avena', 'soja', 'bebida vegetal', 'horchata'],
+  },
+  {
+    unit: 'garrafa 5L',
+    keywords: ['agua', 'garrafa', 'mineral'],
+  },
+  {
+    unit: '100gr',
+    keywords: [
+      'jamon', 'jamón', 'lomo', 'pavo', 'chorizo', 'salchichon', 'salchichón',
+      'embutido', 'cecina', 'mortadela', 'salami', 'chopped', 'queso lonchas',
+      'queso curado', 'parmesano', 'bacon', 'beicon', 'fiambre'
+    ],
+  },
+  {
+    unit: 'botella',
+    keywords: ['vino', 'vermut', 'cava', 'sidra', 'licor', 'champan', 'champán', 'whisky', 'ginebra'],
+  },
+  {
+    unit: 'pack 6 latas',
+    keywords: ['cerveza', 'coca cola', 'cocacola', 'coca-cola', 'fanta', 'nestea', 'aquarius', 'tonica', 'tónica', 'refresco'],
+  },
+  {
+    unit: 'docena',
+    keywords: ['huevo', 'huevos'],
+  },
+  {
+    unit: 'barra',
+    keywords: ['pan', 'barra', 'baguette', 'pistola'],
+  },
+  {
+    unit: 'botella 1L',
+    keywords: ['aceite', 'oliva', 'girasol'],
+  },
+  {
+    unit: '500gr',
+    keywords: [
+      'carne picada', 'picada', 'pechuga', 'pollo', 'ternera', 'cerdo',
+      'salmon', 'salmón', 'merluza', 'dorada', 'lubina', 'filetes', 'solomillo'
+    ],
+  },
+  {
+    unit: '1 kg',
+    keywords: [
+      'patata', 'patatas', 'papa', 'papas', 'manzana', 'platano', 'plátano',
+      'naranja', 'cebolla', 'tomate', 'zanahoria', 'pera', 'limon', 'limón'
+    ],
+  },
+  {
+    unit: 'pack 3 latas',
+    keywords: ['atun', 'atún', 'mejillon', 'mejillón', 'sardina', 'sardinas', 'maiz', 'maíz'],
+  },
+  {
+    unit: 'paquete 1kg',
+    keywords: ['arroz', 'pasta', 'macarron', 'macarrón', 'espagueti', 'lenteja', 'lentejas', 'garbanzo', 'garbanzos', 'alubia', 'alubias', 'harina', 'azucar', 'azúcar'],
+  },
+  {
+    unit: 'paquete',
+    keywords: ['pan de molde', 'galleta', 'galletas', 'cereal', 'cereales', 'muesli', 'croissant', 'cafe', 'café'],
+  },
+  {
+    unit: 'pack',
+    keywords: ['papel higienico', 'papel higiénico', 'papel cocina', 'servilleta', 'servilletas'],
+  },
+  {
+    unit: 'botella',
+    keywords: ['detergente', 'suavizante', 'lavavajillas', 'fairy', 'fregasuelos', 'lejia', 'lejía', 'limpiador'],
+  },
+  {
+    unit: 'caja',
+    keywords: ['pastillas lavavajillas', 'capsulas', 'cápsulas'],
+  },
+  {
+    unit: 'bote',
+    keywords: ['champu', 'champú', 'gel', 'jabon', 'jabón', 'colonia', 'crema', 'mayonesa', 'ketchup', 'tomate frito', 'mermelada'],
+  },
+  {
+    unit: 'rollo',
+    keywords: ['bolsa de basura', 'bolsas basura', 'papel aluminio', 'film'],
+  },
+];
+
+export function detectDefaultUnit(productName: string): string {
+  const normalized = productName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  for (const rule of UNIT_RULES) {
+    for (const kw of rule.keywords) {
+      const normKw = kw
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      const regex = new RegExp(`\\b${normKw}`, 'i');
+      if (regex.test(normalized)) {
+        return rule.unit;
+      }
+    }
+  }
+
+  return 'ud';
+}
+

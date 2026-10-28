@@ -134,11 +134,24 @@ export async function initializeDatabase() {
     `);
 
     await rawClient.execute(`
+      CREATE TABLE IF NOT EXISTS shopping_catalog (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        category TEXT DEFAULT 'Otros',
+        default_unit TEXT DEFAULT 'ud',
+        default_qty INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await rawClient.execute(`
       CREATE TABLE IF NOT EXISTS shopping_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        catalog_id INTEGER REFERENCES shopping_catalog(id) ON DELETE SET NULL,
         name TEXT NOT NULL,
         category TEXT DEFAULT 'Otros',
-        quantity TEXT,
+        quantity TEXT DEFAULT '1',
+        unit TEXT DEFAULT 'ud',
         notes TEXT,
         added_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
         is_bought INTEGER DEFAULT 0,
@@ -147,6 +160,14 @@ export async function initializeDatabase() {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Defensive migrations for shopping_items columns if existing db
+    try {
+      await rawClient.execute(`ALTER TABLE shopping_items ADD COLUMN catalog_id INTEGER;`);
+    } catch {}
+    try {
+      await rawClient.execute(`ALTER TABLE shopping_items ADD COLUMN unit TEXT DEFAULT 'ud';`);
+    } catch {}
 
     // ==========================================
     // 1. DEDUPLICACIÓN DEFENSIVA DE VEHÍCULOS
@@ -304,6 +325,52 @@ export async function initializeDatabase() {
         });
       }
     } catch {}
+
+    // Asegurar artículos iniciales en el Catálogo de la Compra (Artículos en uso)
+    try {
+      const countRes = await rawClient.execute('SELECT COUNT(*) as count FROM shopping_catalog');
+      const catalogCount = Number(countRes.rows[0]?.count || 0);
+      if (catalogCount === 0) {
+        const initialCatalog = [
+          { name: 'Leche', category: 'Lácteos y Huevos', defaultUnit: 'pack 6L' },
+          { name: 'Agua', category: 'Bebidas', defaultUnit: 'garrafa 5L' },
+          { name: 'Huevos', category: 'Lácteos y Huevos', defaultUnit: 'docena' },
+          { name: 'Pan', category: 'Panadería y Cereales', defaultUnit: 'barra' },
+          { name: 'Jamón Serrano', category: 'Carnicería y Charcutería', defaultUnit: '100gr' },
+          { name: 'Pechuga de Pollo', category: 'Carnicería y Charcutería', defaultUnit: '500gr' },
+          { name: 'Queso en lonchas', category: 'Lácteos y Huevos', defaultUnit: '100gr' },
+          { name: 'Plátanos', category: 'Frutas y Verduras', defaultUnit: '1 kg' },
+          { name: 'Manzanas', category: 'Frutas y Verduras', defaultUnit: '1 kg' },
+          { name: 'Tomates', category: 'Frutas y Verduras', defaultUnit: '1 kg' },
+          { name: 'Cebollas', category: 'Frutas y Verduras', defaultUnit: '1 kg' },
+          { name: 'Patatas', category: 'Frutas y Verduras', defaultUnit: '1 kg' },
+          { name: 'Aceite de Oliva', category: 'Despensa y Conservas', defaultUnit: 'botella 1L' },
+          { name: 'Arroz', category: 'Despensa y Conservas', defaultUnit: 'paquete 1kg' },
+          { name: 'Pasta (Macarrones)', category: 'Despensa y Conservas', defaultUnit: 'paquete 1kg' },
+          { name: 'Atún en lata', category: 'Despensa y Conservas', defaultUnit: 'pack 3 latas' },
+          { name: 'Café', category: 'Despensa y Conservas', defaultUnit: 'paquete' },
+          { name: 'Vino Tinto', category: 'Bebidas', defaultUnit: 'botella' },
+          { name: 'Cerveza', category: 'Bebidas', defaultUnit: 'pack 6 latas' },
+          { name: 'Papel Higiénico', category: 'Limpieza y Hogar', defaultUnit: 'pack' },
+          { name: 'Detergente Lavadora', category: 'Limpieza y Hogar', defaultUnit: 'botella' },
+          { name: 'Lavavajillas (Fairy)', category: 'Limpieza y Hogar', defaultUnit: 'botella' },
+          { name: 'Bolsas de Basura', category: 'Limpieza y Hogar', defaultUnit: 'rollo' },
+          { name: 'Champú', category: 'Higiene y Cuidado', defaultUnit: 'bote' },
+          { name: 'Gel de Ducha', category: 'Higiene y Cuidado', defaultUnit: 'bote' },
+          { name: 'Pasta de Dientes', category: 'Higiene y Cuidado', defaultUnit: 'tubo' },
+        ];
+
+        for (const item of initialCatalog) {
+          await rawClient.execute({
+            sql: 'INSERT INTO shopping_catalog (name, category, default_unit, default_qty) VALUES (?, ?, ?, ?)',
+            args: [item.name, item.category, item.defaultUnit, 1],
+          });
+        }
+        console.log(`🛒 ${initialCatalog.length} artículos iniciales sembrados en el Catálogo de Compra.`);
+      }
+    } catch (seedErr) {
+      console.error('Error sembrando catálogo de compra:', seedErr);
+    }
 
     isInitialized = true;
     console.log('✅ Database tables initialized successfully.');

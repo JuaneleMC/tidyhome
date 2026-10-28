@@ -28,7 +28,8 @@ export const PATCH: APIRoute = async ({ params, request }) => {
 
     if (body.name !== undefined) updateData.name = String(body.name).trim();
     if (body.category !== undefined) updateData.category = String(body.category).trim();
-    if (body.quantity !== undefined) updateData.quantity = body.quantity ? String(body.quantity).trim() : null;
+    if (body.quantity !== undefined) updateData.quantity = body.quantity ? String(body.quantity).trim() : '1';
+    if (body.unit !== undefined) updateData.unit = body.unit ? String(body.unit).trim() : 'ud';
     if (body.notes !== undefined) updateData.notes = body.notes ? String(body.notes).trim() : null;
 
     const updated = await db

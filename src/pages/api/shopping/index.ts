@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 import { db, initializeDatabase } from '../../../db/client';
-import { shoppingItems, users, type ShoppingCategoryType } from '../../../db/schema';
-import { eq, desc, asc } from 'drizzle-orm';
-import { detectShoppingCategory } from '../../../lib/shoppingCategories';
+import { shoppingItems, shoppingCatalog, users, type ShoppingCategoryType } from '../../../db/schema';
+import { eq, desc, asc, and } from 'drizzle-orm';
+import { detectShoppingCategory, detectDefaultUnit } from '../../../lib/shoppingCategories';
 
 export const prerender = false;
 
@@ -14,9 +14,11 @@ export const GET: APIRoute = async () => {
     const items = await db
       .select({
         id: shoppingItems.id,
+        catalogId: shoppingItems.catalogId,
         name: shoppingItems.name,
         category: shoppingItems.category,
         quantity: shoppingItems.quantity,
+        unit: shoppingItems.unit,
         notes: shoppingItems.notes,
         addedById: shoppingItems.addedBy,
         isBought: shoppingItems.isBought,
@@ -40,6 +42,8 @@ export const GET: APIRoute = async () => {
       return {
         ...item,
         isBought: Boolean(item.isBought),
+        quantity: item.quantity || '1',
+        unit: item.unit || 'ud',
         boughtByName: boughtUser?.name || null,
         boughtByAvatar: boughtUser?.avatar || null,
         boughtByColor: boughtUser?.color || null,
@@ -62,7 +66,25 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     await initializeDatabase();
     const body = await request.json();
-    const { name, category, quantity, notes, addedBy } = body;
+    let { catalogId, name, category, quantity, unit, notes, addedBy } = body;
+
+    let targetCatalogId: number | null = catalogId ? Number(catalogId) : null;
+
+    // Si viene catalogId, buscar el artículo del catálogo para autocompletar si falta algo
+    if (targetCatalogId) {
+      const catRes = await db
+        .select()
+        .from(shoppingCatalog)
+        .where(eq(shoppingCatalog.id, targetCatalogId))
+        .limit(1);
+
+      if (catRes.length > 0) {
+        const cat = catRes[0];
+        if (!name) name = cat.name;
+        if (!category || category === 'Otros') category = cat.category;
+        if (!unit) unit = cat.defaultUnit;
+      }
+    }
 
     if (!name || !name.trim()) {
       return new Response(
@@ -72,18 +94,85 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const trimmedName = name.trim();
-    // If category is not provided or 'Otros', try to detect automatically
     const finalCategory: ShoppingCategoryType =
       category && category !== 'Otros'
         ? (category as ShoppingCategoryType)
         : detectShoppingCategory(trimmedName);
 
+    const finalUnit: string =
+      unit && unit.trim()
+        ? unit.trim()
+        : detectDefaultUnit(trimmedName);
+
+    const finalQty: string = quantity && String(quantity).trim() ? String(quantity).trim() : '1';
+
+    // Si no teníamos targetCatalogId, buscar o crear en shoppingCatalog para guardarlo en "Artículos en uso"
+    if (!targetCatalogId) {
+      const catExisting = await db
+        .select()
+        .from(shoppingCatalog)
+        .where(eq(shoppingCatalog.name, trimmedName))
+        .limit(1);
+
+      if (catExisting.length > 0) {
+        targetCatalogId = catExisting[0].id;
+      } else {
+        const newCat = await db
+          .insert(shoppingCatalog)
+          .values({
+            name: trimmedName,
+            category: finalCategory,
+            defaultUnit: finalUnit,
+            defaultQty: 1,
+          })
+          .returning();
+        if (newCat.length > 0) {
+          targetCatalogId = newCat[0].id;
+        }
+      }
+    }
+
+    // Comprobar si ya existe en la lista de la compra pendiente (isBought = 0)
+    const existingShopping = await db
+      .select()
+      .from(shoppingItems)
+      .where(
+        targetCatalogId
+          ? and(eq(shoppingItems.catalogId, targetCatalogId), eq(shoppingItems.isBought, 0))
+          : and(eq(shoppingItems.name, trimmedName), eq(shoppingItems.isBought, 0))
+      )
+      .limit(1);
+
+    if (existingShopping.length > 0) {
+      // Si ya está pendiente, aumentamos la cantidad en 1 si fue un tap simple
+      const current = existingShopping[0];
+      const parsedNum = parseInt(current.quantity || '1', 10);
+      const newQty = !isNaN(parsedNum) ? String(parsedNum + 1) : '2';
+
+      const updated = await db
+        .update(shoppingItems)
+        .set({
+          quantity: newQty,
+          unit: finalUnit || current.unit || 'ud',
+          notes: notes !== undefined ? (notes ? String(notes).trim() : null) : current.notes,
+        })
+        .where(eq(shoppingItems.id, current.id))
+        .returning();
+
+      return new Response(JSON.stringify({ success: true, item: updated[0], updatedQty: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const inserted = await db
       .insert(shoppingItems)
       .values({
+        catalogId: targetCatalogId,
         name: trimmedName,
         category: finalCategory,
-        quantity: quantity ? String(quantity).trim() : null,
+        quantity: finalQty,
+        unit: finalUnit,
         notes: notes ? String(notes).trim() : null,
         addedBy: addedBy ? Number(addedBy) : null,
         isBought: 0,
