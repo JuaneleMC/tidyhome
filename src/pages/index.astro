@@ -418,63 +418,6 @@ import '../styles/global.css';
     <!-- SUB-PANEL 1: LISTA ACTIVA DE LA COMPRA -->
     <!-- ========================================== -->
     <div id="shopping-panel-list" class="space-y-3">
-      <!-- Quick Add Input (adds to list and auto-learns into catalog) -->
-      <div class="glass-card rounded-2xl p-3 border border-emerald-500/30 bg-slate-900/90 shadow-xl shadow-emerald-950/20">
-        <form id="form-quick-add-shopping" class="space-y-2">
-          <div class="flex items-center gap-2">
-            <div class="relative flex-1">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🛒</span>
-              <input
-                type="text"
-                id="input-shopping-name"
-                placeholder="Añadir a la lista... (ej: Leche, Agua, Jamón serrano)"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-                autocomplete="off"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              id="btn-shopping-add"
-              class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-md shadow-emerald-600/30 active:scale-95 transition flex items-center gap-1 shrink-0"
-            >
-              <span>+</span>
-              <span class="hidden xs:inline">Añadir</span>
-            </button>
-          </div>
-
-          <!-- Quick unit suggestion / notes row -->
-          <div class="flex items-center gap-2 pt-0.5 text-xs flex-wrap">
-            <div class="flex items-center gap-1">
-              <label class="text-[10px] text-slate-400 font-semibold uppercase">Cant:</label>
-              <input
-                type="number"
-                id="input-shopping-qty"
-                min="1"
-                value="1"
-                class="w-14 bg-slate-800/80 border border-slate-700/60 rounded-lg px-2 py-1.5 text-xs text-white placeholder-slate-500 text-center font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                title="Cantidad"
-              />
-            </div>
-            <div class="flex items-center gap-1 flex-1 min-w-[130px]">
-              <label class="text-[10px] text-slate-400 font-semibold uppercase">Unidad:</label>
-              <input
-                type="text"
-                id="input-shopping-unit"
-                placeholder="Auto (ej: pack 6L, 100gr)"
-                class="flex-1 bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              />
-            </div>
-            <input
-              type="text"
-              id="input-shopping-notes"
-              placeholder="Nota opcional (marca, etc.)"
-              class="flex-1 min-w-[120px] bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            />
-          </div>
-        </form>
-      </div>
-
       <!-- Category Filter pills -->
       <div id="shopping-category-filter" class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
         <!-- Filter buttons: Todas, Fruta, Lácteos... -->
@@ -531,21 +474,32 @@ import '../styles/global.css';
     <div id="shopping-panel-catalog" class="hidden space-y-3">
       <!-- Search in catalog and quick add -->
       <div class="glass-card rounded-2xl p-3 border border-indigo-500/30 bg-slate-900/90 shadow-xl shadow-indigo-950/20 space-y-2">
-        <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
-          <input
-            type="text"
-            id="input-catalog-search"
-            placeholder="Buscar en artículos en uso... (A-Z)"
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-9 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-            autocomplete="off"
-          />
+        <form id="form-catalog-search" class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+            <input
+              type="text"
+              id="input-catalog-search"
+              placeholder="Buscar o crear artículo... (A-Z)"
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-9 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              autocomplete="off"
+            />
+            <button
+              id="btn-catalog-clear-search"
+              type="button"
+              class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-base leading-none p-1"
+            >&times;</button>
+          </div>
           <button
-            id="btn-catalog-clear-search"
-            type="button"
-            class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-base leading-none p-1"
-          >&times;</button>
-        </div>
+            type="submit"
+            id="btn-catalog-quick-add"
+            class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition active:scale-95 flex items-center gap-1 shrink-0"
+            title="Crear y pasar a la compra"
+          >
+            <span>+</span>
+            <span class="hidden xs:inline">Crear</span>
+          </button>
+        </form>
 
         <div class="flex items-center justify-end text-[11px] text-slate-400 px-1">
           <span id="catalog-total-items-badge" class="font-bold text-slate-300">0 artículos</span>
@@ -3462,14 +3416,15 @@ import '../styles/global.css';
           <div class="text-4xl animate-bounce">🎉</div>
           <h4 class="text-sm font-bold text-white">¡No falta nada en la despensa!</h4>
           <p class="text-xs text-slate-400 max-w-sm mx-auto">
-            Puedes añadir productos arriba o ir a la pestaña <strong>"Artículos en uso"</strong> para pasar con un toque lo que vayáis a necesitar.
+            Ve a la pestaña <strong>"Artículos en uso"</strong> para marcar con un toque lo que vayáis a comprar.
           </p>
           <button
             type="button"
             id="btn-empty-go-catalog"
-            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition active:scale-95"
+            class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition active:scale-95"
           >
-            📦 Ver Artículos en uso (Despensa) →
+            <span>📦</span>
+            <span>Ir a Artículos en uso (Despensa) →</span>
           </button>
         </div>
       `;
@@ -5513,29 +5468,22 @@ import '../styles/global.css';
       inputCatalogSearch?.focus();
     });
 
-    // Form Quick Add (in active shopping list)
-    const formQuickAdd = document.getElementById('form-quick-add-shopping') as HTMLFormElement | null;
-    formQuickAdd?.addEventListener('submit', async (e) => {
+    // Search / Create in Catalog Form
+    const formCatalogSearch = document.getElementById('form-catalog-search') as HTMLFormElement | null;
+    formCatalogSearch?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const inputName = document.getElementById('input-shopping-name') as HTMLInputElement | null;
-      const inputQty = document.getElementById('input-shopping-qty') as HTMLInputElement | null;
-      const inputUnit = document.getElementById('input-shopping-unit') as HTMLInputElement | null;
-      const inputNotes = document.getElementById('input-shopping-notes') as HTMLInputElement | null;
+      const val = inputCatalogSearch?.value.trim();
+      if (!val) return;
 
-      if (!inputName || !inputName.value.trim()) return;
-
-      const name = inputName.value.trim();
-      const qty = inputQty?.value.trim() || '1';
-      const unit = inputUnit?.value.trim() || undefined;
-      const notes = inputNotes?.value.trim();
-
-      await addShoppingItem(name, undefined, qty, unit, notes);
-
-      inputName.value = '';
-      if (inputQty) inputQty.value = '1';
-      if (inputUnit) inputUnit.value = '';
-      if (inputNotes) inputNotes.value = '';
-      inputName.focus();
+      const existing = shoppingCatalogList.find((i) => i.name.toLowerCase() === val.toLowerCase());
+      if (existing) {
+        await addFromCatalog(existing.id);
+        if (inputCatalogSearch) inputCatalogSearch.value = '';
+        catalogSearchQuery = '';
+        renderShoppingCatalog();
+      } else {
+        await createAndAddCatalogItem(val);
+      }
     });
 
     document.getElementById('btn-shopping-clear-bought')?.addEventListener('click', clearBoughtShoppingItems);
