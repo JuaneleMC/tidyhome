@@ -453,7 +453,7 @@ import '../styles/global.css';
       </div>
 
       <!-- Botón Finalizar Compra y Vaciar Lista Completa -->
-      <div class="pt-6 pb-20 text-center">
+      <div class="pt-6 pb-32 sm:pb-24 text-center">
         <button
           id="btn-shopping-finish-all"
           type="button"
@@ -516,6 +516,19 @@ import '../styles/global.css';
         <!-- Rendered by JS: Active items highlighted in vibrant emerald with checkmark! -->
       </div>
     </div>
+
+    <!-- Botón Flotante (+) para añadir artículo puntual de una sola vez -->
+    <button
+      id="btn-shopping-fab-add"
+      type="button"
+      class="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-30 w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 hover:from-emerald-400 hover:to-teal-400 text-white shadow-2xl shadow-emerald-950/70 hover:shadow-emerald-500/50 border border-emerald-300/40 flex items-center justify-center transition-all duration-200 active:scale-90 hover:scale-110"
+      title="Añadir artículo puntual a la compra"
+      aria-label="Añadir artículo puntual a la compra"
+    >
+      <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+      </svg>
+    </button>
   </section>
 
   <!-- ========================================== -->
@@ -1203,6 +1216,143 @@ import '../styles/global.css';
         <div class="pt-2 flex justify-end gap-2">
           <button type="button" id="btn-cancel-new-vehicle" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold">Cancelar</button>
           <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition active:scale-95">Dar de Alta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: AÑADIR ARTÍCULO PUNTUAL (UNA SOLA VEZ) -->
+  <!-- ========================================== -->
+  <div
+    id="modal-add-one-off-shopping"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity duration-200"
+  >
+    <div class="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🛒</span>
+          <div>
+            <h3 class="text-base font-bold text-white">Añadir a la Compra</h3>
+            <p class="text-xs text-slate-400 font-medium">Artículo puntual de una sola vez</p>
+          </div>
+        </div>
+        <button id="btn-close-add-one-off" type="button" class="text-slate-400 hover:text-white p-1 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="form-add-one-off" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">¿Qué necesitas comprar?</label>
+          <input
+            type="text"
+            id="input-one-off-name"
+            required
+            placeholder="Ej: Bombilla led, Pilas AA, Carbón..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Cantidad</label>
+            <div class="flex items-center rounded-xl bg-slate-800 border border-slate-700 p-1">
+              <button
+                type="button"
+                id="btn-one-off-qty-down"
+                class="w-8 h-8 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 flex items-center justify-center font-bold text-sm"
+              >−</button>
+              <input
+                type="number"
+                id="input-one-off-qty"
+                min="1"
+                value="1"
+                class="w-full bg-transparent text-center text-white font-extrabold text-sm focus:outline-none"
+              />
+              <button
+                type="button"
+                id="btn-one-off-qty-up"
+                class="w-8 h-8 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 flex items-center justify-center font-bold text-sm"
+              >+</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Unidad / Formato</label>
+            <input
+              type="text"
+              id="input-one-off-unit"
+              placeholder="Auto (ej: ud, pack)"
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+        </div>
+
+        <!-- Quick unit chips for one-off -->
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Unidades frecuentes:</label>
+          <div class="flex flex-wrap gap-1.5 text-xs" id="one-off-unit-chips">
+            <button type="button" class="btn-one-off-chip px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:text-white text-xs font-semibold" data-unit="ud">ud</button>
+            <button type="button" class="btn-one-off-chip px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:text-white text-xs font-semibold" data-unit="pack">pack</button>
+            <button type="button" class="btn-one-off-chip px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:text-white text-xs font-semibold" data-unit="1 kg">1 kg</button>
+            <button type="button" class="btn-one-off-chip px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:text-white text-xs font-semibold" data-unit="bote">bote</button>
+            <button type="button" class="btn-one-off-chip px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:text-white text-xs font-semibold" data-unit="lata">lata</button>
+            <button type="button" class="btn-one-off-chip px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:text-white text-xs font-semibold" data-unit="botella">botella</button>
+            <button type="button" class="btn-one-off-chip px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:text-white text-xs font-semibold" data-unit="100gr">100gr</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Categoría (Pasillo del súper)</label>
+          <select
+            id="select-one-off-category"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="auto">✨ Detección automática</option>
+            <option value="Frutas y Verduras">🍎 Frutas y Verduras</option>
+            <option value="Lácteos y Huevos">🥛 Lácteos y Huevos</option>
+            <option value="Carnicería y Charcutería">🥩 Carnicería y Charcutería</option>
+            <option value="Pescadería">🐟 Pescadería</option>
+            <option value="Panadería y Cereales">🥖 Panadería y Cereales</option>
+            <option value="Despensa y Conservas">🥫 Despensa y Conservas</option>
+            <option value="Bebidas">🥤 Bebidas</option>
+            <option value="Limpieza y Hogar">🧹 Limpieza y Hogar</option>
+            <option value="Higiene y Cuidado">🧴 Higiene y Cuidado</option>
+            <option value="Congelados">❄️ Congelados</option>
+            <option value="Snacks y Dulces">🍫 Snacks y Dulces</option>
+            <option value="Otros">📦 Otros</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Nota adicional (opcional)</label>
+          <input
+            type="text"
+            id="input-one-off-notes"
+            placeholder="Ej: marca blanca, 3 capas, etc."
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+
+        <!-- Checkbox: guardar en despensa o sólo una vez -->
+        <div class="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-start gap-2.5 text-xs text-slate-300">
+          <input
+            type="checkbox"
+            id="check-one-off-save-catalog"
+            class="mt-0.5 rounded border-slate-700 text-emerald-600 focus:ring-emerald-500 bg-slate-800 w-4 h-4 cursor-pointer"
+          />
+          <label for="check-one-off-save-catalog" class="cursor-pointer">
+            <span class="font-bold text-white block">Guardar también en "Artículos en uso"</span>
+            <span class="text-slate-400 text-[11px]">Déjalo desmarcado para que sea un artículo puntual de una sola vez.</span>
+          </label>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" id="btn-cancel-add-one-off" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold">Cancelar</button>
+          <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-lg shadow-emerald-600/30 transition active:scale-95 flex items-center gap-1.5">
+            <span>+</span>
+            <span>Añadir a la lista</span>
+          </button>
         </div>
       </form>
     </div>
@@ -3244,6 +3394,7 @@ import '../styles/global.css';
     const btnCatalog = document.getElementById('shopping-subtab-btn-catalog');
     const panelList = document.getElementById('shopping-panel-list');
     const panelCatalog = document.getElementById('shopping-panel-catalog');
+    const fabBtn = document.getElementById('btn-shopping-fab-add');
 
     if (subtab === 'list') {
       btnList?.classList.add('bg-emerald-600', 'text-white', 'font-bold');
@@ -3252,6 +3403,7 @@ import '../styles/global.css';
       btnCatalog?.classList.add('text-slate-400');
       panelList?.classList.remove('hidden');
       panelCatalog?.classList.add('hidden');
+      fabBtn?.classList.remove('hidden');
       loadShoppingList();
     } else {
       btnCatalog?.classList.add('bg-emerald-600', 'text-white', 'font-bold');
@@ -3260,6 +3412,7 @@ import '../styles/global.css';
       btnList?.classList.add('text-slate-400');
       panelCatalog?.classList.remove('hidden');
       panelList?.classList.add('hidden');
+      fabBtn?.classList.add('hidden');
       loadShoppingCatalog();
     }
   }
@@ -3463,47 +3616,59 @@ import '../styles/global.css';
                   .map(
                     (item) => `
                   <div
-                    class="glass-card glass-card-hover rounded-xl p-2.5 sm:p-3 flex items-center justify-between gap-2.5 border border-slate-700/60 hover:border-slate-600 transition"
+                    class="glass-card glass-card-hover rounded-xl p-2.5 sm:p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-slate-700/60 hover:border-slate-600 transition"
                     id="shopping-item-${item.id}"
                   >
-                    <!-- Checkbox and Name -->
-                    <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                      <button
-                        type="button"
-                        class="btn-toggle-shopping-item w-7 h-7 rounded-full border-2 border-slate-600 hover:border-emerald-500 hover:bg-emerald-500/10 flex items-center justify-center transition active:scale-90 shrink-0 group"
-                        data-id="${item.id}"
-                        data-bought="true"
-                        title="Marcar como comprado"
-                      >
-                        <span class="opacity-0 group-hover:opacity-100 text-emerald-400 text-xs font-bold transition">✓</span>
-                      </button>
+                    <!-- Fila 1 (móvil) / Izquierda (desktop): Checkbox + Nombre del artículo + Notas + Usuario + Papelera móvil -->
+                    <div class="flex items-center justify-between gap-2 min-w-0 w-full sm:w-auto flex-1">
+                      <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                        <button
+                          type="button"
+                          class="btn-toggle-shopping-item w-7 h-7 rounded-full border-2 border-slate-600 hover:border-emerald-500 hover:bg-emerald-500/10 flex items-center justify-center transition active:scale-90 shrink-0 group"
+                          data-id="${item.id}"
+                          data-bought="true"
+                          title="Marcar como comprado"
+                        >
+                          <span class="opacity-0 group-hover:opacity-100 text-emerald-400 text-xs font-bold transition">✓</span>
+                        </button>
 
-                      <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-1.5 flex-wrap leading-tight">
-                          <span class="text-sm font-bold text-white break-words">
+                        <div class="min-w-0 flex-1">
+                          <span class="text-sm font-bold text-white break-words block leading-snug">
                             ${escHtml(item.name)}
                           </span>
+
+                          ${
+                            item.notes
+                              ? `<p class="text-[11px] text-slate-400 italic mt-0.5 break-words">${escHtml(item.notes)}</p>`
+                              : ''
+                          }
+
+                          ${
+                            item.addedByName
+                              ? `<div class="flex items-center gap-1 mt-0.5 text-[10px] text-slate-400">
+                                  <span>${escHtml(item.addedByAvatar || '👤')}</span>
+                                  <span>${escHtml(item.addedByName)}</span>
+                                 </div>`
+                              : ''
+                          }
                         </div>
-
-                        ${
-                          item.notes
-                            ? `<p class="text-[11px] text-slate-400 italic mt-0.5 break-words">${escHtml(item.notes)}</p>`
-                            : ''
-                        }
-
-                        ${
-                          item.addedByName
-                            ? `<div class="flex items-center gap-1 mt-0.5 text-[10px] text-slate-400">
-                                <span>${escHtml(item.addedByAvatar || '👤')}</span>
-                                <span>${escHtml(item.addedByName)}</span>
-                               </div>`
-                            : ''
-                        }
                       </div>
+
+                      <!-- Botón eliminar rápido en móvil -->
+                      <button
+                        type="button"
+                        class="btn-delete-shopping-item p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition shrink-0 sm:hidden"
+                        data-id="${item.id}"
+                        title="Eliminar de la lista"
+                      >
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
 
-                    <!-- STEPPER: [-] [qty] [+] and Unit Chip -->
-                    <div class="shrink-0 flex items-center gap-1.5">
+                    <!-- Fila 2 (móvil) / Derecha (desktop): Stepper + Pastilla de Unidad + Papelera desktop -->
+                    <div class="flex items-center justify-end gap-1.5 shrink-0 self-end sm:self-center pl-9 sm:pl-0">
                       <!-- Stepper box -->
                       <div class="inline-flex items-center rounded-xl bg-slate-800/90 border border-slate-700/80 p-0.5 shadow-sm">
                         <button
@@ -3548,10 +3713,10 @@ import '../styles/global.css';
                         <span class="text-[9px] opacity-80">▾</span>
                       </button>
 
-                      <!-- Delete button -->
+                      <!-- Delete button en desktop -->
                       <button
                         type="button"
-                        class="btn-delete-shopping-item p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition shrink-0"
+                        class="hidden sm:inline-flex btn-delete-shopping-item p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition shrink-0"
                         data-id="${item.id}"
                         title="Eliminar de la lista"
                       >
@@ -4174,6 +4339,34 @@ import '../styles/global.css';
   }
 
   // MODALES DE UNIDAD Y EDICIÓN DE CATÁLOGO
+
+  function openAddOneOffModal() {
+    const modal = document.getElementById('modal-add-one-off-shopping');
+    const inputName = document.getElementById('input-one-off-name') as HTMLInputElement | null;
+    const inputQty = document.getElementById('input-one-off-qty') as HTMLInputElement | null;
+    const inputUnit = document.getElementById('input-one-off-unit') as HTMLInputElement | null;
+    const inputNotes = document.getElementById('input-one-off-notes') as HTMLInputElement | null;
+    const checkCatalog = document.getElementById('check-one-off-save-catalog') as HTMLInputElement | null;
+    const selectCat = document.getElementById('select-one-off-category') as HTMLSelectElement | null;
+
+    if (!modal) return;
+    if (inputName) inputName.value = '';
+    if (inputQty) inputQty.value = '1';
+    if (inputUnit) inputUnit.value = '';
+    if (inputNotes) inputNotes.value = '';
+    if (checkCatalog) checkCatalog.checked = false;
+    if (selectCat) selectCat.value = 'auto';
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => inputName?.focus(), 100);
+  }
+
+  function closeAddOneOffModal() {
+    const modal = document.getElementById('modal-add-one-off-shopping');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  }
 
   function openChangeUnitModal(id: number, targetType: 'shopping' | 'catalog', name: string, currentUnit: string) {
     const modal = document.getElementById('modal-change-unit');
@@ -5514,6 +5707,84 @@ import '../styles/global.css';
       const chevron = document.getElementById('bought-chevron');
       if (container) container.classList.toggle('hidden', !isBoughtSectionOpen);
       if (chevron) chevron.textContent = isBoughtSectionOpen ? '▼' : '▶';
+    });
+
+    // FAB y Modal de Artículo Puntual (de una sola vez)
+    document.getElementById('btn-shopping-fab-add')?.addEventListener('click', openAddOneOffModal);
+    document.getElementById('btn-close-add-one-off')?.addEventListener('click', closeAddOneOffModal);
+    document.getElementById('btn-cancel-add-one-off')?.addEventListener('click', closeAddOneOffModal);
+
+    document.getElementById('btn-one-off-qty-down')?.addEventListener('click', () => {
+      const inp = document.getElementById('input-one-off-qty') as HTMLInputElement | null;
+      if (inp) {
+        const val = parseInt(inp.value || '1', 10);
+        if (val > 1) inp.value = String(val - 1);
+      }
+    });
+
+    document.getElementById('btn-one-off-qty-up')?.addEventListener('click', () => {
+      const inp = document.getElementById('input-one-off-qty') as HTMLInputElement | null;
+      if (inp) {
+        const val = parseInt(inp.value || '1', 10);
+        inp.value = String(val + 1);
+      }
+    });
+
+    document.querySelectorAll('.btn-one-off-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const u = chip.getAttribute('data-unit');
+        const inp = document.getElementById('input-one-off-unit') as HTMLInputElement | null;
+        if (inp && u) inp.value = u;
+      });
+    });
+
+    const formAddOneOff = document.getElementById('form-add-one-off') as HTMLFormElement | null;
+    formAddOneOff?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const inputName = document.getElementById('input-one-off-name') as HTMLInputElement | null;
+      const inputQty = document.getElementById('input-one-off-qty') as HTMLInputElement | null;
+      const inputUnit = document.getElementById('input-one-off-unit') as HTMLInputElement | null;
+      const inputNotes = document.getElementById('input-one-off-notes') as HTMLInputElement | null;
+      const checkCatalog = document.getElementById('check-one-off-save-catalog') as HTMLInputElement | null;
+      const selectCat = document.getElementById('select-one-off-category') as HTMLSelectElement | null;
+
+      if (!inputName || !inputName.value.trim()) return;
+
+      const name = inputName.value.trim();
+      const qty = inputQty?.value.trim() || '1';
+      const unit = inputUnit?.value.trim() || undefined;
+      const notes = inputNotes?.value.trim();
+      const category = selectCat?.value !== 'auto' ? selectCat?.value : undefined;
+      const saveToCatalog = Boolean(checkCatalog?.checked);
+
+      try {
+        const res = await fetch('/api/shopping', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            category,
+            quantity: qty,
+            unit,
+            notes,
+            saveToCatalog,
+            isOneOff: !saveToCatalog,
+            addedBy: activeUser?.id,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast(`"${name}" añadido a la compra 🛒`, 'success');
+          closeAddOneOffModal();
+          await loadShoppingList();
+          await loadShoppingCatalog();
+        } else {
+          showToast(data.error || 'Error al añadir artículo', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
     });
 
     // Unit Picker Modal Listeners

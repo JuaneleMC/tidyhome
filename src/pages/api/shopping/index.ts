@@ -106,8 +106,9 @@ export const POST: APIRoute = async ({ request }) => {
 
     const finalQty: string = quantity && String(quantity).trim() ? String(quantity).trim() : '1';
 
-    // Si no teníamos targetCatalogId, buscar o crear en shoppingCatalog para guardarlo en "Artículos en uso"
-    if (!targetCatalogId) {
+    // Si no teníamos targetCatalogId y se solicita guardar en catálogo, buscar o crear en shoppingCatalog
+    const shouldSaveToCatalog = body.saveToCatalog !== false && !body.isOneOff;
+    if (!targetCatalogId && shouldSaveToCatalog) {
       const catExisting = await db
         .select()
         .from(shoppingCatalog)
