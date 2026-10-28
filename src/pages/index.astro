@@ -374,45 +374,44 @@ import '../styles/global.css';
   <!-- TAB 3: LISTA DE LA COMPRA (SUPERMERCADO) -->
   <!-- ========================================== -->
   <section id="view-shopping" class="tab-view hidden space-y-4">
-    <!-- Header with stats and actions -->
-    <div class="flex items-center justify-between gap-3">
-      <div>
+    <!-- Header & Sub-Tabs pegajosos (siempre visibles al hacer scroll) -->
+    <div class="shopping-sticky-header space-y-2">
+      <div class="flex items-center justify-between gap-3">
         <h2 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
           <span>🛒</span> Lista de la Compra
         </h2>
-        <p class="text-xs text-slate-400 font-medium">Estilo Listonic: despensa y lista conectadas</p>
+
+        <div class="flex items-center gap-1.5">
+          <button
+            id="btn-shopping-clear-bought"
+            type="button"
+            class="hidden text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border border-slate-700/60 hover:border-rose-500/30 font-semibold transition active:scale-95"
+            title="Borrar productos ya comprados del carro"
+          >
+            🧹 Limpiar comprados
+          </button>
+        </div>
       </div>
 
-      <div class="flex items-center gap-1.5">
+      <!-- Sub-Tabs: [ 🛒 Lista de la compra (X) ] | [ 📦 Artículos en uso (Y) ] -->
+      <div class="inline-flex p-1 rounded-2xl bg-slate-800/80 border border-slate-700/60 text-xs font-semibold w-full shadow-inner">
         <button
-          id="btn-shopping-clear-bought"
+          id="shopping-subtab-btn-list"
           type="button"
-          class="hidden text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border border-slate-700/60 hover:border-rose-500/30 font-semibold transition active:scale-95"
-          title="Borrar productos ya comprados del carro"
+          class="shopping-subtab-btn flex-1 py-2 rounded-xl bg-emerald-600 text-white font-bold transition shadow-sm flex items-center justify-center gap-1.5"
         >
-          🧹 Limpiar comprados
+          <span>🛒 Lista de la compra</span>
+          <span id="badge-subtab-shopping-count" class="px-1.5 py-0.2 bg-emerald-950/60 text-emerald-200 border border-emerald-400/30 rounded-full text-[10px] font-extrabold">0</span>
+        </button>
+        <button
+          id="shopping-subtab-btn-catalog"
+          type="button"
+          class="shopping-subtab-btn flex-1 py-2 rounded-xl text-slate-400 hover:text-white font-semibold transition flex items-center justify-center gap-1.5"
+        >
+          <span>📦 Artículos en uso</span>
+          <span id="badge-subtab-catalog-count" class="px-1.5 py-0.2 bg-slate-900/60 text-slate-400 rounded-full text-[10px]">0</span>
         </button>
       </div>
-    </div>
-
-    <!-- Sub-Tabs: [ 🛒 Lista de la compra (X) ] | [ 📦 Artículos en uso (Y) ] -->
-    <div class="inline-flex p-1 rounded-2xl bg-slate-800/80 border border-slate-700/60 text-xs font-semibold w-full shadow-inner">
-      <button
-        id="shopping-subtab-btn-list"
-        type="button"
-        class="shopping-subtab-btn flex-1 py-2 rounded-xl bg-emerald-600 text-white font-bold transition shadow-sm flex items-center justify-center gap-1.5"
-      >
-        <span>🛒 Lista de la compra</span>
-        <span id="badge-subtab-shopping-count" class="px-1.5 py-0.2 bg-emerald-950/60 text-emerald-200 border border-emerald-400/30 rounded-full text-[10px] font-extrabold">0</span>
-      </button>
-      <button
-        id="shopping-subtab-btn-catalog"
-        type="button"
-        class="shopping-subtab-btn flex-1 py-2 rounded-xl text-slate-400 hover:text-white font-semibold transition flex items-center justify-center gap-1.5"
-      >
-        <span>📦 Artículos en uso</span>
-        <span id="badge-subtab-catalog-count" class="px-1.5 py-0.2 bg-slate-900/60 text-slate-400 rounded-full text-[10px]">0</span>
-      </button>
     </div>
 
     <!-- ========================================== -->
@@ -493,7 +492,7 @@ import '../styles/global.css';
       </div>
 
       <!-- Bought Items Section (Collapsible) -->
-      <div id="shopping-bought-wrapper" class="hidden space-y-2 pt-3 border-t border-slate-800 pb-20">
+      <div id="shopping-bought-wrapper" class="hidden space-y-2 pt-3 border-t border-slate-800">
         <div class="flex items-center justify-between">
           <button
             id="btn-toggle-bought-section"
@@ -508,6 +507,21 @@ import '../styles/global.css';
         <div id="shopping-bought-container" class="space-y-1.5">
           <!-- Rendered by JS -->
         </div>
+      </div>
+
+      <!-- Botón Finalizar Compra y Vaciar Lista Completa -->
+      <div class="pt-6 pb-20 text-center">
+        <button
+          id="btn-shopping-finish-all"
+          type="button"
+          class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white text-sm font-black shadow-xl shadow-emerald-950/40 transition active:scale-95 inline-flex items-center justify-center gap-2 mx-auto"
+        >
+          <span class="text-base">🏁</span>
+          <span>Finalizar compra y vaciar lista</span>
+        </button>
+        <p class="text-[11px] text-slate-400 mt-2 font-medium">
+          Vacía los pendientes y el carro. Tus artículos en uso seguirán intactos para la próxima compra.
+        </p>
       </div>
     </div>
 
@@ -533,8 +547,7 @@ import '../styles/global.css';
           >&times;</button>
         </div>
 
-        <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
-          <span>👆 Toca un artículo para pasarlo a la compra</span>
+        <div class="flex items-center justify-end text-[11px] text-slate-400 px-1">
           <span id="catalog-total-items-badge" class="font-bold text-slate-300">0 artículos</span>
         </div>
       </div>
@@ -3569,7 +3582,7 @@ import '../styles/global.css';
                       <!-- Unit chip (interactive to change unit) -->
                       <button
                         type="button"
-                        class="btn-open-change-unit px-2 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition active:scale-95 flex items-center gap-1"
+                        class="btn-open-change-unit px-2.5 py-1 rounded-xl text-xs font-extrabold transition active:scale-95 flex items-center gap-1 shadow-sm"
                         data-id="${item.id}"
                         data-type="shopping"
                         data-name="${escHtml(item.name)}"
@@ -3577,7 +3590,7 @@ import '../styles/global.css';
                         title="Cambiar formato/unidad de compra"
                       >
                         <span>${escHtml(item.unit || 'ud')}</span>
-                        <span class="text-[9px] text-emerald-400/70">▾</span>
+                        <span class="text-[9px] opacity-80">▾</span>
                       </button>
 
                       <!-- Delete button -->
@@ -5526,6 +5539,26 @@ import '../styles/global.css';
     });
 
     document.getElementById('btn-shopping-clear-bought')?.addEventListener('click', clearBoughtShoppingItems);
+
+    // Finalizar compra por completo (vaciar pendientes y comprados, manteniendo artículos en uso)
+    document.getElementById('btn-shopping-finish-all')?.addEventListener('click', async () => {
+      if (confirm('¿Finalizar compra? Se vaciará toda la lista actual (pendientes y el carro). Los artículos en uso seguirán guardados en la despensa.')) {
+        try {
+          const res = await fetch('/api/shopping/clear-all', { method: 'POST' });
+          const data = await res.json();
+          if (data.success) {
+            triggerConfetti();
+            showToast('¡Compra finalizada! Lista vaciada y despensa lista 🎉', 'success');
+            await loadShoppingList();
+            await loadShoppingCatalog();
+          } else {
+            showToast(data.error || 'Error al finalizar compra', 'error');
+          }
+        } catch (err) {
+          showToast('Error de conexión', 'error');
+        }
+      }
+    });
 
     document.getElementById('btn-toggle-bought-section')?.addEventListener('click', () => {
       isBoughtSectionOpen = !isBoughtSectionOpen;

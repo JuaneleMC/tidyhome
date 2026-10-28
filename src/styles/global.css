@@ -333,3 +333,47 @@ body.theme-pastel .bg-slate-800.rounded-full {
 .animate-pop {
   animation: checkmark-pop 0.3s ease-out;
 }
+
+/* ===================================================
+   MÓDULO COMPRA: HEADER PEGAJOSO Y UNIDADES DE ALTO CONTRASTE
+   =================================================== */
+.shopping-sticky-header {
+  position: sticky;
+  top: -1rem;
+  margin-top: -1rem;
+  z-index: 30;
+  padding-top: 1rem;
+  padding-bottom: 0.6rem;
+  background: linear-gradient(to bottom, rgba(15, 23, 42, 0.98) 85%, transparent 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+body.theme-pastel .shopping-sticky-header {
+  background: linear-gradient(to bottom, rgba(203, 217, 238, 0.98) 85%, transparent 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Pastilla de unidades con contraste impecable y nitidez */
+.btn-open-change-unit {
+  background-color: #064e3b !important;
+  color: #ecfdf5 !important;
+  border: 1px solid #10b981 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+body.theme-pastel .btn-open-change-unit {
+  background-color: #d1fae5 !important; /* verde menta suave */
+  color: #064e3b !important; /* verde bosque oscuro, máxima legibilidad */
+  border: 1.5px solid #059669 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 1px 3px rgba(6, 78, 59, 0.12);
+}
+
+.btn-open-change-unit:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
