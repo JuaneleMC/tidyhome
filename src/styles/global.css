@@ -120,24 +120,40 @@ body.theme-pastel .text-slate-500 {
   color: #64748b;
 }
 
-/* Excepciones para botones o badges con fondo de color sólido (mantienen texto blanco) */
-body.theme-pastel button[class*="bg-indigo-"] .text-white,
-body.theme-pastel button[class*="bg-purple-"] .text-white,
-body.theme-pastel button[class*="bg-emerald-"] .text-white,
-body.theme-pastel button[class*="bg-rose-"] .text-white,
-body.theme-pastel button[class*="bg-pink-"] .text-white,
-body.theme-pastel span[class*="bg-indigo-"] .text-white,
-body.theme-pastel span[class*="bg-purple-"] .text-white,
-body.theme-pastel span[class*="bg-emerald-"] .text-white,
-body.theme-pastel span[class*="bg-rose-"] .text-white,
-body.theme-pastel span[class*="bg-pink-"] .text-white,
-body.theme-pastel span[class*="bg-rose-500"],
-body.theme-pastel span[class*="bg-rose-600"],
+/* Excepciones para botones o badges con fondo de color sólido o degradado (mantienen texto blanco nítido) */
 body.theme-pastel button[class*="bg-indigo-"],
+body.theme-pastel button[class*="bg-indigo-"] *,
 body.theme-pastel button[class*="bg-purple-"],
+body.theme-pastel button[class*="bg-purple-"] *,
 body.theme-pastel button[class*="bg-emerald-"],
+body.theme-pastel button[class*="bg-emerald-"] *,
 body.theme-pastel button[class*="bg-rose-"],
+body.theme-pastel button[class*="bg-rose-"] *,
 body.theme-pastel button[class*="bg-pink-"],
+body.theme-pastel button[class*="bg-pink-"] *,
+body.theme-pastel button[class*="bg-blue-"],
+body.theme-pastel button[class*="bg-blue-"] *,
+body.theme-pastel button[class*="from-indigo-"],
+body.theme-pastel button[class*="from-indigo-"] *,
+body.theme-pastel button[class*="from-purple-"],
+body.theme-pastel button[class*="from-purple-"] *,
+body.theme-pastel button[class*="from-blue-"],
+body.theme-pastel button[class*="from-blue-"] *,
+body.theme-pastel button[class*="from-emerald-"],
+body.theme-pastel button[class*="from-emerald-"] *,
+body.theme-pastel button[class*="from-pink-"],
+body.theme-pastel button[class*="from-pink-"] *,
+body.theme-pastel span[class*="bg-indigo-600"],
+body.theme-pastel span[class*="bg-indigo-600"] *,
+body.theme-pastel span[class*="bg-indigo-500"]:not([class*="bg-indigo-500/"]),
+body.theme-pastel span[class*="bg-emerald-500"]:not([class*="bg-emerald-500/"]),
+body.theme-pastel span[class*="bg-emerald-600"],
+body.theme-pastel span[class*="bg-rose-500"]:not([class*="bg-rose-500/"]),
+body.theme-pastel span[class*="bg-rose-600"],
+body.theme-pastel .cal-day[style*="background"],
+body.theme-pastel .cal-day[style*="background"] *,
+body.theme-pastel .cal-user-btn.shadow-md,
+body.theme-pastel .cal-user-btn.shadow-md *,
 body.theme-pastel .panel-filter-btn.bg-indigo-600,
 body.theme-pastel .dashboard-group-btn.bg-indigo-600,
 body.theme-pastel .catalog-filter-btn.bg-indigo-600,
@@ -246,12 +262,152 @@ body.theme-pastel .catalog-filter-btn.text-slate-300 {
 body.theme-pastel .bg-emerald-950\/20,
 body.theme-pastel .bg-emerald-950\/90 {
   background-color: #ecfdf5 !important;
-  border-color: #a7f3d0 !important;
+  border-color: #6ee7b7 !important;
+  color: #064e3b !important;
+}
+
+/* Título tachado de tarea completada con buen contraste */
+body.theme-pastel .bg-emerald-950\/20 .line-through {
   color: #065f46 !important;
 }
 
-body.theme-pastel .bg-emerald-950\/20 span {
-  color: #065f46 !important;
+/* ===================================================
+   ETIQUETAS DE TAREAS Y PASTILLAS DE ALTO CONTRASTE
+   =================================================== */
+
+/* 1. Etiqueta "✓ Hecha por X": Fondo verde esmeralda intenso con texto blanco nítido */
+.badge-done-by,
+body.theme-pastel .badge-done-by,
+.badge-done-by *,
+body.theme-pastel .badge-done-by * {
+  background-color: #047857 !important;
+  color: #ffffff !important;
+  border-color: #065f46 !important;
+}
+
+/* 2. Etiqueta "⚡ Hecha por X" (hecha por otro conviviente): Fondo rosa/frambuesa intenso con texto blanco */
+.badge-stolen-by,
+body.theme-pastel .badge-stolen-by,
+.badge-stolen-by *,
+body.theme-pastel .badge-stolen-by * {
+  background-color: #be185d !important;
+  color: #ffffff !important;
+  border-color: #9d174d !important;
+}
+
+/* 3. Etiqueta "🎯 Tocaba a X": Fondo blanco limpio con texto pizarra oscuro */
+.badge-assigned-to,
+body.theme-pastel .badge-assigned-to {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+.badge-assigned-to *,
+body.theme-pastel .badge-assigned-to * {
+  color: #0f172a !important;
+}
+
+/* 4. Etiqueta "📅 Hecha el [Día]": Fondo índigo intenso con texto blanco puro */
+.badge-exec-date,
+body.theme-pastel .badge-exec-date,
+.badge-exec-date *,
+body.theme-pastel .badge-exec-date * {
+  background-color: #4338ca !important;
+  color: #ffffff !important;
+  border-color: #3730a3 !important;
+}
+
+/* 5. Etiqueta "📅 Programada: [Día]": Fondo pizarra claro con texto oscuro (o índigo intenso si es Hoy) */
+.badge-sched-date,
+body.theme-pastel .badge-sched-date {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+.badge-sched-date *,
+body.theme-pastel .badge-sched-date * {
+  color: #0f172a !important;
+}
+
+.badge-sched-today,
+body.theme-pastel .badge-sched-today,
+.badge-sched-today *,
+body.theme-pastel .badge-sched-today * {
+  background-color: #4338ca !important;
+  color: #ffffff !important;
+  border-color: #3730a3 !important;
+}
+
+/* Pastillas translúcidas en modo pastel (evita fondos violetas/verdes con letras apagadas) */
+body.theme-pastel span.bg-indigo-500\/20,
+body.theme-pastel span.bg-indigo-500\/15 {
+  background-color: #4338ca !important;
+  color: #ffffff !important;
+  border-color: #3730a3 !important;
+}
+body.theme-pastel span.bg-indigo-500\/20 *,
+body.theme-pastel span.bg-indigo-500\/15 * {
+  color: #ffffff !important;
+}
+
+body.theme-pastel span.bg-purple-500\/20,
+body.theme-pastel span.bg-purple-500\/15 {
+  background-color: #6d28d9 !important;
+  color: #ffffff !important;
+  border-color: #5b21b6 !important;
+}
+body.theme-pastel span.bg-purple-500\/20 *,
+body.theme-pastel span.bg-purple-500\/15 * {
+  color: #ffffff !important;
+}
+
+body.theme-pastel span.bg-emerald-500\/20,
+body.theme-pastel span.bg-emerald-500\/15 {
+  background-color: #047857 !important;
+  color: #ffffff !important;
+  border-color: #065f46 !important;
+}
+body.theme-pastel span.bg-emerald-500\/20 *,
+body.theme-pastel span.bg-emerald-500\/15 * {
+  color: #ffffff !important;
+}
+
+body.theme-pastel span.bg-pink-500\/20,
+body.theme-pastel span.bg-pink-500\/15 {
+  background-color: #be185d !important;
+  color: #ffffff !important;
+  border-color: #9d174d !important;
+}
+body.theme-pastel span.bg-pink-500\/20 *,
+body.theme-pastel span.bg-pink-500\/15 * {
+  color: #ffffff !important;
+}
+
+body.theme-pastel span.bg-rose-500\/20 {
+  background-color: #be123c !important;
+  color: #ffffff !important;
+  border-color: #9f1239 !important;
+}
+
+/* Textos de color sueltos sobre fondos claros en modo pastel */
+body.theme-pastel .text-emerald-400 {
+  color: #047857 !important;
+}
+body.theme-pastel .text-amber-400,
+body.theme-pastel .text-amber-400\/90 {
+  color: #b45309 !important;
+}
+body.theme-pastel .text-indigo-300,
+body.theme-pastel .text-indigo-400 {
+  color: #3730a3 !important;
+}
+body.theme-pastel .text-purple-300,
+body.theme-pastel .text-purple-400 {
+  color: #5b21b6 !important;
+}
+body.theme-pastel .text-pink-300,
+body.theme-pastel .text-pink-400 {
+  color: #be185d !important;
 }
 
 body.theme-pastel .bg-pink-950\/30 {
@@ -259,9 +415,11 @@ body.theme-pastel .bg-pink-950\/30 {
   border-color: #fbcfe8 !important;
 }
 
-body.theme-pastel .bg-indigo-950\/30 {
-  background-color: #eef2ff !important;
-  border-color: #c7d2fe !important;
+body.theme-pastel .bg-indigo-950\/30,
+body.theme-pastel .bg-indigo-600\/20 {
+  background-color: #e0e7ff !important;
+  color: #1e1b4b !important;
+  border-color: #818cf8 !important;
 }
 
 body.theme-pastel .bg-purple-950\/30 {

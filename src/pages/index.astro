@@ -1692,7 +1692,7 @@ import '../styles/global.css';
 
     return `
       <span
-        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/20 text-indigo-200 border border-indigo-400/40"
+        class="badge-exec-date inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border shadow-xs"
         title="Programada para el ${schedText} · Marcada como hecha el ${execInfo.dayName} ${execInfo.d} ${execInfo.monthShort}"
       >
         <span>📅 Hecha el ${execInfo.dayName} ${execInfo.d} ${execInfo.monthShort}</span>
@@ -1705,13 +1705,11 @@ import '../styles/global.css';
     if (!info) return '';
 
     return `
-      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
-        info.isToday
-          ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-400/40'
-          : 'bg-slate-800 text-slate-300 border border-slate-700/60'
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border shadow-xs ${
+        info.isToday ? 'badge-sched-today' : 'badge-sched-date'
       }" title="Programada para el ${info.dayName} ${info.d} ${info.monthShort}">
         <span>📅 Programada: ${info.dayName} ${info.d} ${info.monthShort}</span>
-        ${info.isToday ? '<span class="text-[9px] px-1 py-0.1 bg-indigo-600 text-white rounded font-bold uppercase">Hoy</span>' : ''}
+        ${info.isToday ? '<span class="text-[9px] px-1 py-0.1 bg-white/20 rounded font-extrabold uppercase">Hoy</span>' : ''}
       </span>
     `;
   }
@@ -1875,11 +1873,11 @@ import '../styles/global.css';
           if (done && isStolen) {
             personHtml = `
               <div class="flex items-center gap-1.5 flex-wrap mt-1 text-[10px]">
-                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                <span class="badge-assigned-to inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-semibold shadow-xs">
                   <span>🎯 Tocaba a:</span>
                   <strong>${u ? escHtml(u.avatar + ' ' + u.name) : 'Usuario'}</strong>
                 </span>
-                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-200 border border-pink-400/40 font-bold">
+                <span class="badge-stolen-by inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-bold shadow-xs">
                   <span>⚡ Hecha por:</span>
                   <strong>${execU ? escHtml(execU.avatar + ' ' + execU.name) : escHtml(t.executedByName || 'Conviviente')}</strong>
                 </span>
@@ -1890,7 +1888,7 @@ import '../styles/global.css';
             const whoDone = execU || u;
             personHtml = `
               <div class="flex items-center gap-1.5 flex-wrap mt-1 text-[10px]">
-                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">
+                <span class="badge-done-by inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-bold shadow-xs">
                   <span>✓ Hecha por:</span>
                   <strong>${whoDone ? escHtml(whoDone.avatar + ' ' + whoDone.name) : 'Conviviente'}</strong>
                 </span>
@@ -2612,12 +2610,12 @@ import '../styles/global.css';
               ${
                 isStolen
                   ? `
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                    <span class="badge-assigned-to inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border shadow-xs">
                       <span>🎯 Tocaba a:</span>
                       <span>${chore.assignedToAvatar || '👤'}</span>
-                      <strong class="text-white">${chore.assignedToName}</strong>
+                      <strong>${chore.assignedToName}</strong>
                     </span>
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-pink-500/20 text-pink-200 border border-pink-400/40">
+                    <span class="badge-stolen-by inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border shadow-xs">
                       <span>⚡ Hecha por:</span>
                       <span>${chore.executedByAvatar || '👤'}</span>
                       <strong>${chore.executedByName}</strong>
@@ -2625,26 +2623,26 @@ import '../styles/global.css';
                   `
                   : isCompleted
                   ? `
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                    <span class="badge-done-by inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border shadow-xs">
                       <span>✓ Hecha por</span>
                       <span>${chore.executedByAvatar || chore.assignedToAvatar || '👤'}</span>
                       <strong>${chore.executedByName || chore.assignedToName}</strong>
                     </span>
                   `
                   : isPunctual
-                  ? `<span class="text-[10px] text-amber-400/90 font-medium">⏳ Pendiente</span>`
+                  ? `<span class="text-[10px] text-amber-400/90 font-semibold">⏳ Pendiente</span>`
                   : `
-                    <span class="inline-flex items-center gap-1 text-slate-300">
-                      <span class="text-slate-400">🎯 Tocaba a:</span>
+                    <span class="badge-assigned-to inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border shadow-xs">
+                      <span>🎯 Tocaba a:</span>
                       <span>${chore.assignedToAvatar || '👤'}</span>
-                      <span class="${isAssignedToMe ? 'text-indigo-400 font-bold' : 'font-semibold'}">
+                      <strong>
                         ${chore.assignedToName}
-                      </span>
+                      </strong>
                     </span>
                     ${
                       isOverdue
-                        ? `<span class="text-[10px] text-rose-700 font-bold bg-rose-100/90 px-1.5 py-0.5 rounded border border-rose-200">⚠️ Con retraso</span>`
-                        : `<span class="text-[10px] text-amber-400/90 font-medium">⏳ Pendiente</span>`
+                        ? `<span class="text-[10px] text-rose-800 font-bold bg-rose-100 px-1.5 py-0.5 rounded border border-rose-300">⚠️ Con retraso</span>`
+                        : `<span class="text-[10px] text-amber-400/90 font-semibold">⏳ Pendiente</span>`
                     }
                   `
               }
@@ -3269,26 +3267,26 @@ import '../styles/global.css';
             const execParts = h.executedDateYmd.split('-').map(Number);
             const execDate = new Date(execParts[0], execParts[1] - 1, execParts[2]);
             const execFormatted = execDate.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
-            execDateBadge = `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-200 border border-indigo-400/40 text-[10px] font-bold">📅 Hecha el ${escHtml(execFormatted)}</span>`;
+            execDateBadge = `<span class="badge-exec-date inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-bold shadow-xs">📅 Hecha el ${escHtml(execFormatted)}</span>`;
           }
 
           const personLine = h.isStolen
             ? `<div class="flex items-center gap-1.5 flex-wrap">
-                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">🎯 Tocaba a: <strong>${escHtml((h.assignedToAvatar || '👤') + ' ' + (h.assignedToName || 'Conviviente'))}</strong></span>
-                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-200 border border-pink-400/40 font-bold">⚡ Hecha por: <strong>${escHtml((h.executedByAvatar || '👤') + ' ' + (h.executedByName || 'Conviviente'))}</strong></span>
+                 <span class="badge-assigned-to text-[10px] px-2 py-0.5 rounded-md border font-semibold shadow-xs">🎯 Tocaba a: <strong>${escHtml((h.assignedToAvatar || '👤') + ' ' + (h.assignedToName || 'Conviviente'))}</strong></span>
+                 <span class="badge-stolen-by text-[10px] px-2 py-0.5 rounded-md border font-bold shadow-xs">⚡ Hecha por: <strong>${escHtml((h.executedByAvatar || '👤') + ' ' + (h.executedByName || 'Conviviente'))}</strong></span>
                </div>`
-            : `<span class="font-bold text-white block">✓ Hecha por ${escHtml((h.executedByAvatar || '👤') + ' ' + (h.executedByName || 'Conviviente'))}</span>`;
+            : `<span class="badge-done-by inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md border font-bold shadow-xs">✓ Hecha por ${escHtml((h.executedByAvatar || '👤') + ' ' + (h.executedByName || 'Conviviente'))}</span>`;
 
           return `
             <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-xs">
               <div class="space-y-1 min-w-0 flex-1">
                 ${personLine}
                 <div class="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400">
-                  <span>📅 Programada: ${escHtml(schedFormatted)}</span>
+                  <span class="badge-sched-date px-1.5 py-0.5 rounded border font-semibold">📅 Programada: ${escHtml(schedFormatted)}</span>
                   ${execDateBadge}
                 </div>
               </div>
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 shrink-0">
+              <span class="badge-done-by text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0">
                 ✓ Hecha
               </span>
             </div>
