@@ -14,47 +14,143 @@ export function extractExecutionDateYMD(executionDate: string | null | undefined
 }
 
 /**
- * Normaliza cualquier tarea que en versiones anteriores hubiera sido movida de su fecha programada
- * (teniendo original_target_date relleno), restaurando su target_date original y conservando execution_date.
+ * Normaliza cualquier tarea que hubiera quedado registrada en un día distinto al que le corresponde
+ * según su programación (tanto si tenía original_target_date como si se registró directamente en otro día
+ * o se cambió su día en el catálogo), colocándola en su día programado (target_date) y conservando
+ * el día real en que se hizo en execution_date.
  */
 async function normalizeMovedChores() {
-  const movedLogs = await db
+  try {
+    await rawClient.execute(`ALTER TABLE chore_log ADD COLUMN original_target_date TEXT;`);
+  } catch {}
+
+  const allCatalog = await db.select().from(choreCatalog);
+  const catalogMap = new Map(allCatalog.map((c) => [c.id, c]));
+
+  const allLogs = await db
     .select({
       id: choreLog.id,
       choreId: choreLog.choreId,
       targetDate: choreLog.targetDate,
       originalTargetDate: choreLog.originalTargetDate,
+      status: choreLog.status,
       executionDate: choreLog.executionDate,
     })
-    .from(choreLog)
-    .where(isNotNull(choreLog.originalTargetDate));
+    .from(choreLog);
 
-  for (const log of movedLogs) {
-    if (!log.originalTargetDate) continue;
-    const restoredDate = log.originalTargetDate;
-    const preservedExecutionDate = log.executionDate || log.targetDate;
+  // Procesar primero las tareas completadas para que tengan prioridad sobre posibles pendientes duplicadas
+  allLogs.sort((a, b) => (a.status === 'completed' ? -1 : 1) - (b.status === 'completed' ? -1 : 1));
 
-    // Si por algún motivo se había generado otra pendiente duplicada en la fecha original, la limpiamos
-    if (restoredDate !== log.targetDate) {
-      await db
-        .delete(choreLog)
-        .where(
-          and(
-            eq(choreLog.choreId, log.choreId),
-            eq(choreLog.targetDate, restoredDate),
-            eq(choreLog.status, 'pending')
-          )
-        );
+  const deletedIds = new Set<number>();
+
+  for (const log of allLogs) {
+    if (deletedIds.has(log.id)) continue;
+    const chore = catalogMap.get(log.choreId);
+    if (!chore) continue;
+
+    const parts = log.targetDate.split('-').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) continue;
+    const [y, m, d] = parts;
+    const logDateObj = new Date(y, m - 1, d);
+    const actualDayOfWeek = logDateObj.getDay();
+    const weekDays = getDaysOfWeek(logDateObj);
+
+    let desiredTargetDate = log.targetDate;
+
+    if (chore.frequency === 'weekly' || chore.frequency === 'biweekly' || chore.frequency === 'monthly') {
+      const expectedDayOfWeek = chore.dayOfWeek ?? 1;
+      if (log.originalTargetDate && log.originalTargetDate !== log.targetDate) {
+        const origParts = log.originalTargetDate.split('-').map(Number);
+        if (origParts.length === 3 && !origParts.some(isNaN)) {
+          const origDateObj = new Date(origParts[0], origParts[1] - 1, origParts[2]);
+          if (origDateObj.getDay() === expectedDayOfWeek) {
+            desiredTargetDate = log.originalTargetDate;
+          }
+        }
+      }
+      if (desiredTargetDate === log.targetDate && actualDayOfWeek !== expectedDayOfWeek) {
+        const scheduledDayInWeek = weekDays.find((wd) => wd.dayOfWeek === expectedDayOfWeek);
+        if (scheduledDayInWeek) {
+          desiredTargetDate = scheduledDayInWeek.dateStr;
+        }
+      }
+    } else if (chore.frequency === 'twice_weekly') {
+      const firstDayNum = chore.dayOfWeek ?? 1;
+      const secondDayNum = chore.secondDayOfWeek ?? ((firstDayNum + 3) % 7 === 0 ? 0 : (firstDayNum + 3) % 7);
+
+      if (log.originalTargetDate && log.originalTargetDate !== log.targetDate) {
+        desiredTargetDate = log.originalTargetDate;
+      } else if (actualDayOfWeek !== firstDayNum && actualDayOfWeek !== secondDayNum) {
+        const day1 = weekDays.find((wd) => wd.dayOfWeek === firstDayNum);
+        const day2 = weekDays.find((wd) => wd.dayOfWeek === secondDayNum);
+        const candidates = [day1?.dateStr, day2?.dateStr].filter(Boolean) as string[];
+        if (candidates.length > 0) {
+          const weekLogsForChore = allLogs.filter(
+            (l) => !deletedIds.has(l.id) && l.choreId === log.choreId && l.id !== log.id && candidates.includes(l.targetDate)
+          );
+          const missingCandidate = candidates.find(
+            (cDate) => !weekLogsForChore.some((l) => l.targetDate === cDate)
+          );
+          const pendingCandidate = candidates.find(
+            (cDate) => weekLogsForChore.some((l) => l.targetDate === cDate && l.status === 'pending')
+          );
+          desiredTargetDate = missingCandidate || pendingCandidate || candidates[0];
+        }
+      }
+    } else if (log.originalTargetDate && log.originalTargetDate !== log.targetDate) {
+      desiredTargetDate = log.originalTargetDate;
     }
 
-    await db
-      .update(choreLog)
-      .set({
-        targetDate: restoredDate,
-        originalTargetDate: null,
-        executionDate: preservedExecutionDate,
-      })
-      .where(eq(choreLog.id, log.id));
+    if (desiredTargetDate !== log.targetDate || log.originalTargetDate !== null) {
+      if (log.status === 'pending' && desiredTargetDate !== log.targetDate) {
+        // Si es una tarea pendiente desubicada y ya existe un registro en el día correcto, eliminar la desubicada
+        const existingAtTarget = allLogs.find(
+          (l) => !deletedIds.has(l.id) && l.id !== log.id && l.choreId === log.choreId && l.targetDate === desiredTargetDate
+        );
+        if (existingAtTarget) {
+          await db.delete(choreLog).where(eq(choreLog.id, log.id));
+          deletedIds.add(log.id);
+          continue;
+        }
+      }
+
+      let preservedExecutionDate = log.executionDate;
+      if (log.status === 'completed') {
+        const currentExecYmd = extractExecutionDateYMD(log.executionDate);
+        if (!currentExecYmd || currentExecYmd === desiredTargetDate) {
+          preservedExecutionDate = log.targetDate;
+        }
+      }
+
+      if (desiredTargetDate !== log.targetDate) {
+        // Eliminar cualquier pendiente duplicada en la fecha destino
+        const pendingAtTarget = allLogs.filter(
+          (l) =>
+            !deletedIds.has(l.id) &&
+            l.id !== log.id &&
+            l.choreId === log.choreId &&
+            l.targetDate === desiredTargetDate &&
+            l.status === 'pending'
+        );
+        for (const p of pendingAtTarget) {
+          await db.delete(choreLog).where(eq(choreLog.id, p.id));
+          deletedIds.add(p.id);
+        }
+      }
+
+      await db
+        .update(choreLog)
+        .set({
+          targetDate: desiredTargetDate,
+          originalTargetDate: null,
+          executionDate: preservedExecutionDate,
+        })
+        .where(eq(choreLog.id, log.id));
+
+      log.targetDate = desiredTargetDate;
+      log.originalTargetDate = null;
+      log.executionDate = preservedExecutionDate;
+    }
   }
 }
 
