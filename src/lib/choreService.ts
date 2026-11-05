@@ -1,7 +1,62 @@
 import { db, rawClient, initializeDatabase } from '../db/client';
 import { users, choreCatalog, choreLog, type ChoreStatusType } from '../db/schema';
-import { eq, and, or, inArray, gte, lte, desc, asc } from 'drizzle-orm';
+import { eq, and, or, inArray, gte, lte, desc, asc, isNotNull } from 'drizzle-orm';
 import { getDaysOfWeek, getTodayYMD, getWeekNumber, formatDateYMD, getMondayOfWeek } from './dates';
+
+export function extractExecutionDateYMD(executionDate: string | null | undefined): string | null {
+  if (!executionDate) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(executionDate)) return executionDate;
+  const parsed = new Date(executionDate);
+  if (!isNaN(parsed.getTime())) {
+    return formatDateYMD(parsed);
+  }
+  return executionDate.slice(0, 10);
+}
+
+/**
+ * Normaliza cualquier tarea que en versiones anteriores hubiera sido movida de su fecha programada
+ * (teniendo original_target_date relleno), restaurando su target_date original y conservando execution_date.
+ */
+async function normalizeMovedChores() {
+  const movedLogs = await db
+    .select({
+      id: choreLog.id,
+      choreId: choreLog.choreId,
+      targetDate: choreLog.targetDate,
+      originalTargetDate: choreLog.originalTargetDate,
+      executionDate: choreLog.executionDate,
+    })
+    .from(choreLog)
+    .where(isNotNull(choreLog.originalTargetDate));
+
+  for (const log of movedLogs) {
+    if (!log.originalTargetDate) continue;
+    const restoredDate = log.originalTargetDate;
+    const preservedExecutionDate = log.executionDate || log.targetDate;
+
+    // Si por algún motivo se había generado otra pendiente duplicada en la fecha original, la limpiamos
+    if (restoredDate !== log.targetDate) {
+      await db
+        .delete(choreLog)
+        .where(
+          and(
+            eq(choreLog.choreId, log.choreId),
+            eq(choreLog.targetDate, restoredDate),
+            eq(choreLog.status, 'pending')
+          )
+        );
+    }
+
+    await db
+      .update(choreLog)
+      .set({
+        targetDate: restoredDate,
+        originalTargetDate: null,
+        executionDate: preservedExecutionDate,
+      })
+      .where(eq(choreLog.id, log.id));
+  }
+}
 
 export interface ChoreWithDetails {
   id: number;
@@ -12,7 +67,7 @@ export interface ChoreWithDetails {
   frequency: string;
   assignmentMode: 'fixed' | 'rotating';
   targetDate: string;
-  originalTargetDate: string | null; // Fecha programada original si se movió al ejecutarse
+  originalTargetDate: string | null;
   status: ChoreStatusType;
   assignedToId: number;
   assignedToName: string;
@@ -23,6 +78,8 @@ export interface ChoreWithDetails {
   executedByColor: string | null;
   executedByAvatar: string | null;
   executionDate: string | null;
+  executedDateYmd: string | null;
+  isDifferentExecutionDay: boolean;
   isStolen: boolean; // Si fue completada por alguien distinto al asignado
   isToday: boolean;
   isOverdue: boolean;
@@ -34,6 +91,7 @@ export interface ChoreWithDetails {
  */
 export async function syncAndGenerateWeekChores(referenceDate: Date = new Date()) {
   await initializeDatabase();
+  await normalizeMovedChores();
 
   const days = getDaysOfWeek(referenceDate);
   const weekNumber = getWeekNumber(referenceDate);
@@ -232,6 +290,7 @@ export async function rescheduleChore(choreId: number, referenceDate: Date = new
  */
 export async function getMonthCalendar(year: number, month: number) {
   await initializeDatabase();
+  await normalizeMovedChores();
 
   const firstDay = new Date(year, month - 1, 1);
   const lastDay = new Date(year, month, 0);
@@ -261,6 +320,7 @@ export async function getMonthCalendar(year: number, month: number) {
       status: choreLog.status,
       assignedToId: choreLog.assignedTo,
       executedById: choreLog.executedBy,
+      executionDate: choreLog.executionDate,
     })
     .from(choreLog)
     .innerJoin(choreCatalog, eq(choreLog.choreId, choreCatalog.id))
@@ -268,6 +328,7 @@ export async function getMonthCalendar(year: number, month: number) {
     .orderBy(asc(choreLog.targetDate), asc(choreLog.choreId));
 
   const allUsers = await db.select().from(users).orderBy(users.id);
+  const userMap = new Map(allUsers.map((u) => [u.id, u]));
   const todayStr = getTodayYMD();
 
   return {
@@ -275,19 +336,36 @@ export async function getMonthCalendar(year: number, month: number) {
     month,
     todayStr,
     users: allUsers.map((u) => ({ id: u.id, name: u.name, color: u.color || '#6366f1', avatar: u.avatar || '👤' })),
-    tasks: logs.map((l) => ({
-      ...l,
-      icon: l.icon || '🧹',
-      category: l.category || 'Hogar',
-      isOverdue: l.status !== 'completed' && l.targetDate < todayStr,
-    })),
+    tasks: logs.map((l) => {
+      const assignedUser = userMap.get(l.assignedToId);
+      const executedUser = l.executedById ? userMap.get(l.executedById) : null;
+      const isCompleted = l.status === 'completed';
+      const executedDateYmd = extractExecutionDateYMD(l.executionDate);
+
+      return {
+        ...l,
+        icon: l.icon || '🧹',
+        category: l.category || 'Hogar',
+        assignedToName: assignedUser?.name || 'Desconocido',
+        assignedToAvatar: assignedUser?.avatar || '👤',
+        assignedToColor: assignedUser?.color || '#6366f1',
+        executedByName: executedUser?.name || null,
+        executedByAvatar: executedUser?.avatar || null,
+        executedByColor: executedUser?.color || null,
+        executedDateYmd,
+        isDifferentExecutionDay: Boolean(isCompleted && executedDateYmd && executedDateYmd !== l.targetDate),
+        isStolen: Boolean(isCompleted && l.executedById && l.executedById !== l.assignedToId),
+        isOverdue: !isCompleted && l.targetDate < todayStr,
+      };
+    }),
   };
 }
 
 /**
  * Endpoint de Ejecución Flexible:
  * Marca una tarea como completada o revierte.
- * Permite que cualquiera asuma la tarea de otro (quedando como executed_by).
+ * La tarea conserva siempre su targetDate (día programado).
+ * Si se ejecuta en otro día o por otra persona, queda registrado en executionDate y executedBy.
  */
 export async function executeChore(
   choreLogId: number,
@@ -338,23 +416,13 @@ export async function executeChore(
     nextStatus = current.status === 'completed' ? 'pending' : 'completed';
   }
 
-  // Semanal, quincenal o mensual (las diarias no) se mueven al día ejecutado
-  const isMovableFrequency = current.frequency !== 'daily';
+  // Mantener siempre el día en que fue programada
+  const scheduledDate = current.originalTargetDate || current.targetDate;
 
   if (nextStatus === 'completed') {
     const now = new Date();
     const nowIso = now.toISOString();
     const todayYmd = formatDateYMD(now);
-
-    let newTargetDate = current.targetDate;
-    let originalTargetDate = current.originalTargetDate;
-
-    if (isMovableFrequency) {
-      // Guardar la fecha original si aún no la tenía
-      originalTargetDate = current.originalTargetDate || current.targetDate;
-      // Mover al día que se ejecutó
-      newTargetDate = todayYmd;
-    }
 
     await db
       .update(choreLog)
@@ -362,12 +430,12 @@ export async function executeChore(
         status: 'completed',
         executedBy: userId,
         executionDate: nowIso,
-        targetDate: newTargetDate,
-        originalTargetDate: originalTargetDate,
+        targetDate: scheduledDate,
+        originalTargetDate: null,
       })
       .where(eq(choreLog.id, choreLogId));
 
-    const wasMoved = Boolean(isMovableFrequency && newTargetDate !== (current.originalTargetDate || current.targetDate));
+    const wasDifferentDay = todayYmd !== scheduledDate;
 
     return {
       success: true,
@@ -375,9 +443,10 @@ export async function executeChore(
       executedBy: userId,
       executedByName: user[0].name,
       executionDate: nowIso,
-      targetDate: newTargetDate,
-      originalTargetDate: originalTargetDate,
-      wasMoved,
+      executedDateYmd: todayYmd,
+      targetDate: scheduledDate,
+      originalTargetDate: null,
+      wasDifferentDay,
       wasStolen: current.assignedTo !== userId,
       message:
         current.assignedTo !== userId
@@ -385,20 +454,14 @@ export async function executeChore(
           : `¡Tarea completada con éxito!`,
     };
   } else {
-    // Revertir a pendiente:
-    // Si era semanal/quincenal/mensual y se había movido, devolverla a su fecha programada original
-    const restoredTargetDate =
-      isMovableFrequency && current.originalTargetDate
-        ? current.originalTargetDate
-        : current.targetDate;
-
+    // Revertir a pendiente conservando su fecha programada
     await db
       .update(choreLog)
       .set({
         status: 'pending',
         executedBy: null,
         executionDate: null,
-        targetDate: restoredTargetDate,
+        targetDate: scheduledDate,
         originalTargetDate: null,
       })
       .where(eq(choreLog.id, choreLogId));
@@ -409,8 +472,10 @@ export async function executeChore(
       executedBy: null,
       executedByName: null,
       executionDate: null,
-      targetDate: restoredTargetDate,
+      executedDateYmd: null,
+      targetDate: scheduledDate,
       originalTargetDate: null,
+      wasDifferentDay: false,
       wasStolen: false,
       message: 'La tarea ha vuelto a estado pendiente.',
     };
@@ -462,6 +527,7 @@ export async function getHouseholdDashboard(referenceDate: Date = new Date()) {
     const assignedUser = userMap.get(log.assignedToId);
     const executedUser = log.executedById ? userMap.get(log.executedById) : null;
     const isCompleted = log.status === 'completed';
+    const executedDateYmd = extractExecutionDateYMD(log.executionDate);
 
     return {
       id: log.id,
@@ -483,6 +549,8 @@ export async function getHouseholdDashboard(referenceDate: Date = new Date()) {
       executedByColor: executedUser?.color || null,
       executedByAvatar: executedUser?.avatar || null,
       executionDate: log.executionDate,
+      executedDateYmd,
+      isDifferentExecutionDay: Boolean(isCompleted && executedDateYmd && executedDateYmd !== log.targetDate),
       isStolen: Boolean(isCompleted && log.executedById && log.executedById !== log.assignedToId),
       isToday: log.targetDate === todayStr,
       isOverdue: !isCompleted && log.targetDate < todayStr,
@@ -554,9 +622,11 @@ export async function getHouseholdDashboard(referenceDate: Date = new Date()) {
 
 /**
  * Registra una tarea como ejecutada en un día concreto (no futuro).
- * - Si ya hay un registro de esa tarea ese día, lo completa.
- * - Si no, crea uno nuevo ya completado.
- * Se puede indicar `newChore` para crear al vuelo una tarea puntual ('once') en el catálogo.
+ * - Si ya hay un registro pendiente de esa tarea ese día, lo completa.
+ * - Si es una tarea periódica (semanal/quincenal/mensual) que ya está programada pendiente
+ *   en otro día de esa misma semana, marca aquella como completada (conservando su día programado
+ *   y registrando `date` como `executionDate`) para evitar duplicarla en la misma semana.
+ * - Si no, crea uno nuevo ya completado en esa fecha.
  */
 export async function logChoreForDate(params: {
   choreId?: number;
@@ -568,12 +638,16 @@ export async function logChoreForDate(params: {
   const { date, userId } = params;
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Fecha inválida');
-  if (date > getTodayYMD()) throw new Error('No se puede registrar una tarea en un día futuro');
+  const todayStr = getTodayYMD();
+  if (date > todayStr) throw new Error('No se puede registrar una tarea en un día futuro');
 
   const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!user.length) throw new Error(`Usuario con ID ${userId} no encontrado`);
 
   let choreId = params.choreId;
+  let choreFrequency: string = 'once';
+  let defaultAssigneeId: number | null = userId;
+
   if (!choreId) {
     const name = params.newChore?.name?.trim();
     if (!name) throw new Error('Indica una tarea existente o el nombre de una nueva');
@@ -590,34 +664,86 @@ export async function logChoreForDate(params: {
       .returning({ id: choreCatalog.id });
     choreId = inserted[0].id;
   } else {
-    const exists = await db.select({ id: choreCatalog.id }).from(choreCatalog).where(eq(choreCatalog.id, choreId)).limit(1);
+    const exists = await db
+      .select({
+        id: choreCatalog.id,
+        frequency: choreCatalog.frequency,
+        defaultAssigneeId: choreCatalog.defaultAssigneeId,
+      })
+      .from(choreCatalog)
+      .where(eq(choreCatalog.id, choreId))
+      .limit(1);
     if (!exists.length) throw new Error(`Tarea con ID ${choreId} no encontrada`);
+    choreFrequency = exists[0].frequency;
+    defaultAssigneeId = exists[0].defaultAssigneeId ?? userId;
   }
 
-  const nowIso = new Date().toISOString();
-  const pending = await db
+  // Si se registra en el día de hoy guardamos el ISO actual; si es otro día pasado, guardamos la fecha YYYY-MM-DD
+  const executionValue = date === todayStr ? new Date().toISOString() : date;
+
+  // 1. ¿Hay una instancia pendiente exactamente en este día?
+  const pendingSameDay = await db
     .select({ id: choreLog.id })
     .from(choreLog)
     .where(and(eq(choreLog.choreId, choreId), eq(choreLog.targetDate, date), eq(choreLog.status, 'pending')))
     .limit(1);
 
-  if (pending.length) {
+  if (pendingSameDay.length) {
     await db
       .update(choreLog)
-      .set({ status: 'completed', executedBy: userId, executionDate: nowIso })
-      .where(eq(choreLog.id, pending[0].id));
-    return { success: true, choreLogId: pending[0].id, choreId, created: false };
+      .set({ status: 'completed', executedBy: userId, executionDate: executionValue })
+      .where(eq(choreLog.id, pendingSameDay[0].id));
+    return { success: true, choreLogId: pendingSameDay[0].id, choreId, created: false };
   }
 
+  // 2. Si es semanal, quincenal o mensual, comprobamos si ya está programada pendiente en algún otro día de esa misma semana
+  if (choreFrequency === 'weekly' || choreFrequency === 'biweekly' || choreFrequency === 'monthly') {
+    const [y, m, d] = date.split('-').map(Number);
+    const weekDays = getDaysOfWeek(new Date(y, m - 1, d));
+    const weekDateStrings = weekDays.map((wd) => wd.dateStr);
+
+    const pendingInSameWeek = await db
+      .select({ id: choreLog.id, targetDate: choreLog.targetDate })
+      .from(choreLog)
+      .where(
+        and(
+          eq(choreLog.choreId, choreId),
+          inArray(choreLog.targetDate, weekDateStrings),
+          eq(choreLog.status, 'pending')
+        )
+      )
+      .limit(1);
+
+    if (pendingInSameWeek.length) {
+      await db
+        .update(choreLog)
+        .set({
+          status: 'completed',
+          executedBy: userId,
+          executionDate: executionValue,
+          originalTargetDate: null,
+        })
+        .where(eq(choreLog.id, pendingInSameWeek[0].id));
+      return {
+        success: true,
+        choreLogId: pendingInSameWeek[0].id,
+        choreId,
+        created: false,
+        scheduledDate: pendingInSameWeek[0].targetDate,
+      };
+    }
+  }
+
+  // 3. Crear registro nuevo
   const created = await db
     .insert(choreLog)
     .values({
       choreId,
       targetDate: date,
       status: 'completed',
-      assignedTo: userId,
+      assignedTo: defaultAssigneeId || userId,
       executedBy: userId,
-      executionDate: nowIso,
+      executionDate: executionValue,
     })
     .returning({ id: choreLog.id });
 

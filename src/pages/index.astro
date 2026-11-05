@@ -1526,6 +1526,8 @@ import '../styles/global.css';
     executedByColor: string | null;
     executedByAvatar: string | null;
     executionDate: string | null;
+    executedDateYmd?: string | null;
+    isDifferentExecutionDay?: boolean;
     isStolen: boolean;
     isToday: boolean;
     isOverdue: boolean;
@@ -1647,74 +1649,69 @@ import '../styles/global.css';
   }
 
   // ==========================================
-  // BADGE DE FECHA PROGRAMADA ORIGINAL
+  // FORMATEADORES DE FECHAS DE PROGRAMACIÓN Y EJECUCIÓN
   // ==========================================
-  function formatScheduledDateBadge(item: ChoreLogItem): string {
-    // Solo aplica para tareas completadas, no diarias, que tengan fecha programada registrada
-    if (item.status !== 'completed' || item.frequency === 'daily' || !item.originalTargetDate) {
-      return '';
-    }
-
+  function parseYmdParts(ymd: string | null | undefined): { dayName: string; d: number; monthShort: string; isToday: boolean } | null {
+    if (!ymd) return null;
+    const clean = ymd.slice(0, 10);
+    const parts = clean.split('-').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return null;
+    const [y, m, d] = parts;
     const daysOfWeekEs = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const monthsShortEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-
-    const parts = item.originalTargetDate.split('-').map(Number);
-    if (parts.length !== 3) return '';
-    const [y, m, d] = parts;
     const dateObj = new Date(y, m - 1, d);
-    const dayName = daysOfWeekEs[dateObj.getDay()];
-    const monthShort = monthsShortEs[dateObj.getMonth()];
+    const today = new Date();
+    const isToday = today.getFullYear() === y && today.getMonth() === m - 1 && today.getDate() === d;
+    return {
+      dayName: daysOfWeekEs[dateObj.getDay()],
+      d,
+      monthShort: monthsShortEs[dateObj.getMonth()],
+      isToday,
+    };
+  }
 
-    const isMoved = item.originalTargetDate !== item.targetDate;
+  /**
+   * Si la tarea fue completada en un día distinto al que estaba programada (targetDate),
+   * muestra un badge indicando el día real en que se marcó como hecha.
+   */
+  function formatExecutionDateBadge(item: {
+    status?: string;
+    targetDate?: string;
+    executedDateYmd?: string | null;
+    executionDate?: string | null;
+  }): string {
+    if (item.status !== 'completed' || !item.targetDate) return '';
+    const execYmd = item.executedDateYmd || (item.executionDate ? item.executionDate.slice(0, 10) : null);
+    if (!execYmd || execYmd === item.targetDate) return '';
 
-    if (isMoved) {
-      return `
-        <span
-          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/90 shadow-xs"
-          title="Tarea movida al día ejecutado (${item.targetDate}). Estaba programada para el ${dayName}, ${d} de ${monthShort}"
-        >
-          <span>📅 Programada:</span> <strong class="font-bold text-indigo-950">${dayName} (${d} ${monthShort})</strong>
-        </span>
-      `;
-    } else {
-      return `
-        <span
-          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200"
-          title="Completada en su día programado (${dayName})"
-        >
-          <span>📅 Programada:</span> <span>${dayName}</span>
-        </span>
-      `;
-    }
+    const execInfo = parseYmdParts(execYmd);
+    const schedInfo = parseYmdParts(item.targetDate);
+    if (!execInfo) return '';
+
+    const schedText = schedInfo ? `${schedInfo.dayName} ${schedInfo.d} ${schedInfo.monthShort}` : item.targetDate;
+
+    return `
+      <span
+        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/20 text-indigo-200 border border-indigo-400/40"
+        title="Programada para el ${schedText} · Marcada como hecha el ${execInfo.dayName} ${execInfo.d} ${execInfo.monthShort}"
+      >
+        <span>📅 Hecha el ${execInfo.dayName} ${execInfo.d} ${execInfo.monthShort}</span>
+      </span>
+    `;
   }
 
   function formatScheduledDateForUserView(chore: ChoreLogItem): string {
-    const dateStr = chore.originalTargetDate || chore.targetDate;
-    if (!dateStr) return '';
-
-    const daysOfWeekEs = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    const monthsShortEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-
-    const parts = dateStr.split('-').map(Number);
-    if (parts.length !== 3) return '';
-    const [y, m, d] = parts;
-    const dateObj = new Date(y, m - 1, d);
-    const dayName = daysOfWeekEs[dateObj.getDay()];
-    const monthShort = monthsShortEs[dateObj.getMonth()];
-
-    const today = new Date();
-    const isToday =
-      today.getFullYear() === y && today.getMonth() === m - 1 && today.getDate() === d;
+    const info = parseYmdParts(chore.targetDate);
+    if (!info) return '';
 
     return `
       <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
-        isToday
-          ? 'bg-indigo-500/20 text-indigo-700 border border-indigo-500/30'
+        info.isToday
+          ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-400/40'
           : 'bg-slate-800 text-slate-300 border border-slate-700/60'
-      }" title="Programada para: ${dayName}, ${d} de ${monthShort}">
-        <span>📅</span>
-        <span>${dayName} ${d} ${monthShort}</span>
-        ${isToday ? '<span class="text-[9px] px-1 py-0.1 bg-indigo-600 text-white rounded font-bold uppercase">Hoy</span>' : ''}
+      }" title="Programada para el ${info.dayName} ${info.d} ${info.monthShort}">
+        <span>📅 Programada: ${info.dayName} ${info.d} ${info.monthShort}</span>
+        ${info.isToday ? '<span class="text-[9px] px-1 py-0.1 bg-indigo-600 text-white rounded font-bold uppercase">Hoy</span>' : ''}
       </span>
     `;
   }
@@ -1781,7 +1778,12 @@ import '../styles/global.css';
     }
 
     const userColor = new Map(calendarData.users.map((u) => [u.id, u.color]));
-    const visible = calendarData.tasks.filter((t) => calFilterUser === 'all' || t.assignedToId === calFilterUser);
+    const visible = calendarData.tasks.filter(
+      (t) =>
+        calFilterUser === 'all' ||
+        t.assignedToId === calFilterUser ||
+        (t.status === 'completed' && t.executedById === calFilterUser)
+    );
     const byDate = new Map<string, any[]>();
     for (const t of visible) {
       if (!byDate.has(t.targetDate)) byDate.set(t.targetDate, []);
@@ -1852,7 +1854,11 @@ import '../styles/global.css';
 
     const usersMap = new Map(calendarData.users.map((u) => [u.id, u]));
     const tasks = calendarData.tasks.filter(
-      (t) => t.targetDate === dateStr && (calFilterUser === 'all' || t.assignedToId === calFilterUser)
+      (t) =>
+        t.targetDate === dateStr &&
+        (calFilterUser === 'all' ||
+          t.assignedToId === calFilterUser ||
+          (t.status === 'completed' && t.executedById === calFilterUser))
     );
     tasks.sort((a, b) => a.choreName.localeCompare(b.choreName, 'es', { sensitivity: 'base' }));
 
@@ -1860,16 +1866,57 @@ import '../styles/global.css';
       ? '<div class="py-6 text-center text-xs text-slate-400">Sin tareas para este día 🎉</div>'
       : tasks.map((t) => {
           const u = usersMap.get(t.assignedToId);
+          const execU = t.executedById ? usersMap.get(t.executedById) : null;
           const done = t.status === 'completed';
+          const isStolen = Boolean(done && t.executedById && t.executedById !== t.assignedToId);
+          const execBadge = formatExecutionDateBadge(t);
+
+          let personHtml = '';
+          if (done && isStolen) {
+            personHtml = `
+              <div class="flex items-center gap-1.5 flex-wrap mt-1 text-[10px]">
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                  <span>🎯 Tocaba a:</span>
+                  <strong>${u ? escHtml(u.avatar + ' ' + u.name) : 'Usuario'}</strong>
+                </span>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-200 border border-pink-400/40 font-bold">
+                  <span>⚡ Hecha por:</span>
+                  <strong>${execU ? escHtml(execU.avatar + ' ' + execU.name) : escHtml(t.executedByName || 'Conviviente')}</strong>
+                </span>
+                ${execBadge}
+              </div>
+            `;
+          } else if (done) {
+            const whoDone = execU || u;
+            personHtml = `
+              <div class="flex items-center gap-1.5 flex-wrap mt-1 text-[10px]">
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">
+                  <span>✓ Hecha por:</span>
+                  <strong>${whoDone ? escHtml(whoDone.avatar + ' ' + whoDone.name) : 'Conviviente'}</strong>
+                </span>
+                ${execBadge}
+              </div>
+            `;
+          } else {
+            personHtml = `
+              <div class="text-[11px] text-slate-400 mt-0.5">
+                🎯 Tocaba a: <strong class="text-slate-200">${u ? escHtml(u.avatar + ' ' + u.name) : 'Usuario'}</strong> · ${escHtml(t.category)}
+              </div>
+            `;
+          }
+
           return `
             <div class="flex items-center gap-3 p-2.5 pl-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50" style="box-shadow:inset 5px 0 0 ${u?.color || '#6366f1'}">
               <span class="text-xl">${escHtml(t.icon)}</span>
               <div class="flex-1 min-w-0">
-                <div class="text-sm font-bold break-words leading-snug ${done ? 'line-through text-slate-400' : 'text-white'}">${escHtml(t.choreName)}</div>
-                <div class="text-[11px] text-slate-400">${u ? escHtml(u.avatar + ' ' + u.name) : 'Usuario'} · ${escHtml(t.category)}</div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-sm font-bold break-words leading-snug ${done ? 'line-through text-slate-400' : 'text-white'}">${escHtml(t.choreName)}</span>
+                  <span class="text-[9px] px-1.5 py-0.2 rounded font-medium bg-slate-800 text-slate-400">${escHtml(t.category)}</span>
+                </div>
+                ${personHtml}
               </div>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                done ? 'bg-emerald-500/20 text-emerald-500' : t.isOverdue ? 'bg-rose-500/20 text-rose-500' : 'bg-indigo-500/15 text-indigo-500'
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                done ? 'bg-emerald-500/20 text-emerald-400' : t.isOverdue ? 'bg-rose-500/20 text-rose-400' : 'bg-indigo-500/15 text-indigo-300'
               }">${done ? 'Hecha' : t.isOverdue ? 'Con retraso' : 'Pendiente'}</span>
               <button
                 class="btn-cal-toggle w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-90 shrink-0 ${
@@ -2418,7 +2465,10 @@ import '../styles/global.css';
 
     container.innerHTML = users
       .map((user) => {
-        let userChores = allChores.filter((c) => c.assignedToId === user.id);
+        // Incluye tanto las asignadas a este conviviente como las de otros que este conviviente haya ejecutado
+        let userChores = allChores.filter(
+          (c) => c.assignedToId === user.id || (c.status === 'completed' && c.executedById === user.id)
+        );
 
         if (dashboardFilterStatus === 'pending') {
           userChores = userChores.filter((c) => c.status === 'pending');
@@ -2427,8 +2477,8 @@ import '../styles/global.css';
         }
 
         userChores.sort((a, b) => {
-          const dateA = a.originalTargetDate || a.targetDate || '';
-          const dateB = b.originalTargetDate || b.targetDate || '';
+          const dateA = a.targetDate || '';
+          const dateB = b.targetDate || '';
           const dateComp = dateA.localeCompare(dateB);
           if (dateComp !== 0) return dateComp;
           return a.choreName.localeCompare(b.choreName, 'es', { sensitivity: 'base' });
@@ -2436,6 +2486,9 @@ import '../styles/global.css';
 
         const totalUser = allChores.filter((c) => c.assignedToId === user.id).length;
         const doneUser = allChores.filter((c) => c.assignedToId === user.id && c.status === 'completed').length;
+        const stolenByUser = allChores.filter(
+          (c) => c.status === 'completed' && c.executedById === user.id && c.assignedToId !== user.id
+        ).length;
         const isMe = activeUser?.id === user.id;
 
         return `
@@ -2460,12 +2513,19 @@ import '../styles/global.css';
               </div>
 
               <div class="text-right">
-                <span class="text-xs font-bold ${
-                  doneUser === totalUser && totalUser > 0 ? 'text-emerald-400' : 'text-slate-300'
-                }">
-                  ${doneUser} / ${totalUser}
-                </span>
-                <span class="text-[10px] text-slate-500 block">completadas</span>
+                <div class="flex items-center justify-end gap-1.5">
+                  <span class="text-xs font-bold ${
+                    doneUser === totalUser && totalUser > 0 ? 'text-emerald-400' : 'text-slate-300'
+                  }">
+                    ${doneUser} / ${totalUser}
+                  </span>
+                  ${
+                    stolenByUser > 0
+                      ? `<span class="px-1.5 py-0.5 rounded-md bg-pink-500/20 text-pink-200 border border-pink-400/30 text-[10px] font-bold" title="Tareas de otros convivientes hechas por ${user.name}">+${stolenByUser} ⚡</span>`
+                      : ''
+                  }
+                </div>
+                <span class="text-[10px] text-slate-500 block">asignadas completadas</span>
               </div>
             </div>
 
@@ -2493,7 +2553,7 @@ import '../styles/global.css';
   function renderChoreCardInDashboard(chore: ChoreLogItem, options: { showScheduledDate?: boolean } = {}): string {
     const isCompleted = chore.status === 'completed';
     const isOverdue = chore.isOverdue;
-    const isStolen = isCompleted && chore.executedById && chore.executedById !== chore.assignedToId;
+    const isStolen = Boolean(isCompleted && chore.executedById && chore.executedById !== chore.assignedToId);
     const isAssignedToMe = activeUser?.id === chore.assignedToId;
     const showScheduledDate = options.showScheduledDate ?? false;
     const isPunctual = chore.frequency === 'once' || !chore.assignedToId || chore.assignedToName === 'Sin responsable';
@@ -2545,38 +2605,51 @@ import '../styles/global.css';
               }
             </div>
 
-            <!-- Details: Assignee, Date & Status -->
-            <div class="flex items-center gap-2 mt-1 flex-wrap text-[11px]">
-              ${
-                showScheduledDate
-                  ? formatScheduledDateForUserView(chore)
-                  : isPunctual && !isCompleted
-                  ? ''
-                  : `
-                    <span class="inline-flex items-center gap-1 text-slate-400">
-                      <span>${chore.assignedToAvatar || '👤'}</span>
-                      <span class="${isAssignedToMe ? 'text-indigo-600 font-semibold' : ''}">
-                        ${chore.assignedToName}
-                      </span>
-                    </span>
-                  `
-              }
+            <!-- Details: Scheduled Date, Assignee, Executor & Execution Date -->
+            <div class="flex items-center gap-1.5 mt-1.5 flex-wrap text-[11px]">
+              ${showScheduledDate ? formatScheduledDateForUserView(chore) : ''}
 
               ${
                 isStolen
-                  ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-pink-500/15 text-pink-300 border border-pink-500/30">
-                      ⚡ ¡Robado por ${chore.executedByName}!
-                     </span>`
+                  ? `
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                      <span>🎯 Tocaba a:</span>
+                      <span>${chore.assignedToAvatar || '👤'}</span>
+                      <strong class="text-white">${chore.assignedToName}</strong>
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-pink-500/20 text-pink-200 border border-pink-400/40">
+                      <span>⚡ Hecha por:</span>
+                      <span>${chore.executedByAvatar || '👤'}</span>
+                      <strong>${chore.executedByName}</strong>
+                    </span>
+                  `
                   : isCompleted
-                  ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                      ✓ Hecho por ${chore.executedByName || chore.assignedToName}
-                     </span>`
-                  : isOverdue
-                  ? `<span class="text-[10px] text-rose-700 font-bold bg-rose-100/90 px-1.5 py-0.5 rounded border border-rose-200">⚠️ Con retraso</span>`
-                  : `<span class="text-[10px] text-amber-400/90 font-medium">⏳ Pendiente</span>`
+                  ? `
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      <span>✓ Hecha por</span>
+                      <span>${chore.executedByAvatar || chore.assignedToAvatar || '👤'}</span>
+                      <strong>${chore.executedByName || chore.assignedToName}</strong>
+                    </span>
+                  `
+                  : isPunctual
+                  ? `<span class="text-[10px] text-amber-400/90 font-medium">⏳ Pendiente</span>`
+                  : `
+                    <span class="inline-flex items-center gap-1 text-slate-300">
+                      <span class="text-slate-400">🎯 Tocaba a:</span>
+                      <span>${chore.assignedToAvatar || '👤'}</span>
+                      <span class="${isAssignedToMe ? 'text-indigo-400 font-bold' : 'font-semibold'}">
+                        ${chore.assignedToName}
+                      </span>
+                    </span>
+                    ${
+                      isOverdue
+                        ? `<span class="text-[10px] text-rose-700 font-bold bg-rose-100/90 px-1.5 py-0.5 rounded border border-rose-200">⚠️ Con retraso</span>`
+                        : `<span class="text-[10px] text-amber-400/90 font-medium">⏳ Pendiente</span>`
+                    }
+                  `
               }
 
-              ${!showScheduledDate ? formatScheduledDateBadge(chore) : ''}
+              ${formatExecutionDateBadge(chore)}
             </div>
           </div>
         </div>
@@ -2670,14 +2743,13 @@ import '../styles/global.css';
           if (result.success) {
             triggerConfetti();
             let msg = !isMine
-              ? `¡Increíble! Has asumido la tarea de ${assignee} 👏`
+              ? `¡Increíble! Has hecho la tarea que le tocaba a ${assignee} 👏`
               : '¡Tarea completada con éxito!';
-            if (result.wasMoved && result.originalTargetDate) {
-              const origParts = result.originalTargetDate.split('-').map(Number);
-              const origDate = new Date(origParts[0], origParts[1] - 1, origParts[2]);
-              const daysOfWeekEs = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-              const dayName = daysOfWeekEs[origDate.getDay()];
-              msg += ` (Movida a hoy · programada para el ${dayName})`;
+            if (result.wasDifferentDay && result.executedDateYmd) {
+              const execInfo = parseYmdParts(result.executedDateYmd);
+              if (execInfo) {
+                msg += ` (Marcada el ${execInfo.dayName.toLowerCase()} ${execInfo.d})`;
+              }
             }
             showToast(msg, 'success');
             await loadDashboard();
@@ -2728,16 +2800,15 @@ import '../styles/global.css';
         if (desiredStatus === 'completed') {
           triggerConfetti();
           let msg = data.message || 'Tarea completada 🎉';
-          if (data.wasMoved && data.originalTargetDate) {
-            const origParts = data.originalTargetDate.split('-').map(Number);
-            const origDate = new Date(origParts[0], origParts[1] - 1, origParts[2]);
-            const daysOfWeekEs = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-            const dayName = daysOfWeekEs[origDate.getDay()];
-            msg = `¡Tarea completada y movida a hoy! (Programada para el ${dayName})`;
+          if (data.wasDifferentDay && data.executedDateYmd) {
+            const execInfo = parseYmdParts(data.executedDateYmd);
+            if (execInfo) {
+              msg += ` (Hecha el ${execInfo.dayName.toLowerCase()} ${execInfo.d})`;
+            }
           }
           showToast(msg, 'success');
         } else {
-          showToast('Tarea restablecida a pendiente (en su día programado)', 'info');
+          showToast('Tarea restablecida a pendiente', 'info');
         }
         if (dashboardData) loadDashboard();
       } else {
@@ -3175,7 +3246,8 @@ import '../styles/global.css';
 
       if (lastDoneEl) {
         if (data.lastDone) {
-          const parts = data.lastDone.targetDate.split('-').map(Number);
+          const doneYmd = data.lastDone.executedDateYmd || data.lastDone.targetDate;
+          const parts = doneYmd.split('-').map(Number);
           const d = new Date(parts[0], parts[1] - 1, parts[2]);
           const dateStr = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
           lastDoneEl.textContent = `${dateStr} por ${data.lastDone.executedByName || 'Conviviente'}`;
@@ -3188,19 +3260,35 @@ import '../styles/global.css';
         listEl.innerHTML = '<div class="py-6 text-center text-xs text-slate-500">Aún no se ha registrado ninguna ejecución de esta tarea.</div>';
       } else {
         listEl.innerHTML = data.history.map((h: any) => {
-          const parts = h.targetDate.split('-').map(Number);
-          const d = new Date(parts[0], parts[1] - 1, parts[2]);
-          const dateFormatted = d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+          const schedParts = h.targetDate.split('-').map(Number);
+          const schedDate = new Date(schedParts[0], schedParts[1] - 1, schedParts[2]);
+          const schedFormatted = schedDate.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+          let execDateBadge = '';
+          if (h.isDifferentExecutionDay && h.executedDateYmd) {
+            const execParts = h.executedDateYmd.split('-').map(Number);
+            const execDate = new Date(execParts[0], execParts[1] - 1, execParts[2]);
+            const execFormatted = execDate.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+            execDateBadge = `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-200 border border-indigo-400/40 text-[10px] font-bold">📅 Hecha el ${escHtml(execFormatted)}</span>`;
+          }
+
+          const personLine = h.isStolen
+            ? `<div class="flex items-center gap-1.5 flex-wrap">
+                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">🎯 Tocaba a: <strong>${escHtml((h.assignedToAvatar || '👤') + ' ' + (h.assignedToName || 'Conviviente'))}</strong></span>
+                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-200 border border-pink-400/40 font-bold">⚡ Hecha por: <strong>${escHtml((h.executedByAvatar || '👤') + ' ' + (h.executedByName || 'Conviviente'))}</strong></span>
+               </div>`
+            : `<span class="font-bold text-white block">✓ Hecha por ${escHtml((h.executedByAvatar || '👤') + ' ' + (h.executedByName || 'Conviviente'))}</span>`;
+
           return `
-            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-xs">
-              <div class="flex items-center gap-2">
-                <span class="text-base">${escHtml(h.executedByAvatar || '👤')}</span>
-                <div>
-                  <span class="font-bold text-white block">${escHtml(h.executedByName || 'Conviviente')}</span>
-                  <span class="text-[10px] text-slate-400">${dateFormatted}</span>
+            <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-xs">
+              <div class="space-y-1 min-w-0 flex-1">
+                ${personLine}
+                <div class="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400">
+                  <span>📅 Programada: ${escHtml(schedFormatted)}</span>
+                  ${execDateBadge}
                 </div>
               </div>
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400">
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 shrink-0">
                 ✓ Hecha
               </span>
             </div>

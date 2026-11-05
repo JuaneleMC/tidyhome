@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { db, initializeDatabase } from '../../../../db/client';
 import { choreLog, choreCatalog, users } from '../../../../db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { extractExecutionDateYMD } from '../../../../lib/choreService';
 
 export const prerender = false;
 
@@ -35,24 +36,51 @@ export const GET: APIRoute = async ({ params }) => {
       });
     }
 
+    const allUsers = await db.select().from(users);
+    const userMap = new Map(allUsers.map((u) => [u.id, u]));
+
     const history = await db
       .select({
         id: choreLog.id,
         targetDate: choreLog.targetDate,
-        executionDate: choreLog.executionDate,
+        originalTargetDate: choreLog.originalTargetDate,
+        status: choreLog.status,
+        assignedToId: choreLog.assignedTo,
         executedById: choreLog.executedBy,
-        executedByName: users.name,
-        executedByAvatar: users.avatar,
-        executedByColor: users.color,
+        executionDate: choreLog.executionDate,
         notes: choreLog.notes,
       })
       .from(choreLog)
-      .leftJoin(users, eq(choreLog.executedBy, users.id))
       .where(eq(choreLog.choreId, choreId))
       .orderBy(desc(choreLog.targetDate), desc(choreLog.id));
 
-    // Filtrar solo las completadas
-    const completedHistory = history.filter((h) => h.executionDate || h.executedByName);
+    // Filtrar solo las completadas y enriquecer con datos de asignado y ejecutor
+    const completedHistory = history
+      .filter((h) => h.status === 'completed' || h.executionDate || h.executedById)
+      .map((h) => {
+        const scheduledDate = h.originalTargetDate || h.targetDate;
+        const executedDateYmd = extractExecutionDateYMD(h.executionDate) || h.targetDate;
+        const assignedUser = userMap.get(h.assignedToId);
+        const executedUser = h.executedById ? userMap.get(h.executedById) : assignedUser;
+
+        return {
+          id: h.id,
+          targetDate: scheduledDate,
+          executionDate: h.executionDate,
+          executedDateYmd,
+          isDifferentExecutionDay: Boolean(executedDateYmd && executedDateYmd !== scheduledDate),
+          assignedToId: h.assignedToId,
+          assignedToName: assignedUser?.name || 'Conviviente',
+          assignedToAvatar: assignedUser?.avatar || '👤',
+          assignedToColor: assignedUser?.color || '#6366f1',
+          executedById: h.executedById,
+          executedByName: executedUser?.name || assignedUser?.name || 'Conviviente',
+          executedByAvatar: executedUser?.avatar || assignedUser?.avatar || '👤',
+          executedByColor: executedUser?.color || assignedUser?.color || '#6366f1',
+          isStolen: Boolean(h.executedById && h.assignedToId && h.executedById !== h.assignedToId),
+          notes: h.notes,
+        };
+      });
 
     return new Response(
       JSON.stringify({
