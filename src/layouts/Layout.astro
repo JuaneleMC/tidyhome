@@ -369,35 +369,6 @@ const {
             </button>
           </div>
         </div>
-
-        <!-- Configuración opcional de Gemini API Key -->
-        <details class="pt-1 border-t border-slate-200 text-xs">
-          <summary class="cursor-pointer font-semibold select-none" style="color: #64748b;">
-            ⚙️ Conectar clave de Gemini IA (Opcional)
-          </summary>
-          <div class="mt-2 space-y-2">
-            <p class="text-[11px]" style="color: #475569;">
-              Funciona de serie sin claves. Si además quieres usar <strong>Gemini 2.5 Flash</strong>, pega aquí tu API Key gratuita de Google AI Studio:
-            </p>
-            <div class="flex gap-1.5">
-              <input
-                id="input-gemini-api-key"
-                type="password"
-                placeholder="AIzaSy..."
-                style="background-color: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1;"
-                class="flex-1 rounded-lg px-2.5 py-1.5 text-xs"
-              />
-              <button
-                id="btn-save-gemini-key"
-                type="button"
-                style="background-color: #047857; color: #ffffff;"
-                class="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
-              >
-                Guardar
-              </button>
-            </div>
-          </div>
-        </details>
       </div>
     </div>
 
@@ -416,8 +387,6 @@ const {
         const responseBox = document.getElementById('voice-response-box');
         const userPill = document.getElementById('voice-active-user-pill');
         const btnToggleTts = document.getElementById('btn-voice-toggle-tts');
-        const inputGeminiKey = document.getElementById('input-gemini-api-key');
-        const btnSaveGeminiKey = document.getElementById('btn-save-gemini-key');
 
         let recognition = null;
         let isListening = false;
@@ -428,20 +397,6 @@ const {
           btnToggleTts.textContent = ttsEnabled ? '🔊 Voz' : '🔇 Silencio';
         }
         updateTtsBtn();
-
-        if (inputGeminiKey) {
-          inputGeminiKey.value = localStorage.getItem('th_gemini_api_key') || '';
-        }
-
-        btnSaveGeminiKey?.addEventListener('click', () => {
-          const val = (inputGeminiKey?.value || '').trim();
-          if (val) {
-            localStorage.setItem('th_gemini_api_key', val);
-          } else {
-            localStorage.removeItem('th_gemini_api_key');
-          }
-          if (statusLabel) statusLabel.textContent = val ? '✅ Clave Gemini guardada' : 'Clave eliminada (usando motor integrado)';
-        });
 
         btnToggleTts?.addEventListener('click', () => {
           ttsEnabled = !ttsEnabled;
@@ -518,7 +473,6 @@ const {
                 text: trimmed,
                 userId: getActiveUserId(),
                 userName: getActiveUserName(),
-                geminiApiKey: localStorage.getItem('th_gemini_api_key') || undefined,
               }),
             });
             const data = await res.json();

@@ -602,7 +602,6 @@ export const POST: APIRoute = async ({ request }) => {
     const text = String(body.text || '').trim();
     const userName = body.userName ? String(body.userName).trim() : null;
     const userId = body.userId ? Number(body.userId) : null;
-    const clientGeminiKey = body.geminiApiKey ? String(body.geminiApiKey).trim() : null;
 
     if (!text) {
       return new Response(
@@ -616,16 +615,35 @@ export const POST: APIRoute = async ({ request }) => {
       (import.meta as any).env?.GEMINI_API_KEY ||
       null;
 
-    const activeGeminiKey = clientGeminiKey || serverGeminiKey;
+    // Detectar si el usuario empieza diciendo "Soy [Nombre]" para cambiar el conviviente activo también con Gemini
+    const speechUser = await detectUserInSpeech(text);
+    const effectiveUserName =
+      speechUser.isSelfIntro && speechUser.matchedUser ? speechUser.matchedUser.name : userName;
+    const effectiveUserId =
+      speechUser.isSelfIntro && speechUser.matchedUser ? speechUser.matchedUser.id : userId;
+    const switchedUser =
+      speechUser.isSelfIntro && speechUser.matchedUser
+        ? {
+            id: speechUser.matchedUser.id,
+            name: speechUser.matchedUser.name,
+            avatar: speechUser.matchedUser.avatar,
+          }
+        : null;
 
-    if (activeGeminiKey) {
+    if (serverGeminiKey && String(serverGeminiKey).trim()) {
       try {
-        const geminiResult = await executeWithGeminiLLM(text, activeGeminiKey, userName, userId);
+        const geminiResult = await executeWithGeminiLLM(
+          text,
+          String(serverGeminiKey).trim(),
+          effectiveUserName,
+          effectiveUserId
+        );
         return new Response(
           JSON.stringify({
             success: true,
             reply: geminiResult.reply,
             toolsCalled: geminiResult.toolsCalled,
+            switchedUser,
             engine: 'gemini-2.5-flash',
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }

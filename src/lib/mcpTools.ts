@@ -333,6 +333,10 @@ export const MCP_TOOLS = [
           type: 'boolean',
           description: 'Si es true, muestra únicamente las tareas programadas para hoy. Si es false o se omite, muestra toda la semana actual.',
         },
+        solo_usuario_activo: {
+          type: 'boolean',
+          description: 'Si es true (cuando el usuario pregunta en primera persona: "¿qué me toca?", "¿qué tengo pendiente?"), filtra solo las tareas del conviviente en uso actualmente.',
+        },
       },
     },
   },
