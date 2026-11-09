@@ -23,7 +23,7 @@
       "url": "/?voice=1",
       "icons": [
         {
-          "src": "/icon.svg",
+          "src": "/icon-voice.svg",
           "sizes": "any",
           "type": "image/svg+xml"
         }
