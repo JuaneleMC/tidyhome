@@ -63,6 +63,18 @@ const {
 
         <!-- Active User Selector & Quick Sync -->
         <div class="flex items-center gap-2">
+          <!-- Voice Assistant Button (Header) -->
+          <button
+            id="btn-open-voice-header"
+            type="button"
+            title="Dar orden por voz (Hogar, Compra y Garaje)"
+            style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff;"
+            class="px-2.5 py-1.5 rounded-xl font-bold text-xs shadow-md hover:opacity-95 transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+          >
+            <span style="color: #ffffff;">🎙️</span>
+            <span style="color: #ffffff;">Voz</span>
+          </button>
+
           <!-- Quick Sync Button -->
           <button
             id="btn-sync-all"
@@ -223,6 +235,433 @@ const {
 
     <!-- Global Toast Container -->
     <div id="toast-container" class="fixed top-20 right-4 left-4 sm:left-auto sm:w-96 z-50 pointer-events-none flex flex-col gap-2"></div>
+
+    <!-- Botón Flotante de Micrófono (Acceso con el pulgar) -->
+    <button
+      id="btn-open-voice-fab"
+      type="button"
+      title="Hablar con TidyHome"
+      style="background: linear-gradient(135deg, #4f46e5, #7c3aed, #db2777); color: #ffffff;"
+      class="fixed bottom-20 right-4 z-40 w-13 h-13 rounded-full shadow-xl flex items-center justify-center transition active:scale-90 hover:scale-105 cursor-pointer ring-2 ring-white/80"
+    >
+      <span class="text-xl" style="color: #ffffff;">🎙️</span>
+    </button>
+
+    <!-- Modal Asistente de Voz Inteligente -->
+    <div
+      id="modal-voice-assistant"
+      class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3"
+    >
+      <div
+        style="background-color: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;"
+        class="rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto p-4 sm:p-5 shadow-2xl space-y-4"
+      >
+        <!-- Cabecera del Modal -->
+        <div class="flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div
+              style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff;"
+              class="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
+            >
+              <span style="color: #ffffff;">🎙️</span>
+            </div>
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold" style="color: #0f172a;">
+                Asistente de Voz TidyHome
+              </h3>
+              <p id="voice-active-user-pill" class="text-[11px] font-semibold" style="color: #475569;">
+                Hogar · Compra · Garaje
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <button
+              id="btn-voice-toggle-tts"
+              type="button"
+              title="Activar/Silenciar respuesta hablada"
+              style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;"
+              class="px-2 py-1 rounded-lg text-xs font-bold transition cursor-pointer"
+            >
+              🔊 Voz
+            </button>
+            <button
+              id="btn-close-voice-modal"
+              type="button"
+              style="background-color: #f1f5f9; color: #334155;"
+              class="w-8 h-8 rounded-lg font-bold text-sm flex items-center justify-center hover:bg-slate-200 transition cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <!-- Botón Central de Micrófono en Vivo -->
+        <div class="flex flex-col items-center justify-center py-2 space-y-2.5">
+          <button
+            id="btn-voice-mic-main"
+            type="button"
+            style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff;"
+            class="w-20 h-20 rounded-full shadow-lg flex items-center justify-center transition transform active:scale-95 cursor-pointer ring-4 ring-indigo-100"
+          >
+            <span id="voice-mic-icon" class="text-3xl" style="color: #ffffff;">🎙️</span>
+          </button>
+          <p id="voice-status-label" class="text-xs font-bold text-center" style="color: #4f46e5;">
+            Toca el micrófono y habla
+          </p>
+        </div>
+
+        <!-- Campo de texto / Transcripción editable -->
+        <form id="form-voice-command" class="flex gap-2">
+          <input
+            id="input-voice-command"
+            type="text"
+            placeholder="Dilo hablando o escríbelo aquí..."
+            style="background-color: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1;"
+            class="flex-1 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <button
+            id="btn-submit-voice-command"
+            type="submit"
+            style="background-color: #4f46e5; color: #ffffff;"
+            class="px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm hover:opacity-95 transition cursor-pointer shrink-0"
+          >
+            Enviar
+          </button>
+        </form>
+
+        <!-- Respuesta del Asistente -->
+        <div
+          id="voice-response-box"
+          style="background-color: #f8fafc; border: 1px solid #e2e8f0; color: #0f172a;"
+          class="hidden rounded-xl p-3 text-xs sm:text-sm space-y-1.5 whitespace-pre-line leading-relaxed font-medium"
+        ></div>
+
+        <!-- Ejemplos rápidos de 1 toque -->
+        <div class="space-y-1.5 pt-1">
+          <p class="text-[11px] font-bold uppercase tracking-wider" style="color: #64748b;">
+            Ejemplos (toca uno o dilo con tu voz):
+          </p>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              data-voice-example="¿Qué tareas quedan pendientes esta semana?"
+              style="background-color: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe;"
+              class="voice-example-chip px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:opacity-90 transition cursor-pointer text-left"
+            >
+              🧹 ¿Qué tareas quedan pendientes?
+            </button>
+            <button
+              type="button"
+              data-voice-example="Añade leche, huevos y papel de cocina a la compra"
+              style="background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;"
+              class="voice-example-chip px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:opacity-90 transition cursor-pointer text-left"
+            >
+              🛒 Apunta leche, huevos y papel
+            </button>
+            <button
+              type="button"
+              data-voice-example="¿Cómo está el mantenimiento del coche?"
+              style="background-color: #fff7ed; color: #9a3412; border: 1px solid #fed7aa;"
+              class="voice-example-chip px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:opacity-90 transition cursor-pointer text-left"
+            >
+              🚗 Estado del coche / ITV
+            </button>
+          </div>
+        </div>
+
+        <!-- Configuración opcional de Gemini API Key -->
+        <details class="pt-1 border-t border-slate-200 text-xs">
+          <summary class="cursor-pointer font-semibold select-none" style="color: #64748b;">
+            ⚙️ Conectar clave de Gemini IA (Opcional)
+          </summary>
+          <div class="mt-2 space-y-2">
+            <p class="text-[11px]" style="color: #475569;">
+              Funciona de serie sin claves. Si además quieres usar <strong>Gemini 2.5 Flash</strong>, pega aquí tu API Key gratuita de Google AI Studio:
+            </p>
+            <div class="flex gap-1.5">
+              <input
+                id="input-gemini-api-key"
+                type="password"
+                placeholder="AIzaSy..."
+                style="background-color: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1;"
+                class="flex-1 rounded-lg px-2.5 py-1.5 text-xs"
+              />
+              <button
+                id="btn-save-gemini-key"
+                type="button"
+                style="background-color: #047857; color: #ffffff;"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- Script del Asistente de Voz -->
+    <script is:inline>
+      (function () {
+        const modal = document.getElementById('modal-voice-assistant');
+        const btnHeader = document.getElementById('btn-open-voice-header');
+        const btnFab = document.getElementById('btn-open-voice-fab');
+        const btnClose = document.getElementById('btn-close-voice-modal');
+        const btnMic = document.getElementById('btn-voice-mic-main');
+        const micIcon = document.getElementById('voice-mic-icon');
+        const statusLabel = document.getElementById('voice-status-label');
+        const form = document.getElementById('form-voice-command');
+        const input = document.getElementById('input-voice-command');
+        const responseBox = document.getElementById('voice-response-box');
+        const userPill = document.getElementById('voice-active-user-pill');
+        const btnToggleTts = document.getElementById('btn-voice-toggle-tts');
+        const inputGeminiKey = document.getElementById('input-gemini-api-key');
+        const btnSaveGeminiKey = document.getElementById('btn-save-gemini-key');
+
+        let recognition = null;
+        let isListening = false;
+        let ttsEnabled = localStorage.getItem('th_voice_tts') !== '0';
+
+        function updateTtsBtn() {
+          if (!btnToggleTts) return;
+          btnToggleTts.textContent = ttsEnabled ? '🔊 Voz' : '🔇 Silencio';
+        }
+        updateTtsBtn();
+
+        if (inputGeminiKey) {
+          inputGeminiKey.value = localStorage.getItem('th_gemini_api_key') || '';
+        }
+
+        btnSaveGeminiKey?.addEventListener('click', () => {
+          const val = (inputGeminiKey?.value || '').trim();
+          if (val) {
+            localStorage.setItem('th_gemini_api_key', val);
+          } else {
+            localStorage.removeItem('th_gemini_api_key');
+          }
+          if (statusLabel) statusLabel.textContent = val ? '✅ Clave Gemini guardada' : 'Clave eliminada (usando motor integrado)';
+        });
+
+        btnToggleTts?.addEventListener('click', () => {
+          ttsEnabled = !ttsEnabled;
+          localStorage.setItem('th_voice_tts', ttsEnabled ? '1' : '0');
+          if (!ttsEnabled && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+          }
+          updateTtsBtn();
+        });
+
+        function getActiveUserName() {
+          const el = document.getElementById('active-user-name');
+          const txt = el ? el.textContent.trim() : '';
+          return txt && txt !== 'Cargando...' ? txt : null;
+        }
+
+        function speakText(text) {
+          if (!ttsEnabled || !('speechSynthesis' in window)) return;
+          try {
+            window.speechSynthesis.cancel();
+            const cleanSpeech = String(text || '')
+              .replace(/[✅⏳📋🛒📦🚗🔧🚨⚠️📍☑️▫️🟢🟡🔴🎯⚡•]/g, '')
+              .replace(/\[.*?\]/g, '')
+              .replace(/\n+/g, '. ');
+            const utter = new SpeechSynthesisUtterance(cleanSpeech);
+            utter.lang = 'es-ES';
+            utter.rate = 1.05;
+            window.speechSynthesis.speak(utter);
+          } catch (e) {}
+        }
+
+        function setListeningUI(listening) {
+          isListening = listening;
+          if (!btnMic || !statusLabel || !micIcon) return;
+          if (listening) {
+            btnMic.style.background = 'linear-gradient(135deg, #e11d48, #db2777)';
+            btnMic.classList.add('animate-pulse');
+            micIcon.textContent = '🛑';
+            statusLabel.textContent = 'Escuchando... habla ahora';
+            statusLabel.style.color = '#e11d48';
+          } else {
+            btnMic.style.background = 'linear-gradient(135deg, #4f46e5, #7c3aed)';
+            btnMic.classList.remove('animate-pulse');
+            micIcon.textContent = '🎙️';
+            statusLabel.textContent = 'Toca el micrófono para hablar';
+            statusLabel.style.color = '#4f46e5';
+          }
+        }
+
+        async function executeVoiceText(commandText) {
+          const trimmed = String(commandText || '').trim();
+          if (!trimmed) return;
+
+          if (input) input.value = trimmed;
+          if (statusLabel) {
+            statusLabel.textContent = '⏳ Ejecutando tu instrucción...';
+            statusLabel.style.color = '#4f46e5';
+          }
+          if (responseBox) {
+            responseBox.classList.remove('hidden');
+            responseBox.textContent = 'Procesando...';
+          }
+
+          try {
+            const res = await fetch('/api/ai/voice', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: trimmed,
+                userName: getActiveUserName(),
+                geminiApiKey: localStorage.getItem('th_gemini_api_key') || undefined,
+              }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              throw new Error(data.error || 'No se pudo procesar la orden');
+            }
+
+            if (responseBox) {
+              responseBox.textContent = data.reply;
+            }
+            if (statusLabel) {
+              statusLabel.textContent = '✅ ¡Hecho! Toca el micro si quieres decir algo más';
+              statusLabel.style.color = '#047857';
+            }
+
+            speakText(data.reply);
+
+            // Refrescar datos de la pantalla si se ejecutó alguna acción
+            const syncBtn = document.getElementById('btn-sync-all');
+            if (syncBtn) syncBtn.click();
+          } catch (err) {
+            if (responseBox) {
+              responseBox.classList.remove('hidden');
+              responseBox.textContent = '❌ ' + (err.message || 'Error al procesar');
+            }
+            if (statusLabel) {
+              statusLabel.textContent = 'Hubo un error. Inténtalo de nuevo.';
+              statusLabel.style.color = '#e11d48';
+            }
+          }
+        }
+
+        function startSpeechRecognition() {
+          const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SpeechRec) {
+            if (statusLabel) {
+              statusLabel.textContent = 'Tu navegador no soporta micrófono directo; escribe tu orden abajo.';
+              statusLabel.style.color = '#b45309';
+            }
+            input?.focus();
+            return;
+          }
+
+          if (isListening && recognition) {
+            recognition.stop();
+            return;
+          }
+
+          recognition = new SpeechRec();
+          recognition.lang = 'es-ES';
+          recognition.continuous = false;
+          recognition.interimResults = true;
+
+          recognition.onstart = () => {
+            setListeningUI(true);
+          };
+
+          recognition.onresult = (event) => {
+            let transcript = '';
+            let isFinal = false;
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              transcript += event.results[i][0].transcript;
+              if (event.results[i].isFinal) isFinal = true;
+            }
+            if (input) input.value = transcript;
+            if (isFinal && transcript.trim()) {
+              setListeningUI(false);
+              executeVoiceText(transcript.trim());
+            }
+          };
+
+          recognition.onerror = (event) => {
+            setListeningUI(false);
+            if (event.error === 'not-allowed') {
+              statusLabel.textContent = '⚠️ Da permiso al micrófono en el navegador para hablar.';
+              statusLabel.style.color = '#e11d48';
+            }
+          };
+
+          recognition.onend = () => {
+            setListeningUI(false);
+          };
+
+          try {
+            recognition.start();
+          } catch (e) {
+            setListeningUI(false);
+          }
+        }
+
+        function openVoiceModal(autoListen = true) {
+          if (!modal) return;
+          modal.classList.remove('hidden');
+          const uName = getActiveUserName();
+          if (userPill) {
+            userPill.textContent = uName
+              ? `Hablando como: ${uName} · Hogar, Compra y Garaje`
+              : 'Hogar · Compra · Garaje';
+          }
+          if (autoListen) {
+            setTimeout(() => startSpeechRecognition(), 150);
+          }
+        }
+
+        function closeVoiceModal() {
+          if (!modal) return;
+          modal.classList.add('hidden');
+          if (isListening && recognition) {
+            try { recognition.stop(); } catch (e) {}
+          }
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+          }
+        }
+
+        btnHeader?.addEventListener('click', () => openVoiceModal(true));
+        btnFab?.addEventListener('click', () => openVoiceModal(true));
+        btnClose?.addEventListener('click', closeVoiceModal);
+        modal?.addEventListener('click', (e) => {
+          if (e.target === modal) closeVoiceModal();
+        });
+
+        btnMic?.addEventListener('click', () => {
+          startSpeechRecognition();
+        });
+
+        form?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          if (input && input.value.trim()) {
+            executeVoiceText(input.value.trim());
+          }
+        });
+
+        document.querySelectorAll('.voice-example-chip').forEach((chip) => {
+          chip.addEventListener('click', () => {
+            const ex = chip.getAttribute('data-voice-example');
+            if (ex) executeVoiceText(ex);
+          });
+        });
+
+        // Si se abre desde el acceso directo de pantalla de inicio (/?voice=1)
+        window.addEventListener('DOMContentLoaded', () => {
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('voice') === '1' || params.get('voice') === 'auto') {
+            setTimeout(() => openVoiceModal(true), 400);
+          }
+        });
+      })();
+    </script>
 
     <!-- PWA Service Worker Registration -->
     <script is:inline>

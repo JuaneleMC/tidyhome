@@ -1067,3 +1067,4 @@ export async function executeMcpTool(
       throw new Error(`Herramienta MCP desconocida: ${toolName}`);
   }
 }
+

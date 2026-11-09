@@ -14,5 +14,20 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "🎙️ Orden por Voz",
+      "short_name": "Voz",
+      "description": "Dictar tarea, compra o mantenimiento por voz",
+      "url": "/?voice=1",
+      "icons": [
+        {
+          "src": "/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
   ]
 }

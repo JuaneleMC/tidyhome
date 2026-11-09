@@ -2318,7 +2318,8 @@ import '../styles/global.css';
       const data = await res.json();
       if (data.success) {
         showToast(data.message || 'Semana sincronizada correctamente', 'success');
-        if (activeTab === 'calendar') { if (calViewMode === 'month') loadCalendar(); else loadDashboard(); } else if (activeTab === 'garage') { loadGarage(); }
+        if (activeTab === 'calendar') { if (calViewMode === 'month') loadCalendar(); else loadDashboard(); } else if (activeTab === 'garage') { loadGarage(); } else if (activeTab === 'catalog') { loadCatalog(); }
+        loadShoppingList();
       } else {
         showToast(data.error || 'Error al sincronizar', 'error');
       }
