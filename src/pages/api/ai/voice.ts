@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { MCP_TOOLS, executeMcpTool } from '../../../lib/mcpTools';
+import { MCP_TOOLS, executeMcpTool, detectUserInSpeech } from '../../../lib/mcpTools';
 import { getTodayYMD } from '../../../lib/dates';
 
 export const prerender = false;
@@ -153,19 +153,65 @@ function capitalizeFirst(s: string): string {
  */
 async function executeSmartSpanishIntent(
   rawText: string,
-  defaultUserName?: string | null
-): Promise<{ reply: string; toolsCalled: string[] }> {
+  defaultUserName?: string | null,
+  defaultUserId?: number | null
+): Promise<{
+  reply: string;
+  toolsCalled: string[];
+  switchedUser?: { id: number; name: string; avatar?: string | null } | null;
+}> {
   const toolsCalled: string[] = [];
   const outputs: string[] = [];
 
+  // 1. Detectar si el usuario dice "Soy [Nombre]" al principio o menciona a un conviviente
+  const initialSpeechUser = await detectUserInSpeech(rawText);
+  let effectiveUserName = defaultUserName || null;
+  let effectiveUserId = defaultUserId || null;
+  let switchedUser: { id: number; name: string; avatar?: string | null } | null = null;
+
+  if (initialSpeechUser.isSelfIntro) {
+    if (!initialSpeechUser.matchedUser && initialSpeechUser.spokenName) {
+      return {
+        reply: `⚠️ No he encontrado ningún conviviente llamado "${initialSpeechUser.spokenName}". Los convivientes registrados son: ${initialSpeechUser.allUsers.map((u) => u.name).join(', ')}.`,
+        toolsCalled: [],
+      };
+    }
+    if (initialSpeechUser.matchedUser) {
+      effectiveUserName = initialSpeechUser.matchedUser.name;
+      effectiveUserId = initialSpeechUser.matchedUser.id;
+      switchedUser = {
+        id: initialSpeechUser.matchedUser.id,
+        name: initialSpeechUser.matchedUser.name,
+        avatar: initialSpeechUser.matchedUser.avatar,
+      };
+    }
+  }
+
+  // Limpiar presentación inicial tipo "Hola, soy Juan," o "Soy Juan y..."
+  const cleanedRawText = rawText
+    .replace(/^(?:hola\s*,?\s*|oye\s*,?\s*)?(?:soy|habla)\s+[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9]+(?:\s*[,.:;]\s*|\s+y\s+|\s+)/i, '')
+    .trim();
+
+  if (!cleanedRawText && switchedUser) {
+    return {
+      reply: `👋 ¡Hola ${switchedUser.name}! Te he dejado seleccionado como conviviente activo. ¿Qué quieres consultar o registrar?`,
+      toolsCalled: [],
+      switchedUser,
+    };
+  }
+
+  const textToProcess = cleanedRawText || rawText;
+  const ctx = { defaultUserName: effectiveUserName, defaultUserId: effectiveUserId };
+
   // Separar si hay dos órdenes distintas unidas (ej. "ya he limpiado el baño y apunta leche en la compra")
-  const subCommands = rawText
+  const subCommands = textToProcess
     .split(/\s+(?:y\s+adem[aá]s|y\s+tambi[eé]n|;\s*)\s+|\s+(?=y\s+(?:apunta|a[ñn]ade|pon|marca|registra|actualiza)\b)/i)
     .map((s) => s.replace(/^y\s+/i, '').trim())
     .filter(Boolean);
 
   for (const cmd of subCommands) {
     const norm = normalizeText(cmd);
+    const cmdUserDetection = await detectUserInSpeech(cmd);
 
     // ----------------------------------------------------------------------
     // A. MÓDULO COMPRA
@@ -183,7 +229,7 @@ async function executeSmartSpanishIntent(
       norm === 'ver compra'
     ) {
       toolsCalled.push('leer_lista_compra');
-      outputs.push(await executeMcpTool('leer_lista_compra', {}, { defaultUserName }));
+      outputs.push(await executeMcpTool('leer_lista_compra', {}, ctx));
       continue;
     }
 
@@ -208,7 +254,7 @@ async function executeSmartSpanishIntent(
       if (names.length > 0) {
         toolsCalled.push('marcar_comprado_lista_compra');
         outputs.push(
-          await executeMcpTool('marcar_comprado_lista_compra', { nombres: names }, { defaultUserName })
+          await executeMcpTool('marcar_comprado_lista_compra', { nombres: names }, ctx)
         );
         continue;
       }
@@ -223,7 +269,7 @@ async function executeSmartSpanishIntent(
       if (productos.length > 0) {
         toolsCalled.push('anadir_a_lista_compra');
         outputs.push(
-          await executeMcpTool('anadir_a_lista_compra', { productos }, { defaultUserName })
+          await executeMcpTool('anadir_a_lista_compra', { productos }, ctx)
         );
         continue;
       }
@@ -247,7 +293,7 @@ async function executeSmartSpanishIntent(
         norm.startsWith('mantenimiento')
       ) {
         toolsCalled.push('consultar_mantenimiento_coche');
-        outputs.push(await executeMcpTool('consultar_mantenimiento_coche', {}, { defaultUserName }));
+        outputs.push(await executeMcpTool('consultar_mantenimiento_coche', {}, ctx));
         continue;
       }
 
@@ -258,7 +304,7 @@ async function executeSmartSpanishIntent(
           .trim() || cmd;
         toolsCalled.push('reportar_averia_coche');
         outputs.push(
-          await executeMcpTool('reportar_averia_coche', { titulo: capitalizeFirst(title) }, { defaultUserName })
+          await executeMcpTool('reportar_averia_coche', { titulo: capitalizeFirst(title) }, ctx)
         );
         continue;
       }
@@ -302,7 +348,7 @@ async function executeSmartSpanishIntent(
               ...(km !== null ? { kilometros: km } : {}),
               ...(cost ? { coste: cost } : {}),
             },
-            { defaultUserName }
+            ctx
           )
         );
         continue;
@@ -317,7 +363,7 @@ async function executeSmartSpanishIntent(
             await executeMcpTool(
               'actualizar_kilometros_coche',
               { kilometros: km },
-              { defaultUserName }
+              ctx
             )
           );
           continue;
@@ -328,15 +374,26 @@ async function executeSmartSpanishIntent(
     // ----------------------------------------------------------------------
     // C. MÓDULO TAREAS DEL HOGAR
     // ----------------------------------------------------------------------
-    // C1. Consultar tareas ("¿qué me toca hoy?", "¿qué tareas quedan pendientes?")
+    // C1. Consultar tareas ("¿qué me toca hoy?", "¿qué me toca esta semana?", "¿qué tareas quedan pendientes?")
     if (
-      /\b(que\s+tareas?|que\s+me\s+toca|que\s+toca|que\s+queda|pendientes|listar\s+tareas|resumen\s+de\s+tareas|tareas\s+de\s+hoy)\b/.test(
+      /\b(que\s+tareas?|que\s+me\s+toca[n]?|que\s+le\s+toca[n]?|que\s+toca[n]?|que\s+tengo|que\s+queda[n]?|mis\s+tareas?|tareas?\s+de|pendientes?|listar\s+tareas|resumen\s+de\s+tareas|tareas\s+de\s+hoy|que\s+hago)\b/.test(
         norm
       )
     ) {
       const onlyToday = /\bhoy\b/.test(norm);
-      const onlyPending = /\b(pendientes?|falta|quedan|toca)\b/.test(norm);
-      const isAskingForMe = /\b(me\s+toca|mis\s+tareas)\b/.test(norm);
+      const asksCompleted = /\b(completadas?|hechas?|terminadas?)\b/.test(norm);
+      const asksAllStates = /\b(todas)\b/.test(norm) && !/\b(pendientes?)\b/.test(norm);
+      const estado = asksCompleted ? 'completed' : asksAllStates ? 'all' : 'pending';
+
+      // ¿Habla en primera persona ("me toca", "me tocan", "tengo", "mis tareas", "hago") o dijo "soy X"?
+      const isFirstPerson =
+        Boolean(initialSpeechUser.isSelfIntro) ||
+        /\b(me\s+toca[n]?|me\s+queda[n]?|mis\s+tareas?|tengo|hago|para\s+mi)\b/.test(norm);
+
+      // ¿Mencionó explícitamente a algún conviviente en la frase (ej. "qué le toca a Marta" o "soy Juan")?
+      const explicitMember =
+        cmdUserDetection.spokenName ||
+        (initialSpeechUser.isSelfIntro ? initialSpeechUser.spokenName : null);
 
       toolsCalled.push('listar_tareas_hogar');
       outputs.push(
@@ -344,10 +401,14 @@ async function executeSmartSpanishIntent(
           'listar_tareas_hogar',
           {
             solo_hoy: onlyToday,
-            estado: onlyPending ? 'pending' : 'all',
-            ...(isAskingForMe && defaultUserName ? { miembro: defaultUserName } : {}),
+            estado,
+            ...(explicitMember
+              ? { miembro: explicitMember }
+              : isFirstPerson
+                ? { solo_usuario_activo: true }
+                : {}),
           },
-          { defaultUserName }
+          ctx
         )
       );
       continue;
@@ -372,8 +433,12 @@ async function executeSmartSpanishIntent(
         outputs.push(
           await executeMcpTool(
             'crear_tarea_hogar',
-            { titulo: capitalizeFirst(cleanTitle), fecha: dateHint },
-            { defaultUserName }
+            {
+              titulo: capitalizeFirst(cleanTitle),
+              fecha: dateHint,
+              ...(cmdUserDetection.matchedUser ? { miembro_asignado: cmdUserDetection.matchedUser.name } : {}),
+            },
+            ctx
           )
         );
         continue;
@@ -386,7 +451,7 @@ async function executeSmartSpanishIntent(
       if (productos.length > 0) {
         toolsCalled.push('anadir_a_lista_compra');
         outputs.push(
-          await executeMcpTool('anadir_a_lista_compra', { productos }, { defaultUserName })
+          await executeMcpTool('anadir_a_lista_compra', { productos }, ctx)
         );
         continue;
       }
@@ -423,8 +488,9 @@ async function executeSmartSpanishIntent(
         {
           titulo: taskTitle,
           fecha_ejecucion: execDate,
+          ...(cmdUserDetection.matchedUser ? { ejecutado_por: cmdUserDetection.matchedUser.name } : {}),
         },
-        { defaultUserName }
+        ctx
       )
     );
   }
@@ -432,6 +498,7 @@ async function executeSmartSpanishIntent(
   return {
     reply: outputs.join('\n\n'),
     toolsCalled,
+    switchedUser,
   };
 }
 
@@ -441,7 +508,8 @@ async function executeSmartSpanishIntent(
 async function executeWithGeminiLLM(
   text: string,
   apiKey: string,
-  defaultUserName?: string | null
+  defaultUserName?: string | null,
+  defaultUserId?: number | null
 ): Promise<{ reply: string; toolsCalled: string[]; engine: 'gemini' }> {
   const todayStr = getTodayYMD();
   const functionDeclarations = MCP_TOOLS.map((t) => ({
@@ -452,10 +520,11 @@ async function executeWithGeminiLLM(
 
   const systemInstruction = `Eres el asistente de voz inteligente de TidyHome (app familiar de tareas del hogar, lista de la compra del supermercado y mantenimiento de vehículos en garaje).
 Fecha actual: ${todayStr}.
-Conviviente que habla desde el teléfono: ${defaultUserName || 'Conviviente activo'}.
-Instrucciones:
-1. Usa SIEMPRE las herramientas disponibles para ejecutar las acciones que pida el usuario (incluso varias herramientas en una misma frase si pide cosas de compra, hogar y coche a la vez).
-2. Cuando termines de llamar a las herramientas, responde en español de forma breve, natural, directa y amigable (máximo 2-3 frases) porque tu respuesta se leerá en voz alta por el altavoz del móvil.`;
+Conviviente activo actualmente en el teléfono: ${defaultUserName || 'Conviviente activo'}.
+Instrucciones críticas:
+1. Cuando el usuario pregunte en primera persona ("¿qué me toca?", "¿qué tengo esta semana?", "¿mis tareas?") o diga "soy [Nombre]", pasa SIEMPRE el nombre del conviviente en el parámetro "miembro" de listar_tareas_hogar para devolver SOLO las tareas de esa persona y NO las de toda la casa.
+2. Cuando el usuario diga que ha hecho una tarea ("ya he limpiado el baño", "he hecho la lavadora"), asígnala como ejecutada por el conviviente activo (${defaultUserName || 'activo'}) o por quien haya indicado.
+3. Cuando termines de llamar a las herramientas, responde en español de forma breve, natural y directa (máximo 2-3 frases).`;
 
   const contents: any[] = [{ role: 'user', parts: [{ text }] }];
   const toolsCalled: string[] = [];
@@ -505,7 +574,7 @@ Instrucciones:
       toolsCalled.push(name);
       let toolOutput: string;
       try {
-        toolOutput = await executeMcpTool(name, args || {}, { defaultUserName });
+        toolOutput = await executeMcpTool(name, args || {}, { defaultUserName, defaultUserId });
       } catch (e: any) {
         toolOutput = `Error: ${e?.message || String(e)}`;
       }
@@ -532,6 +601,7 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
     const text = String(body.text || '').trim();
     const userName = body.userName ? String(body.userName).trim() : null;
+    const userId = body.userId ? Number(body.userId) : null;
     const clientGeminiKey = body.geminiApiKey ? String(body.geminiApiKey).trim() : null;
 
     if (!text) {
@@ -550,7 +620,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (activeGeminiKey) {
       try {
-        const geminiResult = await executeWithGeminiLLM(text, activeGeminiKey, userName);
+        const geminiResult = await executeWithGeminiLLM(text, activeGeminiKey, userName, userId);
         return new Response(
           JSON.stringify({
             success: true,
@@ -565,12 +635,13 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    const localResult = await executeSmartSpanishIntent(text, userName);
+    const localResult = await executeSmartSpanishIntent(text, userName, userId);
     return new Response(
       JSON.stringify({
         success: true,
         reply: localResult.reply,
         toolsCalled: localResult.toolsCalled,
+        switchedUser: localResult.switchedUser || null,
         engine: 'smart-local',
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -585,3 +656,4 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 };
+

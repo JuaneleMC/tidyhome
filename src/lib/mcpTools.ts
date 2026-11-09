@@ -111,26 +111,124 @@ function resolveSpanishDate(dateInput?: string | null): string {
 }
 
 /**
- * Busca un conviviente por nombre aproximado, o usa el usuario por defecto si no se especifica.
+ * Busca un conviviente por nombre aproximado sin hacer fallback silencioso a otro usuario si no coincide.
  */
-async function resolveUser(nameOrHint?: string | null, defaultUserName?: string | null) {
+export async function findUserStrict(nameQuery: string) {
+  const allUsers = await db.select().from(users).orderBy(asc(users.id));
+  const normQuery = normalizeText(nameQuery);
+  if (!normQuery || allUsers.length === 0) return { user: null, allUsers };
+
+  let bestUser = null;
+  let bestScore = 0;
+
+  for (const u of allUsers) {
+    const normU = normalizeText(u.name);
+    let s = scoreMatch(u.name, nameQuery);
+    // Coincidencia por prefijo (ej. "Juan" <-> "Juane" / "Juanma")
+    if (normU.startsWith(normQuery) || normQuery.startsWith(normU)) {
+      s = Math.max(s, 88);
+    }
+    if (s > bestScore) {
+      bestScore = s;
+      bestUser = u;
+    }
+  }
+
+  if (bestUser && bestScore >= 50) {
+    return { user: bestUser, allUsers };
+  }
+
+  return { user: null, allUsers };
+}
+
+/**
+ * Detecta si en una frase hablada se menciona explícitamente a algún conviviente de la base de datos
+ * o si el usuario dice "soy [Nombre]" / "a [Nombre]" / "de [Nombre]".
+ */
+export async function detectUserInSpeech(rawText: string) {
+  const allUsers = await db.select().from(users).orderBy(asc(users.id));
+  const norm = normalizeText(rawText);
+
+  // 1. ¿Dice explícitamente "soy X" o "habla X"?
+  const selfIntroMatch = norm.match(/\b(?:soy|habla|aqui)\s+([a-z0-9]+)\b/);
+  if (selfIntroMatch) {
+    const spokenName = selfIntroMatch[1];
+    const { user } = await findUserStrict(spokenName);
+    return {
+      matchedUser: user,
+      spokenName,
+      isSelfIntro: true,
+      allUsers,
+    };
+  }
+
+  // 2. ¿Menciona directamente el nombre de algún conviviente de la base de datos en la frase?
+  for (const u of allUsers) {
+    const normName = normalizeText(u.name);
+    const firstWord = normName.split(/\s+/)[0];
+    if (firstWord.length >= 3) {
+      const regex = new RegExp(`\\b${firstWord}\\b`, 'i');
+      if (regex.test(norm)) {
+        return {
+          matchedUser: u,
+          spokenName: u.name,
+          isSelfIntro: false,
+          allUsers,
+        };
+      }
+    }
+  }
+
+  // 3. ¿Dice "le toca(n) a X" / "tareas de X" / "pendientes de X" con un nombre que quizá sea diminutivo o no exista?
+  const thirdPersonMatch = norm.match(
+    /\b(?:toca(?:n)?\s+a|tareas?\s+de|pendientes?\s+de|tiene\s+pendiente(?:s)?)\s+([a-z0-9]+)\b/
+  );
+  if (thirdPersonMatch) {
+    const spokenName = thirdPersonMatch[1];
+    const stopWords = new Set(['hoy', 'manana', 'ayer', 'esta', 'este', 'la', 'el', 'todos', 'casa', 'hacer', 'semana']);
+    if (!stopWords.has(spokenName)) {
+      const { user } = await findUserStrict(spokenName);
+      return {
+        matchedUser: user,
+        spokenName,
+        isSelfIntro: false,
+        allUsers,
+      };
+    }
+  }
+
+  return {
+    matchedUser: null,
+    spokenName: null,
+    isSelfIntro: false,
+    allUsers,
+  };
+}
+
+/**
+ * Busca un conviviente por nombre aproximado, o usa el usuario activo por ID/nombre si no se especifica.
+ */
+async function resolveUser(
+  nameOrHint?: string | null,
+  defaultUserName?: string | null,
+  defaultUserId?: number | null
+) {
   const allUsers = await db.select().from(users).orderBy(asc(users.id));
   if (allUsers.length === 0) return null;
 
-  const candidates = [nameOrHint, defaultUserName].filter(Boolean) as string[];
-  for (const candidate of candidates) {
-    let bestUser = null;
-    let bestScore = 0;
-    for (const u of allUsers) {
-      const s = scoreMatch(u.name, candidate);
-      if (s > bestScore) {
-        bestScore = s;
-        bestUser = u;
-      }
-    }
-    if (bestUser && bestScore >= 40) {
-      return bestUser;
-    }
+  if (nameOrHint) {
+    const { user } = await findUserStrict(nameOrHint);
+    if (user) return user;
+  }
+
+  if (defaultUserId) {
+    const byId = allUsers.find((u) => u.id === Number(defaultUserId));
+    if (byId) return byId;
+  }
+
+  if (defaultUserName) {
+    const { user } = await findUserStrict(defaultUserName);
+    if (user) return user;
   }
 
   return allUsers[0];
@@ -486,7 +584,7 @@ export const MCP_TOOLS = [
 export async function executeMcpTool(
   toolName: string,
   args: Record<string, any> = {},
-  context: { defaultUserName?: string | null } = {}
+  context: { defaultUserName?: string | null; defaultUserId?: number | null } = {}
 ): Promise<string> {
   await initializeDatabase();
 
@@ -500,10 +598,17 @@ export async function executeMcpTool(
       const filterState = args.estado || 'all';
       const onlyToday = Boolean(args.solo_hoy);
       const memberHint = args.miembro || null;
+      const useActiveUser = Boolean(args.solo_usuario_activo);
 
       let targetUser = null;
       if (memberHint) {
-        targetUser = await resolveUser(memberHint, null);
+        const { user, allUsers } = await findUserStrict(String(memberHint));
+        if (!user) {
+          return `⚠️ No he encontrado ningún conviviente llamado "${memberHint}". Los convivientes registrados son: ${allUsers.map((u) => u.name).join(', ')}.`;
+        }
+        targetUser = user;
+      } else if (useActiveUser) {
+        targetUser = await resolveUser(null, context.defaultUserName, context.defaultUserId);
       }
 
       let chores = dashboard.allChores;
@@ -514,13 +619,14 @@ export async function executeMcpTool(
         chores = chores.filter((c) => c.status === filterState);
       }
       if (targetUser) {
-        chores = chores.filter(
-          (c) => c.assignedToId === targetUser.id || c.executedById === targetUser.id
-        );
+        chores = chores.filter((c) => c.assignedToId === targetUser.id);
       }
 
       if (chores.length === 0) {
-        return `No hay tareas que coincidan con el filtro solicitado (${onlyToday ? 'hoy' : 'esta semana'}${targetUser ? `, conviviente: ${targetUser.name}` : ''}${filterState !== 'all' ? `, estado: ${filterState}` : ''}).`;
+        if (targetUser) {
+          return `🎉 ${targetUser.name} no tiene tareas ${filterState === 'pending' ? 'pendientes ' : ''}para ${onlyToday ? 'hoy' : 'esta semana'}.`;
+        }
+        return `No hay tareas que coincidan con el filtro solicitado (${onlyToday ? 'hoy' : 'esta semana'}${filterState !== 'all' ? `, estado: ${filterState}` : ''}).`;
       }
 
       const dayMap = new Map(dashboard.days.map((d) => [d.dateStr, `${d.dayName} ${d.dayNumber}`]));
@@ -537,12 +643,21 @@ export async function executeMcpTool(
           return `✅ [${dayLabel}] ${c.icon} ${c.choreName} — ${authorInfo}${execDiff}`;
         } else {
           const overdueTag = c.isOverdue ? ' ⚠️ (Atrasada)' : c.isToday ? ' 📍 (Hoy)' : '';
-          return `⏳ [${dayLabel}] ${c.icon} ${c.choreName} — Asignada a: ${c.assignedToName}${overdueTag}`;
+          return targetUser
+            ? `⏳ [${dayLabel}] ${c.icon} ${c.choreName}${overdueTag}`
+            : `⏳ [${dayLabel}] ${c.icon} ${c.choreName} — Asignada a: ${c.assignedToName}${overdueTag}`;
         }
       });
 
+      if (targetUser) {
+        return [
+          `📋 Tareas de ${targetUser.name} (${onlyToday ? 'hoy' : dashboard.summary.weekRange}) — ${chores.length} ${filterState === 'pending' ? 'pendiente(s)' : 'tarea(s)'}:`,
+          ...lines,
+        ].join('\n');
+      }
+
       return [
-        `📋 Resumen de tareas (${dashboard.summary.weekRange}) — Progreso global: ${dashboard.summary.totalCompleted}/${dashboard.summary.totalTasks} (${dashboard.summary.overallProgress}%):`,
+        `📋 Resumen de toda la casa (${dashboard.summary.weekRange}) — Progreso global: ${dashboard.summary.totalCompleted}/${dashboard.summary.totalTasks} (${dashboard.summary.overallProgress}%):`,
         ...lines,
       ].join('\n');
     }
@@ -556,7 +671,7 @@ export async function executeMcpTool(
         throw new Error('Debes indicar el nombre o título de la tarea a completar.');
       }
 
-      const actor = await resolveUser(args.ejecutado_por, context.defaultUserName);
+      const actor = await resolveUser(args.ejecutado_por, context.defaultUserName, context.defaultUserId);
       if (!actor) {
         throw new Error('No hay convivientes registrados en TidyHome.');
       }
@@ -632,7 +747,7 @@ export async function executeMcpTool(
       const title = String(args.titulo || '').trim();
       if (!title) throw new Error('El título de la tarea es obligatorio.');
 
-      const assignee = await resolveUser(args.miembro_asignado, context.defaultUserName);
+      const assignee = await resolveUser(args.miembro_asignado, context.defaultUserName, context.defaultUserId);
       if (!assignee) throw new Error('No se encontró ningún conviviente al que asignar la tarea.');
 
       const targetDate = resolveSpanishDate(args.fecha);
@@ -679,7 +794,7 @@ export async function executeMcpTool(
         throw new Error('Debes indicar al menos un producto para añadir a la lista de la compra.');
       }
 
-      const actor = await resolveUser(null, context.defaultUserName);
+      const actor = await resolveUser(null, context.defaultUserName, context.defaultUserId);
       const addedSummaries: string[] = [];
 
       for (const item of rawProducts) {
@@ -814,7 +929,7 @@ export async function executeMcpTool(
         throw new Error('Indica qué productos quieres marcar como comprados.');
       }
 
-      const actor = await resolveUser(null, context.defaultUserName);
+      const actor = await resolveUser(null, context.defaultUserName, context.defaultUserId);
       const pendingItems = await db
         .select()
         .from(shoppingItems)
@@ -932,7 +1047,7 @@ export async function executeMcpTool(
       if (isNaN(newKm) || newKm < 0) throw new Error('Kilometraje inválido.');
 
       const todayStr = getTodayYMD();
-      const actor = await resolveUser(null, context.defaultUserName);
+      const actor = await resolveUser(null, context.defaultUserName, context.defaultUserId);
 
       await db
         .update(vehicles)
@@ -985,7 +1100,7 @@ export async function executeMcpTool(
           ? Number(args.kilometros)
           : v.currentKm || null;
 
-      const actor = await resolveUser(null, context.defaultUserName);
+      const actor = await resolveUser(null, context.defaultUserName, context.defaultUserId);
 
       // Buscar si coincide con algún mantenimiento programado del vehículo (ej. ITV, Aceite, Ruedas)
       const rules = await db
@@ -1048,7 +1163,7 @@ export async function executeMcpTool(
       const title = String(args.titulo || '').trim();
       if (!title) throw new Error('El título o descripción de la avería es obligatorio.');
 
-      const actor = await resolveUser(null, context.defaultUserName);
+      const actor = await resolveUser(null, context.defaultUserName, context.defaultUserId);
       const todayStr = getTodayYMD();
 
       await db.insert(vehicleIncidents).values({

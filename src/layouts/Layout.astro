@@ -345,11 +345,11 @@ const {
           <div class="flex flex-wrap gap-1.5">
             <button
               type="button"
-              data-voice-example="¿Qué tareas quedan pendientes esta semana?"
+              data-voice-example="¿Qué tareas me tocan esta semana?"
               style="background-color: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe;"
               class="voice-example-chip px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:opacity-90 transition cursor-pointer text-left"
             >
-              🧹 ¿Qué tareas quedan pendientes?
+              🧹 ¿Qué me toca esta semana?
             </button>
             <button
               type="button"
@@ -455,7 +455,12 @@ const {
         function getActiveUserName() {
           const el = document.getElementById('active-user-name');
           const txt = el ? el.textContent.trim() : '';
-          return txt && txt !== 'Cargando...' ? txt : null;
+          return txt && txt !== 'Cargando...' && txt !== 'Sin convivientes' ? txt : null;
+        }
+
+        function getActiveUserId() {
+          const raw = localStorage.getItem('tidyhome_active_user_id');
+          return raw ? Number(raw) : null;
         }
 
         function speakText(text) {
@@ -511,6 +516,7 @@ const {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 text: trimmed,
+                userId: getActiveUserId(),
                 userName: getActiveUserName(),
                 geminiApiKey: localStorage.getItem('th_gemini_api_key') || undefined,
               }),
@@ -518,6 +524,17 @@ const {
             const data = await res.json();
             if (!res.ok || !data.success) {
               throw new Error(data.error || 'No se pudo procesar la orden');
+            }
+
+            if (data.switchedUser && data.switchedUser.id) {
+              localStorage.setItem('tidyhome_active_user_id', String(data.switchedUser.id));
+              const nameEl = document.getElementById('active-user-name');
+              const avatarEl = document.getElementById('active-user-avatar');
+              if (nameEl) nameEl.textContent = data.switchedUser.name;
+              if (avatarEl && data.switchedUser.avatar) avatarEl.textContent = data.switchedUser.avatar;
+              if (userPill) {
+                userPill.textContent = `Hablando como: ${data.switchedUser.name} · Hogar, Compra y Garaje`;
+              }
             }
 
             if (responseBox) {
